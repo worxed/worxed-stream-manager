@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Worxed Stream Overlay</title>
+    <link href="https://fonts.googleapis.com/css2?family=VT323:wght@400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --worxed-bg: #121318;
+            --worxed-green: #8cffbe;
+            --worxed-purple: #b893ff;
+            --worxed-font: 'VT323', monospace;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--worxed-font);
+            background: transparent;
+            color: var(--worxed-green);
+            overflow: hidden;
+            font-size: 16px;
+            line-height: 1.4;
+        }
+
+        /* Chat Overlay */
+        .chat-overlay {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            width: 400px;
+            max-height: 300px;
+            background: rgba(18, 19, 24, 0.9);
+            border: 2px solid var(--worxed-green);
+            border-radius: 6px;
+            padding: 15px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 0 20px rgba(140, 255, 190, 0.3);
+            display: none;
+        }
+
+        .chat-header {
+            color: var(--worxed-purple);
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            text-shadow: 0 0 10px var(--worxed-purple);
+            border-bottom: 1px solid var(--worxed-purple);
+            padding-bottom: 5px;
+        }
+
+        .chat-messages {
+            max-height: 220px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: var(--worxed-green) transparent;
+        }
+
+        .chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: var(--worxed-green);
+            border-radius: 3px;
+        }
+
+        .chat-message {
+            margin-bottom: 8px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .chat-username {
+            color: var(--worxed-green);
+            font-weight: bold;
+            text-shadow: 0 0 5px var(--worxed-green);
+        }
+
+        .chat-text {
+            color: #ffffff;
+            margin-left: 5px;
+        }
+
+        /* Alert Overlay */
+        .alert-overlay {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(18, 19, 24, 0.95);
+            border: 3px solid var(--worxed-purple);
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            backdrop-filter: blur(15px);
+            box-shadow: 0 0 30px rgba(184, 147, 255, 0.5);
+            display: none;
+            min-width: 300px;
+        }
+
+        .alert-title {
+            font-size: 2em;
+            color: var(--worxed-purple);
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            text-shadow: 0 0 15px var(--worxed-purple);
+            animation: pulse 2s infinite;
+        }
+
+        .alert-username {
+            font-size: 1.5em;
+            color: var(--worxed-green);
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px var(--worxed-green);
+        }
+
+        .alert-message {
+            font-size: 1.2em;
+            color: #ffffff;
+            margin-bottom: 15px;
+        }
+
+        .alert-amount {
+            font-size: 1.8em;
+            color: var(--worxed-purple);
+            font-weight: bold;
+            text-shadow: 0 0 15px var(--worxed-purple);
+        }
+
+        /* Stats Overlay */
+        .stats-overlay {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(18, 19, 24, 0.9);
+            border: 2px solid var(--worxed-green);
+            border-radius: 6px;
+            padding: 15px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 0 20px rgba(140, 255, 190, 0.3);
+            display: none;
+            min-width: 200px;
+        }
+
+        .stats-header {
+            color: var(--worxed-purple);
+            font-size: 1.1em;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            text-shadow: 0 0 10px var(--worxed-purple);
+            border-bottom: 1px solid var(--worxed-purple);
+            padding-bottom: 5px;
+        }
+
+        .stat-item {
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .stat-label {
+            color: var(--worxed-green);
+            text-shadow: 0 0 5px var(--worxed-green);
+        }
+
+        .stat-value {
+            color: #ffffff;
+            font-weight: bold;
+        }
+
+        /* Game Info Overlay */
+        .game-overlay {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(18, 19, 24, 0.9);
+            border: 2px solid var(--worxed-purple);
+            border-radius: 6px;
+            padding: 15px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 0 20px rgba(184, 147, 255, 0.3);
+            display: none;
+            min-width: 250px;
+        }
+
+        .game-title {
+            color: var(--worxed-purple);
+            font-size: 1.3em;
+            margin-bottom: 5px;
+            text-shadow: 0 0 10px var(--worxed-purple);
+        }
+
+        .game-category {
+            color: var(--worxed-green);
+            font-size: 1em;
+            text-shadow: 0 0 5px var(--worxed-green);
+        }
+
+        /* Animations */
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                text-shadow: 0 0 15px var(--worxed-purple);
+            }
+            50% {
+                text-shadow: 0 0 25px var(--worxed-purple), 0 0 35px var(--worxed-purple);
+            }
+        }
+
+        @keyframes alertShow {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.8);
+            }
+            100% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+
+        @keyframes alertHide {
+            0% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.8);
+            }
+        }
+
+        .alert-show {
+            animation: alertShow 0.5s ease-out;
+        }
+
+        .alert-hide {
+            animation: alertHide 0.5s ease-out;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .chat-overlay {
+                width: 300px;
+                max-height: 200px;
+            }
+            
+            .alert-overlay {
+                min-width: 250px;
+                padding: 20px;
+            }
+            
+            .stats-overlay {
+                min-width: 150px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Chat Overlay -->
+    <div id="chatOverlay" class="chat-overlay">
+        <div class="chat-header">💬 CHAT</div>
+        <div id="chatMessages" class="chat-messages"></div>
+    </div>
+
+    <!-- Alert Overlay -->
+    <div id="alertOverlay" class="alert-overlay">
+        <div id="alertTitle" class="alert-title"></div>
+        <div id="alertUsername" class="alert-username"></div>
+        <div id="alertMessage" class="alert-message"></div>
+        <div id="alertAmount" class="alert-amount"></div>
+    </div>
+
+    <!-- Stats Overlay -->
+    <div id="statsOverlay" class="stats-overlay">
+        <div class="stats-header">📊 STATS</div>
+        <div class="stat-item">
+            <span class="stat-label">Followers:</span>
+            <span id="followerCount" class="stat-value">0</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">Viewers:</span>
+            <span id="viewerCount" class="stat-value">0</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">Uptime:</span>
+            <span id="uptime" class="stat-value">00:00:00</span>
+        </div>
+    </div>
+
+    <!-- Game Info Overlay -->
+    <div id="gameOverlay" class="game-overlay">
+        <div id="gameTitle" class="game-title">No Game Set</div>
+        <div id="gameCategory" class="game-category">Just Chatting</div>
+    </div>
+
+    <script>
+        class OverlayManager {
+            constructor() {
+                this.ws = null;
+                this.chatMessages = [];
+                this.maxChatMessages = 10;
+                this.alertQueue = [];
+                this.isShowingAlert = false;
+                
+                this.initWebSocket();
+                this.initElements();
+                
+                // Show chat by default
+                this.showOverlay('chat');
+            }
+
+            initElements() {
+                this.chatOverlay = document.getElementById('chatOverlay');
+                this.chatMessages = document.getElementById('chatMessages');
+                this.alertOverlay = document.getElementById('alertOverlay');
+                this.statsOverlay = document.getElementById('statsOverlay');
+                this.gameOverlay = document.getElementById('gameOverlay');
+            }
+
+            initWebSocket() {
+                const wsUrl = `ws://localhost:3001?type=overlay`;
+                console.log('🔌 Connecting to WebSocket:', wsUrl);
+                
+                this.ws = new WebSocket(wsUrl);
+                
+                this.ws.onopen = () => {
+                    console.log('✅ Overlay WebSocket connected');
+                };
+                
+                this.ws.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        this.handleMessage(data);
+                    } catch (error) {
+                        console.error('❌ Error parsing message:', error);
+                    }
+                };
+                
+                this.ws.onclose = () => {
+                    console.log('🔌 WebSocket disconnected, reconnecting...');
+                    setTimeout(() => this.initWebSocket(), 2000);
+                };
+                
+                this.ws.onerror = (error) => {
+                    console.error('❌ WebSocket error:', error);
+                };
+            }
+
+            handleMessage(data) {
+                console.log('📨 Received:', data.type);
+                
+                switch (data.type) {
+                    case 'init':
+                        this.handleInit(data.data);
+                        break;
+                    case 'chat_message':
+                        this.handleChatMessage(data.data);
+                        break;
+                    case 'alert':
+                        this.handleAlert(data.data);
+                        break;
+                    case 'stream_data_updated':
+                        this.handleStreamUpdate(data.data);
+                        break;
+                    case 'overlay_settings':
+                        this.handleOverlaySettings(data.data);
+                        break;
+                }
+            }
+
+            handleInit(data) {
+                if (data.streamData) {
+                    this.updateStats(data.streamData);
+                    this.updateGameInfo(data.streamData);
+                }
+            }
+
+            handleChatMessage(message) {
+                this.addChatMessage(message);
+            }
+
+            handleAlert(alert) {
+                this.showAlert(alert);
+            }
+
+            handleStreamUpdate(streamData) {
+                this.updateStats(streamData);
+                this.updateGameInfo(streamData);
+            }
+
+            handleOverlaySettings(settings) {
+                // Apply overlay position and styling
+                if (settings.position) {
+                    this.updateOverlayPosition(settings);
+                }
+                if (settings.style) {
+                    this.updateOverlayStyle(settings.style);
+                }
+            }
+
+            addChatMessage(message) {
+                const messageElement = document.createElement('div');
+                messageElement.className = 'chat-message';
+                messageElement.innerHTML = `
+                    <span class="chat-username">${this.escapeHtml(message.username)}:</span>
+                    <span class="chat-text">${this.escapeHtml(message.message)}</span>
+                `;
+                
+                this.chatMessages.appendChild(messageElement);
+                
+                // Remove old messages
+                while (this.chatMessages.children.length > this.maxChatMessages) {
+                    this.chatMessages.removeChild(this.chatMessages.firstChild);
+                }
+                
+                // Auto-scroll to bottom
+                this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+                
+                // Show chat overlay temporarily
+                this.showOverlay('chat');
+                setTimeout(() => {
+                    if (this.chatMessages.children.length === 0) {
+                        this.hideOverlay('chat');
+                    }
+                }, 10000);
+            }
+
+            showAlert(alert) {
+                const alertTitle = document.getElementById('alertTitle');
+                const alertUsername = document.getElementById('alertUsername');
+                const alertMessage = document.getElementById('alertMessage');
+                const alertAmount = document.getElementById('alertAmount');
+                
+                // Set alert content
+                alertTitle.textContent = this.getAlertTitle(alert.type);
+                alertUsername.textContent = alert.username;
+                alertMessage.textContent = alert.message;
+                
+                if (alert.amount) {
+                    alertAmount.textContent = `$${alert.amount}`;
+                    alertAmount.style.display = 'block';
+                } else {
+                    alertAmount.style.display = 'none';
+                }
+                
+                // Show alert with animation
+                this.alertOverlay.style.display = 'block';
+                this.alertOverlay.classList.add('alert-show');
+                
+                // Hide after duration
+                setTimeout(() => {
+                    this.alertOverlay.classList.remove('alert-show');
+                    this.alertOverlay.classList.add('alert-hide');
+                    
+                    setTimeout(() => {
+                        this.alertOverlay.style.display = 'none';
+                        this.alertOverlay.classList.remove('alert-hide');
+                    }, 500);
+                }, alert.duration || 5000);
+            }
+
+            updateStats(streamData) {
+                document.getElementById('followerCount').textContent = streamData.followers || 0;
+                document.getElementById('viewerCount').textContent = streamData.viewers || 0;
+                document.getElementById('uptime').textContent = streamData.uptime || '00:00:00';
+            }
+
+            updateGameInfo(streamData) {
+                document.getElementById('gameTitle').textContent = streamData.game || 'No Game Set';
+                document.getElementById('gameCategory').textContent = streamData.title || 'Just Chatting';
+            }
+
+            showOverlay(type) {
+                switch (type) {
+                    case 'chat':
+                        this.chatOverlay.style.display = 'block';
+                        break;
+                    case 'stats':
+                        this.statsOverlay.style.display = 'block';
+                        break;
+                    case 'game':
+                        this.gameOverlay.style.display = 'block';
+                        break;
+                }
+            }
+
+            hideOverlay(type) {
+                switch (type) {
+                    case 'chat':
+                        this.chatOverlay.style.display = 'none';
+                        break;
+                    case 'stats':
+                        this.statsOverlay.style.display = 'none';
+                        break;
+                    case 'game':
+                        this.gameOverlay.style.display = 'none';
+                        break;
+                }
+            }
+
+            updateOverlayPosition(settings) {
+                if (settings.position) {
+                    const { x, y } = settings.position;
+                    this.chatOverlay.style.left = `${x}%`;
+                    this.chatOverlay.style.top = `${y}%`;
+                }
+            }
+
+            updateOverlayStyle(style) {
+                if (style.fontSize) {
+                    document.body.style.fontSize = `${style.fontSize}px`;
+                }
+                if (style.borderOpacity) {
+                    const opacity = style.borderOpacity / 100;
+                    document.documentElement.style.setProperty('--border-opacity', opacity);
+                }
+            }
+
+            getAlertTitle(type) {
+                const titles = {
+                    follow: '🎉 NEW FOLLOWER!',
+                    subscribe: '⭐ NEW SUBSCRIBER!',
+                    donation: '💰 DONATION!',
+                    raid: '⚡ RAID!'
+                };
+                return titles[type] || '🎉 ALERT!';
+            }
+
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+        }
+
+        // Initialize overlay when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🚀 Worxed Stream Overlay - Initializing...');
+            new OverlayManager();
+        });
+
+        // URL parameters for overlay type
+        const urlParams = new URLSearchParams(window.location.search);
+        const overlayType = urlParams.get('type') || 'all';
+
+        // Show specific overlay based on URL parameter
+        document.addEventListener('DOMContentLoaded', () => {
+            const overlayManager = new OverlayManager();
+            
+            // Hide all overlays first
+            overlayManager.hideOverlay('chat');
+            overlayManager.hideOverlay('stats');
+            overlayManager.hideOverlay('game');
+            
+            // Show specific overlay based on URL parameter
+            switch (overlayType) {
+                case 'chat':
+                    overlayManager.showOverlay('chat');
+                    break;
+                case 'stats':
+                    overlayManager.showOverlay('stats');
+                    break;
+                case 'game':
+                    overlayManager.showOverlay('game');
+                    break;
+                case 'all':
+                default:
+                    // Show all overlays for testing
+                    overlayManager.showOverlay('chat');
+                    overlayManager.showOverlay('stats');
+                    overlayManager.showOverlay('game');
+                    break;
+            }
+        });
+    </script>
+</body>
+</html> 
