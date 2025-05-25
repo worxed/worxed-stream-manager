@@ -1,0 +1,245 @@
+# Worxed Stream Manager - Git Ignore File
+# =====================================
+
+# Environment and Configuration Files
+.env
+.env.*
+!env.example
+*.env
+*.env.*
+
+# OAuth and Authentication
+PRODUCTION-SETUP.md
+GITHUB-READY.md
+oauth-tokens.json
+auth-config.json
+
+# Generated Reports and Logs
+test-report.json
+test-report.html
+*.log
+logs/
+*.log.*
+
+# Backup Files
+.env.backup.*
+config.backup.*
+*.backup
+
+# Personal Data and Credentials
+client-secrets.json
+webhook-secrets.json
+user-data.json
+
+# Node.js Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Runtime Data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage Directory Used by Tools Like Istanbul
+coverage/
+*.lcov
+
+# nyc Test Coverage
+.nyc_output
+
+# Grunt Intermediate Storage
+.grunt
+
+# Bower Dependency Directory
+bower_components
+
+# Node-waf Configuration
+.lock-wscript
+
+# Compiled Binary Addons
+build/Release
+
+# Dependency Directories
+jspm_packages/
+
+# TypeScript Cache
+*.tsbuildinfo
+
+# Optional npm Cache Directory
+.npm
+
+# Optional eslint Cache
+.eslintcache
+
+# Microbundle Cache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Optional REPL History
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity File
+.yarn-integrity
+
+# dotenv Environment Variables File
+.env*
+.env.test
+
+# parcel-bundler Cache
+.cache
+.parcel-cache
+
+# Next.js Build Output
+.next
+
+# Nuxt.js Build / Generate Output
+.nuxt
+dist
+
+# Gatsby Files
+.cache/
+# public  # Commented out - we need our public directory for overlays
+
+# Vuepress Build Output
+.vuepress/dist
+
+# Serverless Directories
+.serverless/
+
+# FuseBox Cache
+.fusebox/
+
+# DynamoDB Local Files
+.dynamodb/
+
+# TernJS Port File
+.tern-port
+
+# Stores VSCode Versions Used for Testing VSCode Extensions
+.vscode-test
+
+# Yarn v2
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
+
+# IDE and Editor Files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS Generated Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# SSL Certificates (if generated locally)
+certs/
+*.pem
+*.key
+*.crt
+*.csr
+
+# Temporary Files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# Database Files
+*.db
+*.sqlite
+*.sqlite3
+
+# Stream-specific Generated Files
+stream-configs/
+user-profiles/
+analytics-data/
+webhook-logs/
+
+# Build Artifacts
+build/
+dist/
+out/
+
+# Package Lock Files (choose one based on your preference)
+# Uncomment the one you DON'T want to track
+# package-lock.json
+# yarn.lock
+
+# Local Development Files
+.local
+.cache/
+
+# PM2 Process Files
+ecosystem.config.js
+.pm2/
+
+# Docker Files (if using containers)
+.dockerignore
+docker-compose.override.yml
+
+# Webpack Build Files
+webpack-stats.json
+
+# ESLint Cache
+.eslintcache
+
+# Prettier Cache
+.prettiercache
+
+# Stylelint Cache
+.stylelintcache
+
+# Test Coverage
+coverage/
+.coverage/
+
+# Storybook Build Outputs
+storybook-static/
+
+# Temporary Folders
+.tmp/
+.temp/
+
+# Editor Directories and Files
+.vscode/
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Local History for Visual Studio Code
+.history/
+
+# Windows Installer Files
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+
+# Windows Shortcuts
+*.lnk 
+
+
