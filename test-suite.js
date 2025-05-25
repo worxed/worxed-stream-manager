@@ -205,7 +205,11 @@ async function testManagementPages() {
       
       if (response.ok) {
         const content = await response.text();
-        logTest(`${page.name} Content`, content.includes('<html>'), 'Valid HTML structure');
+        // Check for valid HTML structure - look for DOCTYPE and html tag
+        const hasDoctype = content.includes('<!DOCTYPE html>');
+        const hasHtmlTag = content.includes('<html') || content.includes('<HTML');
+        const isValidHTML = hasDoctype && hasHtmlTag;
+        logTest(`${page.name} Content`, isValidHTML, 'Valid HTML structure');
       }
     } catch (error) {
       logTest(`${page.name} Page`, false, `Error: ${error.message}`);
