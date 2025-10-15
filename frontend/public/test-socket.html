@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Socket.IO Connection Test</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+</head>
+<body>
+    <h1>Socket.IO Connection Test</h1>
+    <div id="status">Connecting...</div>
+    <button onclick="testConnect()">Test Connection</button>
+    
+    <script>
+        console.log('🧪 Testing Socket.IO connection...');
+        
+        const socket = io('http://localhost:3000', {
+            transports: ['polling', 'websocket']
+        });
+        
+        const statusDiv = document.getElementById('status');
+        
+        socket.on('connect', () => {
+            console.log('✅ Connected! ID:', socket.id);
+            statusDiv.innerHTML = '✅ Connected! ID: ' + socket.id;
+            statusDiv.style.color = 'green';
+        });
+        
+        socket.on('disconnect', () => {
+            console.log('❌ Disconnected');
+            statusDiv.innerHTML = '❌ Disconnected';
+            statusDiv.style.color = 'red';
+        });
+        
+        socket.on('connect_error', (error) => {
+            console.error('❌ Connection Error:', error);
+            statusDiv.innerHTML = '❌ Connection Error: ' + error.message;
+            statusDiv.style.color = 'red';
+        });
+        
+        function testConnect() {
+            socket.emit('test-alert', { type: 'follow', username: 'TestUser' });
+            console.log('📨 Sent test alert');
+        }
+    </script>
+</body>
+</html>
