@@ -1,320 +1,525 @@
-import { 
-  Grid, 
-  Card, 
-  Text, 
-  Button, 
-  Badge,
+import { useState, useEffect } from 'react';
+import {
+  Grid,
+  Card,
+  Text,
   Group,
   Stack,
-  Indicator,
-  useMantineTheme,
-  ActionIcon,
+  Badge,
+  Button,
   ScrollArea,
-  Switch,
-  Divider,
-  Paper,
-  Container
+  Box,
 } from '@mantine/core';
-import { 
-  IconBrandTwitch, 
-  IconUsers, 
-  IconHeart,
-  IconWifi,
-  IconWifiOff,
-  IconTestPipe,
+import {
+  IconUsers,
+  IconEye,
   IconClock,
-  IconMessage
+  IconDeviceGamepad2,
+  IconRefresh,
+  IconBell,
+  IconMessage,
 } from '@tabler/icons-react';
-import { useState, useEffect } from 'react';
-import { notifications } from '@mantine/notifications';
-import socketService, { 
-  type StreamData, 
-  type ActivityItem, 
-  type AlertSettings,
-  type ChatMessage 
-} from '../services/SocketIOService';
+import { socketService } from '../services/socket';
+import { getStreamInfo, getAnalytics } from '../services/api';
+import type { StreamData, ActivityItem, ChatMessage } from '../types';
 
 export default function Dashboard() {
-  const theme = useMantineTheme();
-  
-  // Real-time data from WebSocket service
   const [streamData, setStreamData] = useState<StreamData>({
-    status: 'OFFLINE',
+    isLive: false,
+    title: 'Loading...',
+    game: '',
     viewers: 0,
     followers: 0,
     uptime: '00:00:00',
-    title: 'Loading...',
-    game: 'Loading...'
+    startedAt: null,
   });
-  
-  const [recentActivity, setRecentActivity] = useState<ActivityItem[]>([]);
-  const [alertSettings, setAlertSettings] = useState<AlertSettings>({
-    follow: { enabled: true, sound: true, duration: 5000 },
-    subscribe: { enabled: true, sound: true, duration: 7000 },
-    donation: { enabled: true, sound: true, duration: 10000 },
-    raid: { enabled: false, sound: false, duration: 8000 }
-  });
-  const [isConnected, setIsConnected] = useState(false);
+  const [activity, setActivity] = useState<ActivityItem[]>([]);
+  const [recentChat, setRecentChat] = useState<ChatMessage[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  // Initialize Socket.IO connections
   useEffect(() => {
-    console.log('🔧 Dashboard: Setting up Socket.IO event listeners...');
-    console.log('🔍 Socket.IO Status - Socket available:', socketService.isSocketAvailable());
-    console.log('🔍 Socket.IO Status - Socket instance:', socketService.getSocket());
-    console.log('🔍 Socket.IO Status - Connected:', socketService.getConnectionStatus());
-    
-    // Connect to Socket.IO if not already connected
-    if (!socketService.getConnectionStatus() && !socketService.isSocketAvailable()) {
-      console.log('🚀 Dashboard: Initiating Socket.IO connection...');
-      socketService.connect();
-    }
-    
-    // Set up event listeners
-    socketService.onStreamData((data) => {
-      console.log('📊 Dashboard: Received stream data:', data);
-      setStreamData(data);
+    loadData();
+
+    // Socket event subscriptions
+    const unsubChat = socketService.onChatMessage((message) => {
+      setRecentChat((prev) => [...prev.slice(-19), message]);
     });
 
-    socketService.onActivity((activity) => {
-      console.log('📈 Dashboard: Received initial activity list:', activity);
-      setRecentActivity(activity);
+    const unsubFollower = socketService.onNewFollower((data) => {
+      setActivity((prev) => [
+        { ...data, type: 'follower' },
+        ...prev.slice(0, 19),
+      ]);
     });
 
-    socketService.onNewActivityItem((newActivity) => {
-      console.log('🆕 Dashboard: Received new activity item:', newActivity);
-      setRecentActivity(prev => {
-        // Add new activity to the beginning and limit to 10 items
-        const updated = [newActivity, ...prev].slice(0, 10);
-        return updated;
-      });
+    const unsubSub = socketService.onNewSubscriber((data) => {
+      setActivity((prev) => [
+        { ...data, type: 'subscriber' },
+        ...prev.slice(0, 19),
+      ]);
     });
 
-    socketService.onAlertSettings((settings) => {
-      console.log('🔔 Dashboard: Received alert settings:', settings);
-      setAlertSettings(settings);
+    const unsubRaid = socketService.onRaid((data) => {
+      setActivity((prev) => [
+        { ...data, type: 'raid' },
+        ...prev.slice(0, 19),
+      ]);
     });
 
-    socketService.onConnection((connected) => {
-      console.log('🔌 Dashboard: Connection status changed:', connected);
-      setIsConnected(connected);
-    });
-
-    socketService.onChat((message: ChatMessage) => {
-      notifications.show({
-        title: `${message.username}:`,
-        message: message.message,
-        color: 'blue',
-      });
-    });
+    // Refresh stream data periodically
+    const interval = setInterval(loadData, 60000);
 
     return () => {
-      console.log('🧹 Dashboard: Cleaning up Socket.IO listeners...');
-      // Don't disconnect the socket entirely in development, just clear the listeners
-      // This prevents issues with React strict mode double-mounting
-      socketService.clearListeners();
+      unsubChat();
+      unsubFollower();
+      unsubSub();
+      unsubRaid();
+      clearInterval(interval);
     };
   }, []);
 
-  const handleTestAlert = (type: 'follow' | 'subscribe' | 'donation' | 'raid') => {
-    if (socketService.getConnectionStatus()) {
-      // Use backend test if connected
-      socketService.testAlert(type, `TestUser${Math.floor(Math.random() * 1000)}`);
-    } else {
-      // Use local test if not connected to backend
-      const activityType = type === 'follow' ? 'follower' : type;
-      socketService.testLocalActivity(activityType as 'follower' | 'subscribe' | 'donation' | 'raid');
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const [streamResult, analyticsResult] = await Promise.all([
+        getStreamInfo(),
+        getAnalytics(),
+      ]);
+
+      if (streamResult.data) {
+        setStreamData(streamResult.data);
+      }
+
+      if (analyticsResult.data) {
+        // Build activity from analytics
+        const activities: ActivityItem[] = [];
+        analyticsResult.data.followers.recent?.forEach((f) => {
+          activities.push({
+            id: f.followed_at,
+            type: 'follower',
+            username: f.user_name,
+            timestamp: f.followed_at,
+          });
+        });
+        setActivity(activities);
+      }
+    } catch (error) {
+      console.error('Failed to load data:', error);
+    }
+    setLoading(false);
+  };
+
+  const testAlert = (type: string) => {
+    socketService.testAlert(type, `TestUser${Math.floor(Math.random() * 1000)}`);
+  };
+
+  const getActivityIcon = (type: string) => {
+    switch (type) {
+      case 'follower':
+        return <IconUsers size={14} />;
+      case 'subscriber':
+        return <IconBell size={14} />;
+      case 'raid':
+        return <IconUsers size={14} />;
+      default:
+        return <IconMessage size={14} />;
     }
   };
 
-  const handleTestChat = () => {
-    socketService.testChat(
-      'TestUser',
-      'This is a test chat message! 🎮',
-      '#8cffbe'
-    );
+  const getActivityColor = (type: string) => {
+    switch (type) {
+      case 'follower':
+        return 'grape';
+      case 'subscriber':
+        return 'green';
+      case 'raid':
+        return 'blue';
+      default:
+        return 'gray';
+    }
   };
-
-  const handleToggleAlert = (type: 'follow' | 'subscribe' | 'donation' | 'raid') => {
-    // Mock alert settings toggle for now (backend doesn't have this endpoint yet)
-    setAlertSettings(prev => ({
-      ...prev,
-      [type]: {
-        ...prev[type],
-        enabled: !prev[type].enabled
-      }
-    }));
-    
-    notifications.show({
-      title: 'Alert Setting Updated',
-      message: `${type} alerts ${alertSettings[type].enabled ? 'disabled' : 'enabled'}`,
-      color: alertSettings[type].enabled ? 'red' : 'green',
-    });
-  };
-
-  const ConnectionIcon = isConnected ? IconWifi : IconWifiOff;
 
   return (
-    <Container size="xl" py="md">
-      <Stack gap="lg">
-        {/* Header */}
-        <Group justify="space-between">
-          <Group>
-            <IconBrandTwitch size={32} color={theme.colors.violet[6]} />
-            <Text size="xl" fw={700}>Worxed Stream Manager</Text>
-          </Group>
-          
-          <Group>
-            <Indicator color={isConnected ? 'green' : 'red'} processing={!isConnected}>
-              <ActionIcon variant="light" size="lg">
-                <ConnectionIcon size={20} />
-              </ActionIcon>
-            </Indicator>
-            <Badge color={isConnected ? 'green' : 'red'} variant="light">
-              {isConnected ? 'Connected' : 'Disconnected'}
-            </Badge>
-          </Group>
+    <Stack gap="md">
+      {/* Stream Status */}
+      <Card
+        padding="lg"
+        radius="md"
+        styles={{
+          root: {
+            backgroundColor: 'var(--card-bg)',
+            border: '1px solid var(--border-color)',
+          },
+        }}
+      >
+        <Group justify="space-between" mb="md">
+          <Text
+            size="lg"
+            style={{
+              fontFamily: '"VT323", monospace',
+              color: 'var(--primary-green)',
+              letterSpacing: '1px',
+            }}
+          >
+            STREAM STATUS
+          </Text>
+          <Button
+            variant="subtle"
+            size="xs"
+            leftSection={<IconRefresh size={14} />}
+            onClick={loadData}
+            loading={loading}
+            styles={{
+              root: {
+                fontFamily: '"VT323", monospace',
+                color: 'var(--text-muted)',
+              },
+            }}
+          >
+            REFRESH
+          </Button>
         </Group>
 
         <Grid>
-          {/* Stream Status Card */}
-          <Grid.Col span={12}>
-            <Card withBorder>
-              <Group justify="space-between" mb="md">
-                <Text fw={600}>Stream Status</Text>
-                <Badge 
-                  color={streamData.status === 'ONLINE' ? 'green' : 'gray'} 
-                  variant="filled"
-                >
-                  {streamData.status}
-                </Badge>
-              </Group>
-              
-              <Text size="lg" mb="xs">{streamData.title}</Text>
-              <Text size="sm" c="dimmed" mb="lg">{streamData.game}</Text>
-
-              <Grid>
-                <Grid.Col span={4}>
-                  <Group>
-                    <IconUsers size={20} />
-                    <Stack gap={0}>
-                      <Text size="lg" fw={700}>{streamData.viewers.toLocaleString()}</Text>
-                      <Text size="xs" c="dimmed">Viewers</Text>
-                    </Stack>
-                  </Group>
-                </Grid.Col>
-                
-                <Grid.Col span={4}>
-                  <Group>
-                    <IconHeart size={20} />
-                    <Stack gap={0}>
-                      <Text size="lg" fw={700}>{streamData.followers.toLocaleString()}</Text>
-                      <Text size="xs" c="dimmed">Followers</Text>
-                    </Stack>
-                  </Group>
-                </Grid.Col>
-                
-                <Grid.Col span={4}>
-                  <Group>
-                    <IconClock size={20} />
-                    <Stack gap={0}>
-                      <Text size="lg" fw={700}>{streamData.uptime}</Text>
-                      <Text size="xs" c="dimmed">Uptime</Text>
-                    </Stack>
-                  </Group>
-                </Grid.Col>
-              </Grid>
-            </Card>
-          </Grid.Col>
-
-          {/* Alert Controls */}
-          <Grid.Col span={6}>
-            <Card withBorder h="100%">
-              <Text fw={600} mb="md">Alert Controls</Text>
-              
-              <Stack gap="sm">
-                {Object.entries(alertSettings).map(([type, settings]) => (
-                  <Group key={type} justify="space-between">
-                    <Group>
-                      <Switch
-                        checked={settings.enabled}
-                        onChange={() => handleToggleAlert(type as 'follow' | 'subscribe' | 'donation' | 'raid')}
-                        color={settings.enabled ? 'green' : 'red'}
-                      />
-                      <Text tt="capitalize">{type}</Text>
-                    </Group>
-                    <Button
-                      variant="light"
-                      size="xs"
-                      leftSection={<IconTestPipe size={14} />}
-                      onClick={() => handleTestAlert(type as 'follow' | 'subscribe' | 'donation' | 'raid')}
-                    >
-                      Test
-                    </Button>
-                  </Group>
-                ))}
-              </Stack>
-
-              <Divider my="md" />
-
-              <Button
-                fullWidth
-                leftSection={<IconMessage size={16} />}
-                onClick={handleTestChat}
-                variant="outline"
+          <Grid.Col span={{ base: 6, md: 3 }}>
+            <Box
+              style={{
+                padding: '16px',
+                background: 'var(--primary-bg)',
+                border: '1px solid var(--border-color)',
+                borderRadius: '6px',
+                textAlign: 'center',
+              }}
+            >
+              <Text
+                size="xs"
+                style={{ color: 'var(--text-muted)', marginBottom: '8px' }}
               >
-                Test Chat Message
-              </Button>
-            </Card>
+                STATUS
+              </Text>
+              <Badge
+                color={streamData.isLive ? 'red' : 'gray'}
+                variant="filled"
+                size="lg"
+                className={streamData.isLive ? 'status-live' : ''}
+              >
+                {streamData.isLive ? 'LIVE' : 'OFFLINE'}
+              </Badge>
+            </Box>
           </Grid.Col>
 
-          {/* Recent Activity */}
-          <Grid.Col span={6}>
-            <Card withBorder h="100%">
-              <Text fw={600} mb="md">Recent Activity</Text>
-              
-              <ScrollArea h={200}>
-                <Stack gap="xs">
-                  {recentActivity.length === 0 ? (
-                    <Text size="sm" c="dimmed" ta="center">No recent activity</Text>
-                  ) : (
-                    recentActivity.map((activity, index) => (
-                      <Paper key={index} p="xs" withBorder>
-                        <Group justify="space-between">
-                          <Stack gap={2}>
-                            <Group gap="xs">
-                              <Badge 
-                                size="xs" 
-                                color={getActivityColor(activity.type)}
-                                variant="light"
-                              >
-                                {activity.type}
-                              </Badge>
-                              <Text size="sm" fw={500}>{activity.user}</Text>
-                            </Group>
-                            <Text size="xs" c="dimmed">{activity.message}</Text>
-                          </Stack>
-                          <Text size="xs" c="dimmed">{activity.time}</Text>
-                        </Group>
-                      </Paper>
-                    ))
-                  )}
-                </Stack>
-              </ScrollArea>
-            </Card>
+          <Grid.Col span={{ base: 6, md: 3 }}>
+            <Box
+              style={{
+                padding: '16px',
+                background: 'var(--primary-bg)',
+                border: '1px solid var(--border-color)',
+                borderRadius: '6px',
+                textAlign: 'center',
+              }}
+            >
+              <Text
+                size="xs"
+                style={{ color: 'var(--text-muted)', marginBottom: '8px' }}
+              >
+                <IconEye size={12} style={{ marginRight: '4px' }} />
+                VIEWERS
+              </Text>
+              <Text
+                size="xl"
+                style={{
+                  fontFamily: '"VT323", monospace',
+                  color: 'var(--primary-green)',
+                }}
+              >
+                {streamData.viewers.toLocaleString()}
+              </Text>
+            </Box>
+          </Grid.Col>
+
+          <Grid.Col span={{ base: 6, md: 3 }}>
+            <Box
+              style={{
+                padding: '16px',
+                background: 'var(--primary-bg)',
+                border: '1px solid var(--border-color)',
+                borderRadius: '6px',
+                textAlign: 'center',
+              }}
+            >
+              <Text
+                size="xs"
+                style={{ color: 'var(--text-muted)', marginBottom: '8px' }}
+              >
+                <IconUsers size={12} style={{ marginRight: '4px' }} />
+                FOLLOWERS
+              </Text>
+              <Text
+                size="xl"
+                style={{
+                  fontFamily: '"VT323", monospace',
+                  color: 'var(--primary-green)',
+                }}
+              >
+                {streamData.followers.toLocaleString()}
+              </Text>
+            </Box>
+          </Grid.Col>
+
+          <Grid.Col span={{ base: 6, md: 3 }}>
+            <Box
+              style={{
+                padding: '16px',
+                background: 'var(--primary-bg)',
+                border: '1px solid var(--border-color)',
+                borderRadius: '6px',
+                textAlign: 'center',
+              }}
+            >
+              <Text
+                size="xs"
+                style={{ color: 'var(--text-muted)', marginBottom: '8px' }}
+              >
+                <IconClock size={12} style={{ marginRight: '4px' }} />
+                UPTIME
+              </Text>
+              <Text
+                size="xl"
+                style={{
+                  fontFamily: '"VT323", monospace',
+                  color: 'var(--primary-green)',
+                }}
+              >
+                {streamData.uptime}
+              </Text>
+            </Box>
           </Grid.Col>
         </Grid>
-      </Stack>
-    </Container>
-  );
-}
 
-function getActivityColor(type: string): string {
-  switch (type) {
-    case 'follower': return 'purple';
-    case 'subscribe': return 'green';
-    case 'donation': return 'yellow';
-    case 'chat': return 'blue';
-    case 'raid': return 'red';
-    default: return 'gray';
-  }
+        {streamData.title && (
+          <Box mt="md">
+            <Group gap="xs">
+              <IconDeviceGamepad2 size={14} style={{ color: 'var(--secondary-purple)' }} />
+              <Text size="sm" style={{ color: 'var(--secondary-purple)' }}>
+                {streamData.game || 'Unknown Game'}
+              </Text>
+            </Group>
+            <Text size="sm" mt="xs" style={{ color: 'var(--text-muted)' }}>
+              {streamData.title}
+            </Text>
+          </Box>
+        )}
+      </Card>
+
+      {/* Quick Actions */}
+      <Card
+        padding="lg"
+        radius="md"
+        styles={{
+          root: {
+            backgroundColor: 'var(--card-bg)',
+            border: '1px solid var(--border-color)',
+          },
+        }}
+      >
+        <Text
+          size="lg"
+          mb="md"
+          style={{
+            fontFamily: '"VT323", monospace',
+            color: 'var(--primary-green)',
+            letterSpacing: '1px',
+          }}
+        >
+          QUICK ACTIONS
+        </Text>
+
+        <Group>
+          <Button
+            variant="outline"
+            color="grape"
+            onClick={() => testAlert('follow')}
+            styles={{
+              root: {
+                fontFamily: '"VT323", monospace',
+                letterSpacing: '1px',
+              },
+            }}
+          >
+            TEST FOLLOW
+          </Button>
+          <Button
+            variant="outline"
+            color="green"
+            onClick={() => testAlert('subscribe')}
+            styles={{
+              root: {
+                fontFamily: '"VT323", monospace',
+                letterSpacing: '1px',
+              },
+            }}
+          >
+            TEST SUB
+          </Button>
+          <Button
+            variant="outline"
+            color="yellow"
+            onClick={() => testAlert('donation')}
+            styles={{
+              root: {
+                fontFamily: '"VT323", monospace',
+                letterSpacing: '1px',
+              },
+            }}
+          >
+            TEST DONATION
+          </Button>
+          <Button
+            variant="outline"
+            color="blue"
+            onClick={() => testAlert('raid')}
+            styles={{
+              root: {
+                fontFamily: '"VT323", monospace',
+                letterSpacing: '1px',
+              },
+            }}
+          >
+            TEST RAID
+          </Button>
+        </Group>
+      </Card>
+
+      {/* Activity & Chat */}
+      <Grid>
+        <Grid.Col span={{ base: 12, md: 6 }}>
+          <Card
+            padding="lg"
+            radius="md"
+            h={300}
+            styles={{
+              root: {
+                backgroundColor: 'var(--card-bg)',
+                border: '1px solid var(--border-color)',
+              },
+            }}
+          >
+            <Text
+              size="lg"
+              mb="md"
+              style={{
+                fontFamily: '"VT323", monospace',
+                color: 'var(--primary-green)',
+                letterSpacing: '1px',
+              }}
+            >
+              RECENT ACTIVITY
+            </Text>
+
+            <ScrollArea h={200}>
+              <Stack gap="xs">
+                {activity.length === 0 ? (
+                  <Text size="sm" style={{ color: 'var(--text-muted)' }}>
+                    No recent activity
+                  </Text>
+                ) : (
+                  activity.map((item) => (
+                    <Group
+                      key={item.id}
+                      gap="sm"
+                      p="xs"
+                      style={{
+                        background: 'var(--primary-bg)',
+                        border: '1px solid var(--border-color)',
+                        borderRadius: '4px',
+                      }}
+                    >
+                      <Badge
+                        size="xs"
+                        color={getActivityColor(item.type)}
+                        variant="light"
+                        leftSection={getActivityIcon(item.type)}
+                      >
+                        {item.type.toUpperCase()}
+                      </Badge>
+                      <Text size="sm" style={{ color: 'var(--secondary-purple)' }}>
+                        {item.username}
+                      </Text>
+                      <Text
+                        size="xs"
+                        style={{ color: 'var(--text-muted)', marginLeft: 'auto' }}
+                      >
+                        {new Date(item.timestamp).toLocaleTimeString()}
+                      </Text>
+                    </Group>
+                  ))
+                )}
+              </Stack>
+            </ScrollArea>
+          </Card>
+        </Grid.Col>
+
+        <Grid.Col span={{ base: 12, md: 6 }}>
+          <Card
+            padding="lg"
+            radius="md"
+            h={300}
+            styles={{
+              root: {
+                backgroundColor: 'var(--card-bg)',
+                border: '1px solid var(--border-color)',
+              },
+            }}
+          >
+            <Text
+              size="lg"
+              mb="md"
+              style={{
+                fontFamily: '"VT323", monospace',
+                color: 'var(--primary-green)',
+                letterSpacing: '1px',
+              }}
+            >
+              RECENT CHAT
+            </Text>
+
+            <ScrollArea h={200}>
+              <Stack gap="xs">
+                {recentChat.length === 0 ? (
+                  <Text size="sm" style={{ color: 'var(--text-muted)' }}>
+                    No recent messages
+                  </Text>
+                ) : (
+                  recentChat.map((msg) => (
+                    <Box
+                      key={msg.id}
+                      p="xs"
+                      style={{
+                        background: 'var(--primary-bg)',
+                        border: '1px solid var(--border-color)',
+                        borderRadius: '4px',
+                      }}
+                    >
+                      <Group gap="xs">
+                        <Text
+                          size="sm"
+                          fw={500}
+                          style={{ color: msg.color || 'var(--secondary-purple)' }}
+                        >
+                          {msg.username}:
+                        </Text>
+                        <Text size="sm" style={{ color: 'var(--text-primary)' }}>
+                          {msg.message}
+                        </Text>
+                      </Group>
+                    </Box>
+                  ))
+                )}
+              </Stack>
+            </ScrollArea>
+          </Card>
+        </Grid.Col>
+      </Grid>
+    </Stack>
+  );
 }

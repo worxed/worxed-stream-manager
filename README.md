@@ -1,19 +1,37 @@
 # 🎮 Worxed Stream Manager
 
-A comprehensive, self-hosted streaming overlay and alert system for Twitch streamers. Built with a retro terminal aesthetic and complete independence from third-party services like StreamElements or Streamlabs.
+A comprehensive, self-hosted streaming overlay and alert system for Twitch streamers. Built with a modern **React + Node.js** stack featuring real-time WebSocket communication and a professional multi-theme interface.
 
-![Terminal Theme](https://img.shields.io/badge/Theme-Terminal-brightgreen)
+**Complete independence from third-party services** like StreamElements or Streamlabs - you own your data and control your stream experience.
+
+![Theme](https://img.shields.io/badge/Theme-Multi_Theme-ff2d55)
 ![Node.js](https://img.shields.io/badge/Node.js-18+-blue)
+![React](https://img.shields.io/badge/React-18-61dafb)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.6-blue)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 ![Twitch](https://img.shields.io/badge/Platform-Twitch-purple)
 
+## 📚 Documentation
+
+- **[TASKS.md](TASKS.md)** - Project roadmap, planned features, and task tracking
+- **[COLORS.md](COLORS.md)** - Complete color system documentation for all themes
+- **[ARCHITECTURE.md](ARCHITECTURE.md)** - Technical architecture and system design
+- **[README.md](README.md)** - This file - getting started and overview
+
 ## ✨ Features
 
-### 🎨 **Dual Overlay Themes**
-- **Standard Theme**: Clean, modern overlay design
-- **Worxed Terminal Theme**: Retro terminal aesthetic with VT323 font, scanlines, and glowing effects
+### 🎨 **Multi-Theme System**
+- **Current**: Neon Ember (Fire Red + Electric Cyan cyberpunk aesthetic)
+- **Coming Soon**: 
+  - **Magma Forge** - High-contrast industrial theme for intense gaming
+  - **Techno-Organic** - Warm amber tones for reduced eye strain
+  - **Synthetica** - Monochromatic OLED-optimized theme
+- Light and dark mode support for each theme
+- Accessible typography with Inter font (18px base for 2K monitors)
+- See [COLORS.md](COLORS.md) for complete color specifications
 
 ### 🚨 **Complete Alert System**
+
 - Real-time follower alerts
 - Subscriber notifications (all tiers)
 - Donation alerts (any payment processor)
@@ -22,118 +40,164 @@ A comprehensive, self-hosted streaming overlay and alert system for Twitch strea
 - Custom event alerts
 - Milestone celebrations
 
-### 📊 **Live Overlays**
-- **Chat Overlay**: Real-time chat display with badges
-- **Alert Overlay**: Animated notifications
-- **Stats Overlay**: Live follower/viewer counts
-- **Game Overlay**: Current game and recent followers
+### 📊 **Four Main Dashboard Views**
 
-### 🛠️ **Management Dashboard**
+1. **Dashboard** - Real-time stream stats, activity feed, live chat monitor
+2. **Alerts** - Configure alert settings, test alerts, view history
+3. **Overlay Customizer** - Live preview, theme presets, URL generation for OBS
+4. **Backend Console** - System monitoring, process management, terminal access
+
+All views update in real-time via WebSocket communication
+
+### 🛠️ **Management Features**
+
 - Real-time overlay customization
-- Alert testing and configuration
-- Multi-stream profile management
+- Alert testing and configuration  
 - Live analytics and statistics
 - Event logging and monitoring
+- Multiple theme presets
+- URL generation for OBS Browser Sources
 
 ### 🔧 **Advanced Features**
-- **Production OAuth**: Secure Twitch API integration
-- **Multi-Stream Support**: Manage multiple channels
-- **Webhook System**: Custom donation integrations
-- **Real-time Updates**: WebSocket-powered live data
-- **Export/Import**: Backup and restore configurations
-- **Comprehensive Testing**: 54 automated tests
 
-## 🚀 Quick Start
+- **Production OAuth**: Secure Twitch API integration
+- **Real-time Updates**: WebSocket-powered live data
+- **Comprehensive API**: RESTful endpoints for all features
 
 ### Prerequisites
-- Node.js 14+ 
-- Twitch Developer Account
-- OBS Studio (for overlays)
+
+- **Node.js 18+** - JavaScript runtime
+- **npm or pnpm** - Package manager
+- **Twitch Developer Account** - For OAuth credentials ([dev.twitch.tv](https://dev.twitch.tv/console))
 
 ### 1. Installation
+
 ```bash
 git clone https://github.com/yourusername/worxed-stream-manager.git
 cd worxed-stream-manager
-npm install
+
+# Install backend dependencies
+cd backend && npm install
+
+# Install frontend dependencies
+cd ../frontend && npm install
 ```
 
 ### 2. Configuration
+
 ```bash
 # Copy environment template
-cp env.example .env
+cp backend/env.example backend/.env
 
-# Run OAuth setup (creates production tokens)
-npm run setup
-
-# Start the server
-npm start
+# Edit backend/.env with your Twitch credentials
+# Get credentials from https://dev.twitch.tv/console
 ```
 
-### 3. Add to OBS
-Add Browser Sources with these URLs:
-- **Chat**: `http://localhost:3000/overlay-worxed/chat`
-- **Alerts**: `http://localhost:3000/overlay-worxed/alerts`
-- **Stats**: `http://localhost:3000/overlay-worxed/stats`
+### 3. Start Development Servers
 
-### 4. Access Dashboard
-Open `http://localhost:3000` for the management dashboard.
+```bash
+# Terminal 1 - Backend (port 3001)
+cd backend && npm run dev
 
-## 📋 Available Endpoints
+# Terminal 2 - Frontend (port 5173)  
+cd froTheme System
 
-### Overlays
-| URL | Description | Theme |
-|-----|-------------|-------|
-| `/overlay/chat` | Chat overlay | Standard |
-| `/overlay/alerts` | Alert notifications | Standard |
-| `/overlay/stats` | Live statistics | Standard |
-| `/overlay/game` | Game information | Standard |
-| `/overlay-worxed/chat` | Chat overlay | Terminal |
-| `/overlay-worxed/alerts` | Alert notifications | Terminal |
-| `/overlay-worxed/stats` | Live statistics | Terminal |
-| `/overlay-worxed/game` | Game information | Terminal |
+### Current Theme: Neon Ember
 
-### Management
-| URL | Description |
-|-----|-------------|
-| `/` | Main dashboard |
-| `/customizer` | Real-time overlay customizer |
-| `/alerts` | Alert manager and testing |
+The **Neon Ember** theme uses a cyberpunk-inspired color palette:
+
+| Element | Usage | Hex Code |
+|---------|-------|----------|
+| 🔴 Fire Red | Primary actions, live indicators, alerts | `#FF2D55` |
+| 💠 Electric Cyan | Data visualization, secondary accents | `#00FBFF` |
+| ⚫ Nightshade | Primary background, deep contrast | `#0F0E17` |
+| 🔘 Cool Slate | Neutral UI elements, borders | `#2C2C2E` |
+
+### Coming Soon: Multi-Theme System
+
+- **Magma Forge** - Industrial high-contrast (red/orange/black)
+- **Techno-Organic** - Warm amber aesthetic (amber/gold/brown)
+- **Synthetica** - Monochromatic minimalism (blue-gray/white/black)
+
+Each theme includes both light and dark modes with WCAG AA accessibility compliance.
+
+**See [COLORS.md](COLORS.md) for complete theme specifications and design principles.**color palette:
+
+| Element | Usage | Hex Code |
+|---------|-------|----------|
+| 🔴 Fire Red | Primary actions, live indicators, alerts | `#FF2D55` |
+| 💠 Electric Cyan | Data visualization, secondary accents | `#00FBFF` |
+| ⚫ Nightshade | Primary background, deep contrast | `#0F0E17` |
+| 🔘 Cool Slate | Neutral UI elements, borders | `#2C2C2E` |
+
+**Design Philosophy:**
+- **Red** = Action & Status (Live Badge, Stream Controls, Alerts)
+- **Cyan** = Data & Information (Viewer Counts, Charts, Analytics)
+- **Glassmorphism**: Frosted card backgrounds with subtle transparency
+- **Neon Glow**: Text shadows creating depth and atmosphere
+
+---
+
+## 📋 Dashboard Features
+
+## 📋 Dashboard Features
+
+### Main Views
+
+- **Dashboard** (`/`) - Stream stats, activity feed, live chat monitor
+- **Alerts** - Configure alert settings, test alerts, view history
+- **Overlay Customizer** - Live preview, theme presets, URL generation
 
 ### API Endpoints
+
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/custom-alert` | POST | Trigger custom alerts |
-| `/webhooks/donation` | POST | Donation webhook |
+| `/api/status` | GET | Server and connection status |
+| `/api/stream` | GET | Current stream info and follower count |
+| `/api/analytics` | GET | Session analytics and recent activity |
+| `/api/alerts` | GET/POST | Alert settings management |
+| `/api/test-alert` | POST | Trigger test alerts |
 | `/webhooks/twitch` | POST | Twitch EventSub webhook |
-| `/api/analytics` | GET | Stream analytics |
-| `/api/config` | GET/POST | Configuration management |
 
-## 🔐 OAuth Setup
+## 🔐 Twitch Authentication Setup
 
-### Option 1: Device Code Flow (Recommended)
-```bash
-npm run setup
-```
-- No HTTPS required
-- Perfect for local development
-- Secure production tokens
+1. Create an app at [Twitch Developer Console](https://dev.twitch.tv/console)
+2. Set OAuth redirect URI: `http://localhost:3000/auth/callback`
+3. Copy your Client ID and Client Secret
+4. Update `backend/.env` with your credentials:
 
-### Option 2: Manual Setup
-1. Create app at [Twitch Developer Console](https://dev.twitch.tv/console)
-2. Set redirect URI: `http://localhost:3000/auth/callback`
-3. Generate Client ID and Secret
-4. Update `.env` file
+```env
+TWITCH_CLIENT_ID=your_client_id_here
+TWITCH_CLIENT_SECRET=your_client_secret_here
+TWITCH_CHANNEL=your_twitch_username
+TWFrontend:**
+- **React 18.3** + **TypeScript 5.6** - Modern UI framework with type safety
+- **Mantine UI 7.15** - Comprehensive component library
+- **Vite 6.0** - Lightning-fast build tool and dev server
+- **Socket.IO Client 4.7** - Real-time WebSocket communication
+- **Inter Font** - Accessible, professional typography
 
-## 🎯 Testing
+**Backend:**
+- **Node.js 18+** + **Express 4.21** - RESTful API server
+- **Socket.IO 4.7** - Bidirectional real-time communication
+- **tmi.js 1.8.5** - Twitch IRC chat integration
+- **node-fetch** - Twitch Helix API requests
 
-### Run All Tests
-```bash
-npm test
-```
+**Features:**
+- Real-time bidirectional WebSocket communication
+- RESTful API with comprehensive endpoints
+- Twitch EventSub webhook support
+- OAuth 2.0 authentication with token refresh
+- Multi-theme system with light/dark modes
 
-### Specific Test Suites
-```bash
-npm run test:health      # Server health
+For detailed architecture information, see [ARCHITECTURE.md](ARCHITECTURE.md)
+- Socket.IO Client - Real-time updates
+
+**Features:**
+- Real-time bidirectional communication
+- RESTful API with WebSocket events
+- Twitch EventSub webhook support
+- OAuth 2.0 authentication with token refresh
 npm run test:oauth       # OAuth validation
 npm run test:api         # Twitch API
 npm run test:overlays    # Overlay pages
@@ -239,17 +303,26 @@ npm start
 2. Configure reverse proxy (nginx/Apache)
 3. Update `WEBHOOK_URL` in `.env`
 4. Use PM2 for process management
-5. Set up Twitch EventSub webhooks
-
-### Docker (Optional)
-```bash
-docker build -t worxed-stream-manager .
-docker run -p 3000:3000 --env-file .env worxed-stream-manager
+worxed-stream-manager/
+├── frontend/                # React TypeScript application
+│   ├── src/
+│   │   ├── components/     # Dashboard, Alerts, Customizer, etc.
+│   │   ├── services/       # Socket.IO and API clients
+│   │   ├── themes/         # Theme system
+│   │   └── App.tsx         # Root component
+│   └── package.json
+├── backend/                 # Node.js Express server
+│   ├── server.js           # Main server (511 lines)
+│   ├── public/             # Legacy overlay HTML
+│   └── package.json
+├── scripts/                 # Utility scripts
+├── TASKS.md                 # Project roadmap
+├── COLORS.md                # Color system docs
+├── ARCHITECTURE.md          # Technical architecture
+└── README.md                # This file
 ```
 
-## 🛠️ Development
-
-### Project Structure
+For detailed architecture, see [ARCHITECTURE.md](ARCHITECTURE.md) Project Structure
 ```
 ├── server.js                 # Main server
 ├── public/                   # Frontend files
@@ -294,11 +367,15 @@ Content-Type: application/json
 
 ### Donation Webhook
 ```http
-POST /webhooks/donation
-Content-Type: application/json
+POPort conflicts**
+- **Backend (3001)**: Kill existing Node processes with `taskkill /F /IM node.exe` (Windows) or `killall node` (Mac/Linux)
+- **Frontend (5173)**: Check if another Vite server is running
+- Verify ports are available: `netstat -ano | findstr :3001` (Windows)
 
-{
-  "username": "DonorName",
+**Server won't start**
+- Check if ports 3001 (backend) and 5173 (frontend) are available
+- Verify Node.js version (18+) with `node --version`
+- Install dependencies in both folders: `cd backend && npm install` then `cd ../frontend && npm install`
   "amount": "5.00",
   "message": "Great stream!",
   "currency": "USD",
@@ -311,41 +388,53 @@ Content-Type: application/json
 ### Common Issues
 
 **Server won't start**
-- Check if port 3000 is available
-- Verify Node.js version (14+)
-- Run `npm install` to install dependencies
+- Check if ports 3001 (backend) and 5173 (frontend) are available
+- Verify Node.js version (18+)
+- Run `npm run install:all` to install all dependencies
+- Start backend and frontend separately if needed
 
-**OAuth errors**
-- Regenerate tokens with `npm run setup`
-- Check Client ID and Secret in `.env`
-- Verify scopes in Twitch Developer Console
+**OAuth/Twitch errors**
+- Check Client ID and Secret in `backend/.env`
+- Verify channel name is correct
+- Ensure OAuth token has required scopes
+- Check Twitch API status
 
-**Overlays not loading**
-- Ensure server is running
+**Frontend not loading**
+- Ensure both backend (3001) and frontend (5173) are running
+- Check browser console for errors (F12)
+- Verify backend is accessible at `http://localhost:3001/api/status`
+- Clear browser cache and reload
+
+**Alerts not appearing**
+- Test alerts in the Alerts view
+- Check WebSocket connection status (badge in header)
+- Verify alert settings are enabled
 - Check browser console for errors
-- Verify URLs in OBS Browser Source
 
-**Alerts not working**
-- Test alerts in Alert Manager (`/alerts`)
-- Check WebSocket connection
-- Verify webhook configurations
+### Getting Help- Real-time streaming data and authentication
+- **Socket.IO** - Bidirectional real-time communication
+- **Mantine UI** - Comprehensive React component library
+- **Inter Font** - Beautiful accessible typography
+- **TMI.js** - Twitch IRC chat integration
+- **Vite** - Lightning-fast development experience
 
-### Getting Help
-1. Check the [Issues](https://github.com/yourusername/worxed-stream-manager/issues) page
-2. Run the test suite: `npm test`
-3. Check server logs for errors
-4. Review the troubleshooting guide in `TESTING.md`
+---
 
-## 📄 License
+**Built with ❤️ by the streaming community,tory and analytics
+- [ ] Enhanced overlay customizer
+- [ ] Keyboard navigation support
 
-MIT License - see [LICENSE](LICENSE) file for details.
+### v1.3 - Advanced Features
+- [ ] Stream Deck integration
+- [ ] Mobile dashboard app
+- [ ] Multi-platform support (YouTube, Kick)
+- [ ] Plugin system for custom extensions
 
-## 🙏 Acknowledgments
+**See [TASKS.md](TASKS.md) for detailed task tracking and planning**egration
 
-- **Twitch API** for real-time streaming data
-- **Socket.IO** for WebSocket communication
-- **VT323 Font** for the authentic terminal aesthetic
-- **TMI.js** for Twitch chat integration
+---
+
+**Built with 🔥 by the streaming community**
 
 ## 🚀 Roadmap
 

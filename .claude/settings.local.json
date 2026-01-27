@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git ls-tree:*)",
+      "Bash(find:*)",
+      "Bash(tree -L 3 --dirsfirst -I \"node_modules|archive|.git|.claude\")"
+    ]
+  }
+}

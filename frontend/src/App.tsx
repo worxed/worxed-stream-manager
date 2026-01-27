@@ -1,40 +1,250 @@
-import { MantineProvider } from '@mantine/core';
-import { Notifications } from '@mantine/notifications';
 import { useState, useEffect } from 'react';
-import { darkTheme, lightTheme } from './themes';
+import {
+  AppShell,
+  Group,
+  Text,
+  NavLink,
+  Box,
+  Badge,
+} from '@mantine/core';
+import {
+  IconDashboard,
+  IconBell,
+  IconPalette,
+  IconWifi,
+  IconWifiOff,
+  IconTerminal,
+} from '@tabler/icons-react';
+import { notifications } from '@mantine/notifications';
+import { socketService } from './services/socket';
+import { applyTheme, getSavedTheme, getSavedMode } from './themes/themes';
 import Dashboard from './components/Dashboard';
+import Alerts from './components/Alerts';
+import Customizer from './components/Customizer';
+import BackendDashboard from './components/BackendDashboard';
 import ThemeSwitcher from './components/ThemeSwitcher';
-import '@mantine/core/styles.css';
-import '@mantine/notifications/styles.css';
 
-function App() {
-  const [currentTheme, setCurrentTheme] = useState<'dark' | 'light'>('dark');
+type View = 'dashboard' | 'alerts' | 'customizer' | 'backend';
+
+export default function App() {
+  const [activeView, setActiveView] = useState<View>('dashboard');
+  const [connected, setConnected] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem('worxed-theme') as 'dark' | 'light';
-    if (saved) setCurrentTheme(saved);
+    // Apply saved theme and mode on mount
+    applyTheme(getSavedTheme(), getSavedMode());
+
+    // Connect to socket
+    socketService.connect();
+
+    const unsubConnect = socketService.onConnect(() => {
+      setConnected(true);
+      notifications.show({
+        title: 'Connected',
+        message: 'Connected to stream manager backend',
+        color: 'green',
+      });
+    });
+
+    const unsubDisconnect = socketService.onDisconnect((reason) => {
+      setConnected(false);
+      notifications.show({
+        title: 'Disconnected',
+        message: `Lost connection: ${reason}`,
+        color: 'red',
+      });
+    });
+
+    return () => {
+      unsubConnect();
+      unsubDisconnect();
+      socketService.disconnect();
+    };
   }, []);
 
-  const toggleTheme = () => {
-    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-    setCurrentTheme(newTheme);
-    localStorage.setItem('worxed-theme', newTheme);
+  const renderView = () => {
+    switch (activeView) {
+      case 'dashboard':
+        return <Dashboard />;
+      case 'alerts':
+        return <Alerts />;
+      case 'customizer':
+        return <Customizer />;
+      case 'backend':
+        return <BackendDashboard />;
+      default:
+        return <Dashboard />;
+    }
   };
 
-  const theme = currentTheme === 'dark' ? darkTheme : lightTheme;
-
   return (
-    <MantineProvider theme={theme} forceColorScheme={currentTheme}>
-      <Notifications />
-      <div style={{
-        background: theme.other?.gradientBg || (currentTheme === 'dark' ? '#1A1A1A' : '#F8F9FA'),
-        minHeight: '100vh',
-      }}>
-        <ThemeSwitcher currentTheme={currentTheme} onToggle={toggleTheme} />
-        <Dashboard />
-      </div>
-    </MantineProvider>
+    <AppShell
+      header={{ height: 60 }}
+      navbar={{ width: 220, breakpoint: 'sm' }}
+      padding="md"
+      styles={{
+        main: {
+          backgroundColor: 'var(--primary-bg)',
+        },
+        header: {
+          backgroundColor: 'var(--surface)',
+          borderBottom: '1px solid var(--border-color)',
+          backdropFilter: 'blur(8px)',
+        },
+        navbar: {
+          backgroundColor: 'var(--surface)',
+          borderRight: '1px solid var(--border-color)',
+          opacity: 0.98,
+        },
+      }}
+    >
+      <AppShell.Header>
+        <Group h="100%" px="md" justify="space-between">
+          <Group>
+            <Text
+              size="28px"
+              fw={700}
+              style={{
+                color: 'var(--fire-red)',
+                letterSpacing: '0.5px',
+                textShadow: '0 0 12px rgba(255, 45, 85, 0.6)',
+              }}
+            >
+              WORXED STREAM MANAGER
+            </Text>
+            <Text
+              size="16px"
+              fw={500}
+              style={{
+                color: 'var(--electric-cyan)',
+              }}
+            >
+              v1.0
+            </Text>
+          </Group>
+
+          <Group>
+            <ThemeSwitcher />
+            <Badge
+              leftSection={connected ? <IconWifi size={14} /> : <IconWifiOff size={14} />}
+              color={connected ? 'green' : 'red'}
+              variant="outline"
+              size="lg"
+              styles={{
+                root: {
+                  fontSize: '16px',
+                  fontWeight: 600,
+                },
+              }}
+            >
+              {connected ? 'CONNECTED' : 'DISCONNECTED'}
+            </Badge>
+          </Group>
+        </Group>
+      </AppShell.Header>
+
+      <AppShell.Navbar p="xs">
+        <Box style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <NavLink
+            active={activeView === 'dashboard'}
+            onClick={() => setActiveView('dashboard')}
+            label="Dashboard"
+            leftSection={<IconDashboard size={20} />}
+            styles={{
+              root: {
+                borderRadius: '4px',
+                fontSize: '16px',
+                fontWeight: 500,
+                '&[dataActive]': {
+                  backgroundColor: 'var(--active-bg)',
+                  color: 'var(--primary-green)',
+                  fontWeight: 600,
+                },
+                '&:hover': {
+                  backgroundColor: 'var(--hover-bg)',
+                },
+              },
+            }}
+          />
+          <NavLink
+            active={activeView === 'alerts'}
+            onClick={() => setActiveView('alerts')}
+            label="Alerts"
+            leftSection={<IconBell size={20} />}
+            styles={{
+              root: {
+                borderRadius: '4px',
+                fontSize: '16px',
+                fontWeight: 500,
+                '&[dataActive]': {
+                  backgroundColor: 'var(--active-bg)',
+                  color: 'var(--primary-green)',
+                  fontWeight: 600,
+                },
+                '&:hover': {
+                  backgroundColor: 'var(--hover-bg)',
+                },
+              },
+            }}
+          />
+          <NavLink
+            active={activeView === 'customizer'}
+            onClick={() => setActiveView('customizer')}
+            label="Overlay Customizer"
+            leftSection={<IconPalette size={20} />}
+            styles={{
+              root: {
+                borderRadius: '4px',
+                fontSize: '16px',
+                fontWeight: 500,
+                '&[dataActive]': {
+                  backgroundColor: 'var(--active-bg)',
+                  color: 'var(--primary-green)',
+                  fontWeight: 600,
+                },
+                '&:hover': {
+                  backgroundColor: 'var(--hover-bg)',
+                },
+              },
+            }}
+          />
+          <NavLink
+            active={activeView === 'backend'}
+            onClick={() => setActiveView('backend')}
+            label="Backend Console"
+            leftSection={<IconTerminal size={20} />}
+            styles={{
+              root: {
+                borderRadius: '4px',
+                fontSize: '16px',
+                fontWeight: 500,
+                '&[dataActive]': {
+                  backgroundColor: 'var(--active-bg)',
+                  color: 'var(--primary-green)',
+                  fontWeight: 600,
+                },
+                '&:hover': {
+                  backgroundColor: 'var(--hover-bg)',
+                },
+              },
+            }}
+          />
+        </Box>
+
+        <Box style={{ marginTop: 'auto', paddingTop: '20px' }}>
+          <Text
+            size="14px"
+            style={{
+              color: 'var(--text-muted)',
+              textAlign: 'center',
+            }}
+          >
+            worxed.com
+          </Text>
+        </Box>
+      </AppShell.Navbar>
+
+      <AppShell.Main>{renderView()}</AppShell.Main>
+    </AppShell>
   );
 }
-
-export default App;

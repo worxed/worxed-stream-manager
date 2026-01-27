@@ -1,43 +1,26 @@
 {
-  "name": "worxed-stream-manager",
+  "name": "worxed-stream-manager-backend",
   "version": "1.0.0",
-  "description": "A comprehensive, self-hosted streaming overlay and alert system for Twitch streamers",
+  "description": "Backend server for Worxed Stream Manager - Twitch overlay and alert system",
   "main": "server.js",
+  "type": "commonjs",
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "build": "webpack --mode production",
-    "dev-build": "webpack --mode development --watch",
-    "test": "node test-suite.js",
-    "test:health": "node run-tests.js health",
-    "test:config": "node run-tests.js config",
-    "test:oauth": "node run-tests.js oauth",
-    "test:api": "node run-tests.js api",
-    "test:overlays": "node run-tests.js overlays",
-    "test:alerts": "node run-tests.js alerts",
-    "pretest": "node pre-test-check.js",
-    "setup": "node setup-production-auth-device.js"
+    "setup": "node scripts/setup-auth.js"
   },
-  "keywords": [
-    "twitch",
-    "overlay",
-    "streaming",
-    "obs",
-    "websocket"
-  ],
-  "author": "Worxed Stream Manager Contributors",
-  "license": "MIT",
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
-    "node-fetch": "^2.6.7",
+    "node-fetch": "^2.7.0",
     "socket.io": "^4.7.2",
     "tmi.js": "^1.8.5"
   },
   "devDependencies": {
-    "nodemon": "^3.0.1",
-    "webpack": "^5.88.2",
-    "webpack-cli": "^5.1.4"
+    "nodemon": "^3.0.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
