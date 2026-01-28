@@ -1,64 +1,107 @@
-# 🏗️ Worxed Stream Manager - Architecture
+# Worxed Stream Manager - Architecture
 
 ## System Overview
 
-Worxed Stream Manager is a full-stack web application for Twitch stream management, built with a modern client-server architecture using WebSocket communication for real-time updates.
+Worxed Stream Manager is a full-stack streaming management platform with three main components: a process supervisor, a backend API server with embedded admin console, and a React-based stream manager frontend.
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                         FRONTEND (React)                         │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │
-│  │  Dashboard   │  │   Alerts     │  │  Customizer  │          │
-│  └──────────────┘  └──────────────┘  └──────────────┘          │
-│  ┌──────────────┐                                               │
-│  │Backend Console│    Mantine UI + TypeScript + Vite           │
-│  └──────────────┘                                               │
-│                    Socket.IO Client ↕ REST API                  │
-└─────────────────────────────────────────────────────────────────┘
-                              ↕
-┌─────────────────────────────────────────────────────────────────┐
-│                      BACKEND (Node.js)                           │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │
-│  │Express Server│  │  Socket.IO   │  │  Twitch API  │          │
-│  └──────────────┘  └──────────────┘  └──────────────┘          │
-│  ┌──────────────┐  ┌──────────────┐                            │
-│  │  TMI.js Chat │  │  Auth Layer  │                            │
-│  └──────────────┘  └──────────────┘                            │
-└─────────────────────────────────────────────────────────────────┘
-                              ↕
-┌─────────────────────────────────────────────────────────────────┐
-│                       EXTERNAL SERVICES                          │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │
-│  │ Twitch OAuth │  │ Twitch Helix │  │ Twitch Chat  │          │
-│  │     API      │  │     API      │  │     IRC      │          │
-│  └──────────────┘  └──────────────┘  └──────────────┘          │
-└─────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────┐
+│                        SUPERVISOR (port 4000)                           │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐         │
+│  │  Process Mgmt   │  │  Health Checks  │  │  Log Streaming  │         │
+│  │  start/stop/    │  │  /status API    │  │  WebSocket to   │         │
+│  │  restart        │  │                 │  │  admin console  │         │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘         │
+│                              Node.js + ws                               │
+└────────────────────────────────┬────────────────────────────────────────┘
+                                 │ spawns & monitors
+┌────────────────────────────────▼────────────────────────────────────────┐
+│                         BACKEND (port 4001)                             │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐         │
+│  │  Express API    │  │  Socket.IO      │  │  Vue Admin      │         │
+│  │  /api/*         │  │  Real-time      │  │  Console (/)    │         │
+│  │  /webhooks/*    │  │  events         │  │  built-in       │         │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘         │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐         │
+│  │  tmi.js         │  │  Twitch OAuth   │  │  Supervisor     │         │
+│  │  IRC Chat       │  │  + Helix API    │  │  Proxy          │         │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘         │
+│                        Node.js + Express + Socket.IO                    │
+└────────────────────────────────┬────────────────────────────────────────┘
+                                 │ WebSocket + REST
+┌────────────────────────────────▼────────────────────────────────────────┐
+│                    STREAM MANAGER FRONTEND (port 5173)                  │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐         │
+│  │  Dashboard      │  │  Alerts         │  │  Customizer     │         │
+│  │  Stream stats   │  │  Configuration  │  │  Overlay design │         │
+│  │  Chat, Activity │  │  Testing        │  │  OBS URLs       │         │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘         │
+│  ┌─────────────────┐                                                    │
+│  │  Backend        │     React 18 + TypeScript + Mantine UI             │
+│  │  Console        │     Socket.IO Client + REST API                    │
+│  └─────────────────┘                                                    │
+└─────────────────────────────────────────────────────────────────────────┘
+                                 │
+┌────────────────────────────────▼────────────────────────────────────────┐
+│                        EXTERNAL SERVICES                                │
+│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐         │
+│  │  Twitch OAuth   │  │  Twitch Helix   │  │  Twitch IRC     │         │
+│  │  Authentication │  │  Stream Data    │  │  Chat (tmi.js)  │         │
+│  └─────────────────┘  └─────────────────┘  └─────────────────┘         │
+│  ┌─────────────────┐  ┌─────────────────┐                              │
+│  │  EventSub       │  │  Future:        │                              │
+│  │  Webhooks       │  │  OBS, Discord   │                              │
+│  └─────────────────┘  └─────────────────┘                              │
+└─────────────────────────────────────────────────────────────────────────┘
 ```
+
+---
+
+## Port Reference
+
+| Port | Service | Technology | Purpose |
+|------|---------|------------|---------|
+| **4000** | Supervisor | Node.js + ws | Process management, log streaming |
+| **4001** | Backend + Admin | Express + Vue | API server, admin console |
+| **4002** | Admin Dev | Vite | Admin console development only |
+| **5173** | Frontend | Vite | Stream manager (React) |
 
 ---
 
 ## Tech Stack
 
-### Frontend
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| **React** | 18.3.1 | UI framework |
-| **TypeScript** | 5.6.2 | Type safety |
-| **Vite** | 6.0.5 | Build tool & dev server |
-| **Mantine UI** | 7.15.2 | Component library |
-| **Socket.IO Client** | 4.7.5 | WebSocket communication |
-| **Tabler Icons** | 3.30.0 | Icon system |
-| **Inter Font** | - | Accessible typography |
+### Supervisor
+| Technology | Purpose |
+|------------|---------|
+| **Node.js** | Runtime |
+| **ws** | WebSocket server for log streaming |
+| **child_process** | Spawn and manage backend/frontend |
 
 ### Backend
 | Technology | Version | Purpose |
 |------------|---------|---------|
-| **Node.js** | 18+ | Runtime environment |
-| **Express** | 4.21.2 | HTTP server framework |
-| **Socket.IO** | 4.7.5 | WebSocket server |
-| **tmi.js** | 1.8.5 | Twitch chat client |
-| **node-fetch** | - | HTTP requests (Twitch API) |
-| **CORS** | 2.8.5 | Cross-origin resource sharing |
+| **Node.js** | 18+ | Runtime |
+| **Express** | 4.21 | HTTP server |
+| **Socket.IO** | 4.7 | WebSocket server |
+| **tmi.js** | 1.8 | Twitch IRC chat |
+| **node-fetch** | 2.7 | Twitch API requests |
+
+### Admin Console (Vue)
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| **Vue** | 3.4 | UI framework |
+| **Naive UI** | 2.38 | Component library |
+| **Vite** | 5.x | Build tool |
+| **Tabler Icons** | - | Icon system |
+
+### Frontend (React)
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| **React** | 18.3 | UI framework |
+| **TypeScript** | 5.6 | Type safety |
+| **Vite** | 6.0 | Build tool |
+| **Mantine UI** | 7.15 | Component library |
+| **Socket.IO Client** | 4.7 | WebSocket client |
 
 ---
 
@@ -66,286 +109,391 @@ Worxed Stream Manager is a full-stack web application for Twitch stream manageme
 
 ```
 worxed-stream-manager/
-├── frontend/                      # React TypeScript frontend
+├── supervisor.js                 # Entry point - process manager
+│
+├── backend/
+│   ├── server.js                 # Express + Socket.IO server
+│   ├── admin/                    # Vue admin console source
+│   │   ├── src/
+│   │   │   ├── App.vue           # Main admin layout
+│   │   │   ├── main.js           # Vue entry point
+│   │   │   └── components/
+│   │   │       ├── LiveTerminal.vue    # Real-time log viewer
+│   │   │       ├── ProcessManager.vue  # Start/stop controls
+│   │   │       ├── StatusCard.vue      # Metric display
+│   │   │       └── LogViewer.vue       # Log filtering
+│   │   ├── vite.config.js        # Builds to ../public
+│   │   └── package.json
+│   ├── public/                   # Built admin UI (served at /)
+│   │   ├── index.html
+│   │   └── assets/
+│   ├── .env                      # Environment variables
+│   └── package.json
+│
+├── frontend/
 │   ├── src/
-│   │   ├── components/           # React components
-│   │   │   ├── Dashboard.tsx     # Main stream dashboard
+│   │   ├── App.tsx               # Root component, 4-view navigation
+│   │   ├── main.tsx              # React entry point
+│   │   ├── index.css             # Global styles, CSS variables
+│   │   ├── components/
+│   │   │   ├── Dashboard.tsx     # Stream stats, chat, activity
 │   │   │   ├── Alerts.tsx        # Alert configuration
-│   │   │   ├── Customizer.tsx    # Overlay customizer
-│   │   │   ├── BackendDashboard.tsx  # Backend monitoring
-│   │   │   └── ThemeSwitcher.tsx # Theme selection (WIP)
-│   │   ├── services/             # API & Socket services
+│   │   │   ├── Customizer.tsx    # Overlay designer
+│   │   │   ├── BackendDashboard.tsx  # System monitoring
+│   │   │   └── ThemeSwitcher.tsx # Theme selection
+│   │   ├── services/
 │   │   │   ├── socket.ts         # Socket.IO client wrapper
 │   │   │   └── api.ts            # REST API client
-│   │   ├── themes/               # Theme system (WIP)
+│   │   ├── themes/
 │   │   │   ├── themes.ts         # Theme definitions
 │   │   │   └── worxed.ts         # Mantine theme config
-│   │   ├── types/                # TypeScript type definitions
-│   │   ├── App.tsx               # Root application component
-│   │   ├── main.tsx              # Application entry point
-│   │   └── index.css             # Global styles & CSS variables
-│   ├── public/                   # Static assets
-│   ├── index.html                # HTML entry point
-│   ├── vite.config.ts            # Vite configuration
-│   ├── tsconfig.json             # TypeScript configuration
-│   └── package.json              # Frontend dependencies
+│   │   └── types/
+│   │       └── index.ts          # TypeScript interfaces
+│   ├── vite.config.ts
+│   └── package.json
 │
-├── backend/                       # Node.js Express backend
-│   ├── server.js                 # Main server file (511 lines)
-│   ├── public/                   # Legacy overlay HTML files
-│   │   ├── overlay.html          # Standard alert overlays
-│   │   ├── overlay-worxed.html   # Custom overlays
-│   │   ├── alerts-manager.html   # Alert management
-│   │   └── customizer.html       # Overlay customization
-│   ├── .env                      # Environment variables (gitignored)
-│   ├── env.example               # Environment template
-│   └── package.json              # Backend dependencies
-│
-├── scripts/                       # Utility scripts
-│   ├── setup-production-auth.js  # OAuth device flow setup
-│   └── setup-github-project.js   # GitHub project automation
-│
-├── TASKS.md                       # Project tasks & roadmap
-├── COLORS.md                      # Color system reference
-├── ARCHITECTURE.md                # This file
-├── README.md                      # Project documentation
-└── package.json                   # Workspace root
+├── .env                          # Root environment (PORT=4001)
+├── package.json                  # Workspace scripts
+├── README.md
+├── ARCHITECTURE.md               # This file
+├── COLORS.md                     # Theme color specifications
+├── TASKS.md                      # Roadmap and task tracking
+└── .claude/
+    ├── context.md                # Claude session context
+    └── settings.local.json       # Claude permissions
 ```
 
 ---
 
 ## Communication Architecture
 
-### REST API (HTTP)
-**Port:** 3001  
-**Purpose:** Initial data fetching, configuration, testing
+### Supervisor API (port 4000)
 
-#### Key Endpoints
+REST endpoints for process control:
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/status` | GET | Server health check & connection status |
-| `/api/stream` | GET | Current stream info & follower count |
-| `/api/analytics` | GET | Session analytics & recent activity |
-| `/api/alerts` | GET | Retrieve alert configuration |
+| `/status` | GET | Full system status (supervisor, backend, frontend) |
+| `/start` | POST | Start backend server |
+| `/stop` | POST | Stop backend server |
+| `/restart` | POST | Restart backend server |
+| `/frontend/start` | POST | Start frontend dev server |
+| `/frontend/stop` | POST | Stop frontend dev server |
+| `/frontend/restart` | POST | Restart frontend |
+| `/start-all` | POST | Start all services |
+| `/stop-all` | POST | Stop all services |
+
+WebSocket for log streaming:
+- Connects to admin console
+- Broadcasts logs from backend/frontend stdout/stderr
+- Maintains 100-entry log buffer for new connections
+
+### Backend API (port 4001)
+
+REST endpoints:
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/status` | GET | Server health, Twitch connection status |
+| `/api/stream` | GET | Current stream info, follower count |
+| `/api/analytics` | GET | Session stats, recent activity |
+| `/api/alerts` | GET | Alert configuration |
 | `/api/alerts` | POST | Update alert settings |
 | `/api/test-alert` | POST | Trigger test alert |
-| `/webhooks/twitch` | POST | Twitch EventSub webhook handler |
+| `/api/navigation` | GET | Service discovery (all URLs) |
+| `/api/health` | GET | Simple health check |
+| `/webhooks/twitch` | POST | Twitch EventSub handler |
+| `/supervisor/*` | * | Proxy to supervisor (port 4000) |
 
-### WebSocket (Socket.IO)
-**Port:** 3001 (same server as REST)  
-**Purpose:** Real-time bidirectional communication
+Socket.IO events:
 
-#### Client → Server Events
-
+**Server → Client:**
 | Event | Payload | Description |
 |-------|---------|-------------|
-| `getStatus` | - | Request server status |
-| `getStreamInfo` | - | Request current stream data |
-| `testAlert` | `{ type, data }` | Trigger test alert |
-| `updateAlertSettings` | `{ settings }` | Update alert configuration |
+| `chat-message` | `{ username, message, color, ... }` | New chat message |
+| `new-subscriber` | `{ username, tier, months }` | Subscription |
+| `new-follower` | `{ username, timestamp }` | New follower |
+| `raid` | `{ username, viewers }` | Incoming raid |
+| `alert` | `{ type, username, message }` | Alert triggered |
+| `alert-settings` | `{ follow, subscribe, ... }` | Settings update |
+| `recent-events` | `{ followers, subs, ... }` | Initial state |
+| `overlay-update` | `{ type, settings }` | Overlay config change |
 
-#### Server → Client Events
-
+**Client → Server:**
 | Event | Payload | Description |
 |-------|---------|-------------|
-| `status` | `{ connected, twitchAuth, ... }` | Server status update |
-| `streamUpdate` | `{ viewerCount, followers, ... }` | Live stream metrics |
-| `newFollower` | `{ username, timestamp }` | New follower alert |
-| `newSubscriber` | `{ username, tier, ... }` | Subscription alert |
-| `chatMessage` | `{ username, message, ... }` | Chat activity |
-| `alertTriggered` | `{ type, data }` | Alert notification |
+| `test-alert` | `{ type, username?, message? }` | Trigger test |
+| `update-alert-settings` | `{ settings }` | Update config |
+| `overlay-update` | `{ type, data }` | Update overlay |
 
 ---
 
 ## Data Flow
 
-### Application Startup
+### Startup Sequence
 
 ```
-1. Frontend (Vite Dev Server) starts on port 5173
+1. User runs: npm start
    ↓
-2. React app loads, renders App.tsx
+2. supervisor.js starts on port 4000
    ↓
-3. App.tsx initializes Socket.IO connection to localhost:3001
+3. Supervisor spawns: node backend/server.js
    ↓
-4. Backend (Express + Socket.IO) running on port 3001
+4. Backend starts on port 4001
+   - Loads .env configuration
+   - Initializes Express + Socket.IO
+   - Connects to Twitch (OAuth validation, tmi.js)
+   - Serves Vue admin from /public
    ↓
-5. Backend connects to Twitch IRC via tmi.js
+5. Supervisor spawns: npm run dev (in frontend/)
    ↓
-6. Backend authenticates with Twitch Helix API
+6. Frontend starts on port 5173
+   - Vite dev server with HMR
+   - Proxies /api and /socket.io to port 4001
    ↓
-7. WebSocket connection established
-   ↓
-8. Frontend receives initial status and begins listening for events
+7. User accesses:
+   - http://localhost:4001 → Admin Console (Vue)
+   - http://localhost:5173 → Stream Manager (React)
 ```
 
 ### Real-Time Event Flow
 
 ```
-Twitch IRC/API Event
+Twitch Event (follow, sub, chat, raid)
    ↓
-tmi.js / Twitch API Client
+tmi.js IRC client / EventSub webhook
    ↓
-Backend Event Handler (server.js)
+Backend event handler (server.js)
    ↓
-Socket.IO Server broadcasts event
+Socket.IO broadcast to all connected clients
    ↓
-Socket.IO Client (frontend/src/services/socket.ts)
+Frontend Socket.IO client (socket.ts)
    ↓
-React Component (Dashboard.tsx, Alerts.tsx, etc.)
+React component state update
    ↓
-UI Update (Mantine components re-render)
+Mantine UI re-renders with new data
+```
+
+### Admin Console → Supervisor Flow
+
+```
+Admin Console (Vue at :4001)
+   ↓
+fetch('/supervisor/restart', { method: 'POST' })
+   ↓
+Backend proxy middleware
+   ↓
+Supervisor API (port 4000)
+   ↓
+Supervisor kills and respawns backend process
+   ↓
+WebSocket broadcasts restart logs to admin console
 ```
 
 ---
 
 ## Component Architecture
 
-### Frontend Components
+### Supervisor (supervisor.js)
 
-#### App.tsx (Root Component)
-- Manages routing between 4 main views
-- Handles WebSocket connection lifecycle
-- Provides connection status indicator
-- Theme system initialization
+Single-file process manager (~200 lines):
+- Spawns backend and frontend as child processes
+- Captures stdout/stderr and broadcasts via WebSocket
+- REST API for process control
+- Graceful shutdown handling (SIGINT, SIGTERM)
+- Maintains log buffer for late-connecting clients
 
-#### Dashboard.tsx
-- Real-time stream statistics
-- Activity feed (follows, subs, raids)
-- Chat message monitor
-- Uses multiple WebSocket subscriptions
+### Backend (backend/server.js)
 
-#### Alerts.tsx
-- Alert configuration interface
-- Alert history viewer
-- Test alert functionality
-- Settings persistence
+Express server (~550 lines):
+- **State Management**: In-memory storage for recent events, alert settings
+- **Twitch Integration**: OAuth validation, token refresh, Helix API calls
+- **Chat Client**: tmi.js for IRC connection
+- **WebSocket**: Socket.IO for real-time frontend updates
+- **Proxy**: Routes /supervisor/* to supervisor API
+- **Static Files**: Serves built Vue admin from /public
 
-#### Customizer.tsx
-- Live overlay preview
-- Theme selection
-- Layout configuration
-- URL generation for OBS
+### Admin Console (backend/admin/)
 
-#### BackendDashboard.tsx
-- Backend process monitoring
-- System metrics display
-- Terminal with command execution
-- Log viewer with filtering
+Vue 3 application:
+- **App.vue**: Main layout with sidebar navigation
+- **LiveTerminal**: WebSocket connection to supervisor for log streaming
+- **ProcessManager**: Start/stop/restart buttons for services
+- **StatusCard**: Display metrics (uptime, status, port)
+- **LogViewer**: Filter and search logs
+
+### Frontend (frontend/)
+
+React 18 application with 4 views:
+- **Dashboard**: Stream stats, chat monitor, activity feed
+- **Alerts**: Alert configuration, testing, history
+- **Customizer**: Overlay design, theme selection, OBS URL generator
+- **BackendDashboard**: System monitoring, terminal access
 
 ---
 
-## Theme System Architecture
+## Theme System
 
-### Current Implementation (Transitioning)
+### Architecture
 
 ```
-┌──────────────────────────────────────┐
-│     CSS Custom Properties (:root)    │
-│  --primary-bg, --fire-red, etc.      │
-└──────────────────────────────────────┘
-                ↕
-┌──────────────────────────────────────┐
-│    themes.ts (Theme Definitions)     │
-│  { magma, techno, synthetica }       │
-└──────────────────────────────────────┘
-                ↕
-┌──────────────────────────────────────┐
-│  ThemeSwitcher.tsx (UI Component)    │
-│  Dropdown menu for theme selection   │
-└──────────────────────────────────────┘
-                ↕
-┌──────────────────────────────────────┐
-│   localStorage (Theme Persistence)   │
-│  Key: 'selectedTheme'                │
-└──────────────────────────────────────┘
+┌─────────────────────────────────────┐
+│   themes.ts (Theme Definitions)     │
+│   3 themes × 2 modes = 6 variants   │
+│   - Magma Forge (red)               │
+│   - Techno-Organic (amber)          │
+│   - Synthetica (cool gray)          │
+└─────────────────┬───────────────────┘
+                  ↓
+┌─────────────────────────────────────┐
+│   CSS Custom Properties (:root)     │
+│   --primary-bg, --surface, etc.     │
+└─────────────────┬───────────────────┘
+                  ↓
+┌─────────────────────────────────────┐
+│   ThemeSwitcher.tsx (UI)            │
+│   Dropdown + light/dark toggle      │
+└─────────────────┬───────────────────┘
+                  ↓
+┌─────────────────────────────────────┐
+│   localStorage                      │
+│   worxed-theme, worxed-theme-mode   │
+└─────────────────────────────────────┘
 ```
 
-### Planned: Light/Dark Mode Support
+### CSS Variables
 
-```typescript
-interface ThemeConfig {
-  name: string;
-  mode: 'light' | 'dark';
-  colors: ThemeColors;
+```css
+:root {
+  /* Canvas */
+  --primary-bg: #0a0a0b;
+  --surface: #141416;
+  --surface-elevated: #1c1c1f;
+
+  /* Brand */
+  --primary: #ff3b30;
+  --secondary: #ff6b35;
+  --accent: #00fbff;
+
+  /* Semantic */
+  --success: #30d158;
+  --warning: #ffd60a;
+  --danger: #ff453a;
+
+  /* Typography */
+  --text-primary: #ffffff;
+  --text-secondary: #a1a1a6;
+  --text-muted: #636366;
 }
-
-// Usage
-applyTheme('magmaForge', 'dark');
-applyTheme('technoOrganic', 'light');
 ```
 
 ---
 
-## Security Architecture
+## Security
 
 ### Authentication
-- **OAuth 2.0**: Twitch authentication flow
-- **Token Storage**: Environment variables (.env)
-- **Token Refresh**: Automatic refresh on expiry
-- **Scopes Required**: 
+- **Twitch OAuth 2.0**: Device code flow for initial setup
+- **Token Storage**: .env file (gitignored)
+- **Auto-Refresh**: Token refresh before expiry
+- **Required Scopes**:
   - `channel:read:subscriptions`
   - `moderator:read:followers`
   - `chat:read`
 
 ### API Security
-- **CORS**: Configured for localhost development
-- **Webhook Validation**: HMAC signature verification
-- **Environment Variables**: Sensitive data in .env (gitignored)
+- **CORS**: Configured for localhost origins
+- **EventSub Validation**: HMAC signature verification
+- **No Auth on Local**: Supervisor/backend APIs are localhost-only
 
----
+### Environment Variables
+```bash
+# Required
+TWITCH_CLIENT_ID=xxx
+TWITCH_CLIENT_SECRET=xxx
+TWITCH_OAUTH_TOKEN=xxx
+TWITCH_REFRESH_TOKEN=xxx
+TWITCH_CHANNEL=username
+TWITCH_BOT_USERNAME=username
+PORT=4001
 
-## Performance Considerations
-
-### Frontend Optimization
-- **Code Splitting**: Vite automatic chunking
-- **Lazy Loading**: Route-based component loading (planned)
-- **Memoization**: React.memo for expensive components (planned)
-- **Debouncing**: User input optimization (planned)
-
-### Backend Optimization
-- **Event Throttling**: Limit WebSocket message frequency
-- **Connection Pooling**: Reuse Twitch API connections
-- **Caching**: Stream data caching (planned)
-- **Memory Management**: Clean up old event logs
-
-### WebSocket Optimization
-- **Binary Protocol**: Socket.IO binary support
-- **Compression**: WebSocket compression enabled
-- **Heartbeat**: Connection keep-alive
-- **Reconnection**: Exponential backoff strategy
-
----
-
-## Deployment Architecture
-
-### Development
+# Optional
+TWITCH_WEBHOOK_SECRET=xxx
+WEBHOOK_URL=https://...
+SUPERVISOR_URL=http://localhost:4000
 ```
-Frontend: http://localhost:5173 (Vite dev server)
-Backend:  http://localhost:3001 (Node.js Express)
+
+---
+
+## Deployment
+
+### Development (Current)
+```
+npm start
+→ Supervisor: http://localhost:4000
+→ Backend + Admin: http://localhost:4001
+→ Frontend: http://localhost:5173
 ```
 
 ### Production (Planned)
 ```
-┌─────────────────────────────────────────┐
-│         Reverse Proxy (nginx)           │
-│    https://stream.worxed.com            │
-└─────────────────────────────────────────┘
-                  ↓
-    ┌─────────────────────────┐
-    │   Frontend (Static)     │
-    │   Vite Build Output     │
-    └─────────────────────────┘
-                  ↓
-    ┌─────────────────────────┐
-    │   Backend (PM2)         │
-    │   Node.js Process       │
-    └─────────────────────────┘
-                  ↓
-    ┌─────────────────────────┐
-    │   Twitch API            │
-    └─────────────────────────┘
+┌─────────────────────────────────────┐
+│      Reverse Proxy (nginx)          │
+│   stream.example.com                │
+│   /api/* → backend:4001             │
+│   /admin/* → backend:4001           │
+│   /* → frontend static              │
+└─────────────────────────────────────┘
+          ↓
+┌─────────────────────────────────────┐
+│   PM2 Process Manager               │
+│   - supervisor.js (cluster mode)    │
+└─────────────────────────────────────┘
+          ↓
+┌─────────────────────────────────────┐
+│   Built Static Files                │
+│   - frontend/dist/                  │
+│   - backend/public/                 │
+└─────────────────────────────────────┘
+```
+
+---
+
+## Future Architecture
+
+### Database Layer (Planned)
+```
+┌─────────────────────────────────────┐
+│   SQLite Database                   │
+│   ├── users (preferences)           │
+│   ├── alerts (configurations)       │
+│   ├── events (history)              │
+│   ├── endpoints (custom APIs)       │
+│   └── analytics (metrics)           │
+└─────────────────────────────────────┘
+```
+
+### Endpoint Builder (Planned)
+```
+Admin Console
+    ↓
+Endpoint Builder UI
+    ↓
+Store in SQLite
+    ↓
+Dynamic Express routes
+    ↓
+External Services (Discord, OBS, etc.)
+```
+
+### Integration Layer (Planned)
+```
+┌─────────────────────────────────────┐
+│   Integration Manager               │
+│   ├── OBS WebSocket                 │
+│   ├── Stream Deck Plugin            │
+│   ├── Discord Webhooks              │
+│   └── Custom HTTP Endpoints         │
+└─────────────────────────────────────┘
 ```
 
 ---

@@ -1,452 +1,314 @@
-# 🎮 Worxed Stream Manager
+# WORXED Stream Manager
 
-A comprehensive, self-hosted streaming overlay and alert system for Twitch streamers. Built with a modern **React + Node.js** stack featuring real-time WebSocket communication and a professional multi-theme interface.
+A comprehensive, self-hosted streaming overlay and alert system for Twitch. Built with a modern **React + Node.js + Vue** stack featuring real-time WebSocket communication and a professional multi-theme interface.
 
 **Complete independence from third-party services** like StreamElements or Streamlabs - you own your data and control your stream experience.
 
-![Theme](https://img.shields.io/badge/Theme-Multi_Theme-ff2d55)
-![Node.js](https://img.shields.io/badge/Node.js-18+-blue)
+![Node.js](https://img.shields.io/badge/Node.js-18+-green)
 ![React](https://img.shields.io/badge/React-18-61dafb)
+![Vue](https://img.shields.io/badge/Vue-3-42b883)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.6-blue)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
-![Twitch](https://img.shields.io/badge/Platform-Twitch-purple)
 
-## 📚 Documentation
+## Architecture Overview
 
-- **[TASKS.md](TASKS.md)** - Project roadmap, planned features, and task tracking
-- **[COLORS.md](COLORS.md)** - Complete color system documentation for all themes
-- **[ARCHITECTURE.md](ARCHITECTURE.md)** - Technical architecture and system design
-- **[README.md](README.md)** - This file - getting started and overview
+```
+                    ┌─────────────────────────────────────┐
+                    │     SUPERVISOR (port 4000)          │
+                    │  Process manager + WebSocket logs   │
+                    │  REST: /status /start /stop /restart│
+                    └──────────────┬──────────────────────┘
+                                   │ spawns & monitors
+                    ┌──────────────▼──────────────────────┐
+                    │     BACKEND (port 4001)             │
+                    │  Express API + Socket.IO + tmi.js   │
+                    │  Vue Admin Console (built-in)       │
+                    │  Twitch OAuth + EventSub            │
+                    └──────────────┬──────────────────────┘
+                                   │ WebSocket + REST
+                    ┌──────────────▼──────────────────────┐
+                    │   STREAM MANAGER (port 5173)        │
+                    │  React + Mantine + TypeScript       │
+                    │  Overlays, Alerts, Dashboard        │
+                    └─────────────────────────────────────┘
+```
 
-## ✨ Features
+| Service | Port | Description |
+|---------|------|-------------|
+| **Supervisor** | 4000 | Process manager, health checks, log streaming |
+| **Backend + Admin** | 4001 | API server + Vue admin console |
+| **Stream Manager** | 5173 | React frontend for stream overlays |
 
-### 🎨 **Multi-Theme System**
-- **Current**: Neon Ember (Fire Red + Electric Cyan cyberpunk aesthetic)
-- **Coming Soon**: 
-  - **Magma Forge** - High-contrast industrial theme for intense gaming
-  - **Techno-Organic** - Warm amber tones for reduced eye strain
-  - **Synthetica** - Monochromatic OLED-optimized theme
-- Light and dark mode support for each theme
-- Accessible typography with Inter font (18px base for 2K monitors)
-- See [COLORS.md](COLORS.md) for complete color specifications
-
-### 🚨 **Complete Alert System**
-
-- Real-time follower alerts
-- Subscriber notifications (all tiers)
-- Donation alerts (any payment processor)
-- Cheer/bits alerts
-- Raid notifications
-- Custom event alerts
-- Milestone celebrations
-
-### 📊 **Four Main Dashboard Views**
-
-1. **Dashboard** - Real-time stream stats, activity feed, live chat monitor
-2. **Alerts** - Configure alert settings, test alerts, view history
-3. **Overlay Customizer** - Live preview, theme presets, URL generation for OBS
-4. **Backend Console** - System monitoring, process management, terminal access
-
-All views update in real-time via WebSocket communication
-
-### 🛠️ **Management Features**
-
-- Real-time overlay customization
-- Alert testing and configuration  
-- Live analytics and statistics
-- Event logging and monitoring
-- Multiple theme presets
-- URL generation for OBS Browser Sources
-
-### 🔧 **Advanced Features**
-
-- **Production OAuth**: Secure Twitch API integration
-- **Real-time Updates**: WebSocket-powered live data
-- **Comprehensive API**: RESTful endpoints for all features
+## Quick Start
 
 ### Prerequisites
 
-- **Node.js 18+** - JavaScript runtime
-- **npm or pnpm** - Package manager
-- **Twitch Developer Account** - For OAuth credentials ([dev.twitch.tv](https://dev.twitch.tv/console))
+- **Node.js 18+**
+- **npm or pnpm**
+- **Twitch Developer Account** ([dev.twitch.tv](https://dev.twitch.tv/console))
 
-### 1. Installation
+### Installation
 
 ```bash
+# Clone the repository
 git clone https://github.com/yourusername/worxed-stream-manager.git
 cd worxed-stream-manager
 
-# Install backend dependencies
-cd backend && npm install
+# Install all dependencies
+npm run install:all
 
-# Install frontend dependencies
-cd ../frontend && npm install
+# Copy and configure environment
+cp .env.example .env
+# Edit .env with your Twitch credentials
 ```
 
-### 2. Configuration
+### Configuration
 
-```bash
-# Copy environment template
-cp backend/env.example backend/.env
+Create a `.env` file in the root directory:
 
-# Edit backend/.env with your Twitch credentials
-# Get credentials from https://dev.twitch.tv/console
+```env
+# Twitch Application (from dev.twitch.tv/console)
+TWITCH_CLIENT_ID=your_client_id
+TWITCH_CLIENT_SECRET=your_client_secret
+
+# OAuth Tokens
+TWITCH_OAUTH_TOKEN=your_oauth_token
+TWITCH_REFRESH_TOKEN=your_refresh_token
+
+# Channel Configuration
+TWITCH_CHANNEL=your_twitch_username
+TWITCH_BOT_USERNAME=your_twitch_username
+
+# Server (don't change unless needed)
+PORT=4001
 ```
 
-### 3. Start Development Servers
+### Start Development
 
 ```bash
-# Terminal 1 - Backend (port 3001)
-cd backend && npm run dev
+# Start everything (recommended)
+npm start
 
-# Terminal 2 - Frontend (port 5173)  
-cd froTheme System
+# This starts:
+# - Supervisor on http://localhost:4000
+# - Backend + Admin on http://localhost:4001
+# - Frontend on http://localhost:5173
+```
 
-### Current Theme: Neon Ember
+### Access Points
 
-The **Neon Ember** theme uses a cyberpunk-inspired color palette:
+| URL | What You Get |
+|-----|--------------|
+| `http://localhost:4001` | Admin Console (process management, logs) |
+| `http://localhost:5173` | Stream Manager (overlays, alerts, dashboard) |
+| `http://localhost:4000/status` | Supervisor API (JSON status) |
 
-| Element | Usage | Hex Code |
-|---------|-------|----------|
-| 🔴 Fire Red | Primary actions, live indicators, alerts | `#FF2D55` |
-| 💠 Electric Cyan | Data visualization, secondary accents | `#00FBFF` |
-| ⚫ Nightshade | Primary background, deep contrast | `#0F0E17` |
-| 🔘 Cool Slate | Neutral UI elements, borders | `#2C2C2E` |
+## Features
 
-### Coming Soon: Multi-Theme System
+### Stream Manager (React Frontend)
 
-- **Magma Forge** - Industrial high-contrast (red/orange/black)
-- **Techno-Organic** - Warm amber aesthetic (amber/gold/brown)
-- **Synthetica** - Monochromatic minimalism (blue-gray/white/black)
+- **Dashboard** - Real-time stream stats, activity feed, live chat
+- **Alerts** - Configure and test follower/sub/raid/donation alerts
+- **Customizer** - Design overlays, generate OBS browser source URLs
+- **Backend Console** - Monitor system, view logs, run commands
 
-Each theme includes both light and dark modes with WCAG AA accessibility compliance.
+### Admin Console (Vue)
 
-**See [COLORS.md](COLORS.md) for complete theme specifications and design principles.**color palette:
+- **Process Manager** - Start/stop/restart backend and frontend
+- **Live Terminal** - Real-time log streaming from all services
+- **Status Cards** - Service health, uptime, connection status
 
-| Element | Usage | Hex Code |
-|---------|-------|----------|
-| 🔴 Fire Red | Primary actions, live indicators, alerts | `#FF2D55` |
-| 💠 Electric Cyan | Data visualization, secondary accents | `#00FBFF` |
-| ⚫ Nightshade | Primary background, deep contrast | `#0F0E17` |
-| 🔘 Cool Slate | Neutral UI elements, borders | `#2C2C2E` |
+### Multi-Theme System
 
-**Design Philosophy:**
-- **Red** = Action & Status (Live Badge, Stream Controls, Alerts)
-- **Cyan** = Data & Information (Viewer Counts, Charts, Analytics)
-- **Glassmorphism**: Frosted card backgrounds with subtle transparency
-- **Neon Glow**: Text shadows creating depth and atmosphere
+Three professional themes with light/dark modes:
 
----
+| Theme | Style | Primary Color |
+|-------|-------|---------------|
+| **Magma Forge** | Industrial command center | `#FF3B30` (Red) |
+| **Techno-Organic** | Warm amber aesthetic | `#FFB627` (Amber) |
+| **Synthetica** | Monochromatic OLED | `#B8C5D6` (Cool gray) |
 
-## 📋 Dashboard Features
+### Real-Time Communication
 
-## 📋 Dashboard Features
+- **WebSocket** via Socket.IO for instant updates
+- **Twitch IRC** via tmi.js for chat messages
+- **EventSub** webhooks for follows, subs, raids
 
-### Main Views
+## API Reference
 
-- **Dashboard** (`/`) - Stream stats, activity feed, live chat monitor
-- **Alerts** - Configure alert settings, test alerts, view history
-- **Overlay Customizer** - Live preview, theme presets, URL generation
-
-### API Endpoints
+### Supervisor API (port 4000)
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/status` | GET | Server and connection status |
-| `/api/stream` | GET | Current stream info and follower count |
-| `/api/analytics` | GET | Session analytics and recent activity |
-| `/api/alerts` | GET/POST | Alert settings management |
-| `/api/test-alert` | POST | Trigger test alerts |
-| `/webhooks/twitch` | POST | Twitch EventSub webhook |
+| `/status` | GET | Full system status |
+| `/start` | POST | Start backend |
+| `/stop` | POST | Stop backend |
+| `/restart` | POST | Restart backend |
+| `/frontend/start` | POST | Start frontend dev server |
+| `/frontend/stop` | POST | Stop frontend |
+| `/start-all` | POST | Start all services |
+| `/stop-all` | POST | Stop all services |
 
-## 🔐 Twitch Authentication Setup
+### Backend API (port 4001)
 
-1. Create an app at [Twitch Developer Console](https://dev.twitch.tv/console)
-2. Set OAuth redirect URI: `http://localhost:3000/auth/callback`
-3. Copy your Client ID and Client Secret
-4. Update `backend/.env` with your credentials:
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/status` | GET | Server health & connection status |
+| `/api/stream` | GET | Current stream info |
+| `/api/analytics` | GET | Session analytics |
+| `/api/alerts` | GET/POST | Alert settings |
+| `/api/test-alert` | POST | Trigger test alert |
+| `/api/navigation` | GET | Service discovery |
+| `/webhooks/twitch` | POST | Twitch EventSub endpoint |
 
-```env
-TWITCH_CLIENT_ID=your_client_id_here
-TWITCH_CLIENT_SECRET=your_client_secret_here
-TWITCH_CHANNEL=your_twitch_username
-TWFrontend:**
-- **React 18.3** + **TypeScript 5.6** - Modern UI framework with type safety
-- **Mantine UI 7.15** - Comprehensive component library
-- **Vite 6.0** - Lightning-fast build tool and dev server
-- **Socket.IO Client 4.7** - Real-time WebSocket communication
-- **Inter Font** - Accessible, professional typography
+## Project Structure
 
-**Backend:**
-- **Node.js 18+** + **Express 4.21** - RESTful API server
-- **Socket.IO 4.7** - Bidirectional real-time communication
-- **tmi.js 1.8.5** - Twitch IRC chat integration
-- **node-fetch** - Twitch Helix API requests
-
-**Features:**
-- Real-time bidirectional WebSocket communication
-- RESTful API with comprehensive endpoints
-- Twitch EventSub webhook support
-- OAuth 2.0 authentication with token refresh
-- Multi-theme system with light/dark modes
-
-For detailed architecture information, see [ARCHITECTURE.md](ARCHITECTURE.md)
-- Socket.IO Client - Real-time updates
-
-**Features:**
-- Real-time bidirectional communication
-- RESTful API with WebSocket events
-- Twitch EventSub webhook support
-- OAuth 2.0 authentication with token refresh
-npm run test:oauth       # OAuth validation
-npm run test:api         # Twitch API
-npm run test:overlays    # Overlay pages
-npm run test:alerts      # Alert system
 ```
-
-### Pre-Test Check
-```bash
-npm run pretest
-```
-
-## 🎨 Customization
-
-### Terminal Theme Colors
-- **Background**: `#121318` (Dark terminal)
-- **Primary**: `#8cffbe` (Pastel green)
-- **Secondary**: `#b893ff` (Pastel purple)
-- **Font**: VT323 (Monospace terminal font)
-
-### Custom Alerts
-```javascript
-// Send custom alert via API
-fetch('/api/custom-alert', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    type: 'milestone',
-    data: {
-      title: '1000 Followers!',
-      message: 'Thank you everyone!',
-      timestamp: new Date().toISOString()
-    }
-  })
-});
-```
-
-### Donation Integration
-```javascript
-// Webhook for payment processors
-fetch('/webhooks/donation', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    username: 'DonorName',
-    amount: '5.00',
-    message: 'Great stream!',
-    currency: 'USD',
-    processor: 'paypal'
-  })
-});
-```
-
-## 🔧 Configuration Management
-
-### Multi-Stream Profiles
-- Save unlimited stream configurations
-- Quick switching between channels
-- Export/import profile backups
-- Real-time configuration updates
-
-### Environment Variables
-```bash
-# Required
-TWITCH_CLIENT_ID=your_client_id
-TWITCH_CLIENT_SECRET=your_client_secret
-TWITCH_OAUTH_TOKEN=your_oauth_token
-TWITCH_REFRESH_TOKEN=your_refresh_token
-TWITCH_CHANNEL=your_username
-TWITCH_BOT_USERNAME=your_username
-
-# Optional
-PORT=3000
-WEBHOOK_URL=https://your-domain.com/webhooks/twitch
-TWITCH_WEBHOOK_SECRET=your_webhook_secret
-```
-
-## 📊 Analytics & Monitoring
-
-### Live Statistics
-- Current viewer count
-- Total followers
-- Chat message count
-- Stream uptime
-- Recent events
-
-### Event Logging
-- All alerts and notifications
-- Configuration changes
-- API requests
-- Error tracking
-- Performance metrics
-
-## 🌐 Production Deployment
-
-### Local Development
-```bash
-npm start
-# Server runs on http://localhost:3000
-```
-
-### Production (VPS/Cloud)
-1. Set up domain with SSL
-2. Configure reverse proxy (nginx/Apache)
-3. Update `WEBHOOK_URL` in `.env`
-4. Use PM2 for process management
 worxed-stream-manager/
-├── frontend/                # React TypeScript application
+├── supervisor.js           # Process manager (entry point)
+├── backend/
+│   ├── server.js           # Express + Socket.IO server
+│   ├── admin/              # Vue 3 admin console source
+│   │   └── src/
+│   │       ├── App.vue
+│   │       └── components/
+│   └── public/             # Built admin UI (served at /)
+├── frontend/
 │   ├── src/
-│   │   ├── components/     # Dashboard, Alerts, Customizer, etc.
-│   │   ├── services/       # Socket.IO and API clients
-│   │   ├── themes/         # Theme system
-│   │   └── App.tsx         # Root component
-│   └── package.json
-├── backend/                 # Node.js Express server
-│   ├── server.js           # Main server (511 lines)
-│   ├── public/             # Legacy overlay HTML
-│   └── package.json
-├── scripts/                 # Utility scripts
-├── TASKS.md                 # Project roadmap
-├── COLORS.md                # Color system docs
-├── ARCHITECTURE.md          # Technical architecture
-└── README.md                # This file
+│   │   ├── App.tsx         # React root component
+│   │   ├── components/     # Dashboard, Alerts, Customizer
+│   │   ├── services/       # socket.ts, api.ts
+│   │   └── themes/         # Theme system
+│   └── vite.config.ts
+├── .env                    # Environment variables
+├── ARCHITECTURE.md         # Technical architecture
+├── COLORS.md               # Theme color specifications
+└── TASKS.md                # Project roadmap
 ```
 
-For detailed architecture, see [ARCHITECTURE.md](ARCHITECTURE.md) Project Structure
-```
-├── server.js                 # Main server
-├── public/                   # Frontend files
-│   ├── index.html           # Dashboard
-│   ├── overlay.html         # Standard overlays
-│   ├── overlay-worxed.html  # Terminal overlays
-│   ├── customizer.html      # Overlay customizer
-│   └── alerts-manager.html  # Alert management
-├── test-suite.js            # Comprehensive tests
-├── setup-production-auth-device.js # OAuth setup
-└── env.example              # Environment template
-```
+## Development Commands
 
-### Adding New Features
-1. Update server endpoints in `server.js`
-2. Add frontend components to `public/`
-3. Create tests in `test-suite.js`
-4. Update documentation
+```bash
+# Full stack (supervisor manages everything)
+npm start
 
-### Contributing
-1. Fork the repository
-2. Create feature branch
-3. Add tests for new features
-4. Ensure all tests pass
-5. Submit pull request
+# Individual services
+npm run dev:admin      # Admin console only (port 4002)
+npm run dev:frontend   # Stream manager only (port 5173)
 
-## 📝 API Documentation
-
-### Custom Alert API
-```http
-POST /api/custom-alert
-Content-Type: application/json
-
-{
-  "type": "custom-follow",
-  "data": {
-    "username": "NewFollower",
-    "timestamp": "2024-01-01T00:00:00.000Z"
-  }
-}
+# Build for production
+npm run build          # Build both admin and frontend
+npm run build:admin    # Admin only
+npm run build:frontend # Frontend only
 ```
 
-### Donation Webhook
-```http
-POPort conflicts**
-- **Backend (3001)**: Kill existing Node processes with `taskkill /F /IM node.exe` (Windows) or `killall node` (Mac/Linux)
-- **Frontend (5173)**: Check if another Vite server is running
-- Verify ports are available: `netstat -ano | findstr :3001` (Windows)
+## Documentation
 
-**Server won't start**
-- Check if ports 3001 (backend) and 5173 (frontend) are available
-- Verify Node.js version (18+) with `node --version`
-- Install dependencies in both folders: `cd backend && npm install` then `cd ../frontend && npm install`
-  "amount": "5.00",
-  "message": "Great stream!",
-  "currency": "USD",
-  "processor": "paypal"
-}
+| File | Description |
+|------|-------------|
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Technical architecture & system design |
+| [COLORS.md](COLORS.md) | Complete theme color specifications |
+| [TASKS.md](TASKS.md) | Project roadmap & task tracking |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Contribution guidelines & templates |
+
+## Contributing
+
+We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for:
+
+- Development setup
+- Code guidelines
+- PR/Issue templates
+- Where to contribute (check TASKS.md for priorities)
+
+**Quick start:**
+```bash
+git clone https://github.com/YOUR_USERNAME/worxed-stream-manager.git
+cd worxed-stream-manager
+npm run install:all
+cp .env.example .env
+npm start
 ```
 
-## 🔍 Troubleshooting
+High priority areas: Database layer, Endpoint builder, Theme system
 
-### Common Issues
+## Roadmap
 
-**Server won't start**
-- Check if ports 3001 (backend) and 5173 (frontend) are available
-- Verify Node.js version (18+)
-- Run `npm run install:all` to install all dependencies
-- Start backend and frontend separately if needed
+### v1.1 - Core Stability (Next)
 
-**OAuth/Twitch errors**
-- Check Client ID and Secret in `backend/.env`
-- Verify channel name is correct
-- Ensure OAuth token has required scopes
-- Check Twitch API status
+- SQLite database for persistent storage
+- Endpoint builder for custom API integrations
+- Theme system overhaul (3 themes × 2 modes)
+- Enhanced analytics dashboard
 
-**Frontend not loading**
-- Ensure both backend (3001) and frontend (5173) are running
-- Check browser console for errors (F12)
-- Verify backend is accessible at `http://localhost:3001/api/status`
-- Clear browser cache and reload
+### v1.2 - Integrations
 
-**Alerts not appearing**
-- Test alerts in the Alerts view
-- Check WebSocket connection status (badge in header)
-- Verify alert settings are enabled
-- Check browser console for errors
+- **OBS WebSocket** - Scene switching, source control, recording status
+- **Stream Deck** - Custom actions plugin, alert triggers, quick stats
+- Advanced alert customization
+- Data export/import
 
-### Getting Help- Real-time streaming data and authentication
-- **Socket.IO** - Bidirectional real-time communication
-- **Mantine UI** - Comprehensive React component library
-- **Inter Font** - Beautiful accessible typography
-- **TMI.js** - Twitch IRC chat integration
-- **Vite** - Lightning-fast development experience
+### v1.3 - Multi-Platform
+
+- YouTube Live integration
+- Kick integration
+- Unified multi-platform chat
+- Plugin system architecture
+
+### v1.4 - Community
+
+- Shareable overlay templates
+- Community theme gallery
+- Alert sound library
+- Cloud sync (optional)
+
+### v1.5 - Ecosystem
+
+- Mobile companion app
+- Browser extension
+- Voice command integration
+- Third-party developer API
+
+See [TASKS.md](TASKS.md) for detailed task tracking and planning.
+
+## Troubleshooting
+
+**Port already in use:**
+
+```bash
+# Windows
+taskkill /F /IM node.exe
+
+# Mac/Linux
+killall node
+```
+
+**Admin UI not loading at localhost:4001:**
+
+- Run `npm run build:admin` to build the Vue app
+- Check that backend/public/ has index.html
+
+**Frontend can't connect to backend:**
+
+- Verify backend is running on port 4001
+- Check browser console for CORS errors
+- Test API: `curl http://localhost:4001/api/status`
+
+**Twitch authentication errors:**
+
+- Verify credentials in `.env`
+- Check OAuth token hasn't expired
+- Ensure required scopes: `channel:read:subscriptions`, `moderator:read:followers`, `chat:read`
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|------------|
+| **Process Manager** | Node.js + ws |
+| **Backend** | Express 4.21 + Socket.IO 4.7 + tmi.js 1.8 |
+| **Admin UI** | Vue 3 + Naive UI |
+| **Frontend** | React 18 + TypeScript 5.6 + Mantine 7.15 |
+| **Build** | Vite 6.0 |
 
 ---
 
-**Built with ❤️ by the streaming community,tory and analytics
-- [ ] Enhanced overlay customizer
-- [ ] Keyboard navigation support
-
-### v1.3 - Advanced Features
-- [ ] Stream Deck integration
-- [ ] Mobile dashboard app
-- [ ] Multi-platform support (YouTube, Kick)
-- [ ] Plugin system for custom extensions
-
-**See [TASKS.md](TASKS.md) for detailed task tracking and planning**egration
-
----
-
-**Built with 🔥 by the streaming community**
-
-## 🚀 Roadmap
-
-- [ ] Stream Deck integration
-- [ ] Mobile dashboard app
-- [ ] Advanced analytics dashboard
-- [ ] Multi-platform support (YouTube, etc.)
-- [ ] Plugin system for custom extensions
-- [ ] Cloud deployment templates
-
----
-
-**Built with ❤️ for the streaming community**
-
-*Transform your stream with professional overlays and complete control over your alerts - no third-party dependencies required!* 
+**Built for streamers who want complete control over their stream.**

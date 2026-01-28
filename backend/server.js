@@ -12,7 +12,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: ['http://localhost:5173', 'http://localhost:3001'],
+    origin: ['http://localhost:5173', 'http://localhost:4001', 'http://localhost:4002'],
     methods: ['GET', 'POST']
   }
 });
@@ -21,6 +21,25 @@ const io = new Server(server, {
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Proxy /supervisor/* requests to the supervisor at port 4000
+const SUPERVISOR_URL = process.env.SUPERVISOR_URL || 'http://localhost:4000';
+app.use('/supervisor', async (req, res) => {
+  try {
+    const targetUrl = `${SUPERVISOR_URL}${req.url}`;
+    const response = await fetch(targetUrl, {
+      method: req.method,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: req.method !== 'GET' && req.method !== 'HEAD' ? JSON.stringify(req.body) : undefined,
+    });
+    const data = await response.json();
+    res.status(response.status).json(data);
+  } catch (err) {
+    res.status(502).json({ error: 'Supervisor unreachable', message: err.message });
+  }
+});
 
 // ===========================================
 // STATE MANAGEMENT
@@ -347,6 +366,41 @@ app.get('/api/status', (req, res) => {
   });
 });
 
+// Navigation/Discovery endpoint - tells clients where everything is
+app.get('/api/navigation', (req, res) => {
+  res.json({
+    admin: {
+      url: 'http://localhost:4001',
+      description: 'Admin Console - Backend management'
+    },
+    frontend: {
+      url: 'http://localhost:5173',
+      description: 'Stream Manager - Overlays & alerts'
+    },
+    supervisor: {
+      url: 'http://localhost:4000',
+      description: 'Supervisor API - Process control'
+    },
+    api: {
+      base: 'http://localhost:4001/api',
+      endpoints: [
+        { method: 'GET', path: '/status', description: 'Server status' },
+        { method: 'GET', path: '/stream', description: 'Stream info' },
+        { method: 'GET', path: '/analytics', description: 'Stream analytics' },
+        { method: 'GET', path: '/alerts', description: 'Alert settings' },
+        { method: 'POST', path: '/alerts', description: 'Update alert settings' },
+        { method: 'POST', path: '/test-alert', description: 'Trigger test alert' },
+        { method: 'GET', path: '/navigation', description: 'This endpoint' }
+      ]
+    }
+  });
+});
+
+// Health check for supervisor
+app.get('/api/health', (req, res) => {
+  res.json({ healthy: true, timestamp: new Date().toISOString() });
+});
+
 app.get('/api/stream', async (req, res) => {
   const streamInfo = await getStreamInfo();
   const followerCount = await getFollowerCount();
@@ -476,6 +530,22 @@ app.post('/webhooks/twitch', express.json({ verify: (req, res, buf) => { req.raw
 });
 
 // ===========================================
+// SPA FALLBACK (Serve Vue Admin)
+// ===========================================
+// Any route not matching API or static files serves the admin app
+app.get('*', (req, res) => {
+  const indexPath = path.join(__dirname, 'public', 'index.html');
+  if (require('fs').existsSync(indexPath)) {
+    res.sendFile(indexPath);
+  } else {
+    res.status(404).json({
+      error: 'Admin UI not built',
+      hint: 'Run "npm run build:admin" from the root directory'
+    });
+  }
+});
+
+// ===========================================
 // INITIALIZATION
 // ===========================================
 async function initialize() {
@@ -494,7 +564,7 @@ async function initialize() {
   }, 3600000);
 }
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 4001;
 server.listen(PORT, () => {
   console.log(`
 ╔════════════════════════════════════════════════════════════╗

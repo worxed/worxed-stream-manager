@@ -6,6 +6,7 @@ import {
   NavLink,
   Box,
   Badge,
+  Button,
 } from '@mantine/core';
 import {
   IconDashboard,
@@ -14,6 +15,7 @@ import {
   IconWifi,
   IconWifiOff,
   IconTerminal,
+  IconExternalLink,
 } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import { socketService } from './services/socket';
@@ -211,7 +213,7 @@ export default function App() {
           <NavLink
             active={activeView === 'backend'}
             onClick={() => setActiveView('backend')}
-            label="Backend Console"
+            label="Backend Monitor"
             leftSection={<IconTerminal size={20} />}
             styles={{
               root: {
@@ -229,6 +231,27 @@ export default function App() {
               },
             }}
           />
+
+          <Box style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid var(--border-color)' }}>
+            <NavLink
+              component="a"
+              href="http://localhost:4001"
+              target="_blank"
+              label="Admin Console"
+              description="Full backend control"
+              leftSection={<IconExternalLink size={20} />}
+              styles={{
+                root: {
+                  borderRadius: '4px',
+                  fontSize: '16px',
+                  fontWeight: 500,
+                  '&:hover': {
+                    backgroundColor: 'var(--hover-bg)',
+                  },
+                },
+              }}
+            />
+          </Box>
         </Box>
 
         <Box style={{ marginTop: 'auto', paddingTop: '20px' }}>

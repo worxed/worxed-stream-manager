@@ -50,7 +50,7 @@ interface Connection {
 export default function BackendDashboard() {
   const [logs, setLogs] = useState<LogEntry[]>([
     { time: '12:00:01', message: 'System initialized.', type: 'info' },
-    { time: '12:00:05', message: 'Socket.IO Server started on port 3001', type: 'success' },
+    { time: '12:00:05', message: 'Socket.IO Server started on port 4001', type: 'success' },
     { time: '12:15:22', message: 'New client connected: Dashboard_01', type: 'info' },
   ]);
   const [command, setCommand] = useState('');
@@ -58,9 +58,9 @@ export default function BackendDashboard() {
   const [serverLatency, setServerLatency] = useState('4ms');
   
   const [processes, setProcesses] = useState<Process[]>([
-    { id: 'p1', name: 'Twitch Chat Client', status: 'running', port: 3001, uptime: '2h 14m', type: 'chat' },
-    { id: 'p2', name: 'WebSocket Server', status: 'running', port: 3001, uptime: '2h 14m', type: 'socket' },
-    { id: 'p3', name: 'API Server', status: 'running', port: 3001, uptime: '2h 14m', type: 'api' },
+    { id: 'p1', name: 'Twitch Chat Client', status: 'running', port: 4001, uptime: '2h 14m', type: 'chat' },
+    { id: 'p2', name: 'WebSocket Server', status: 'running', port: 4001, uptime: '2h 14m', type: 'socket' },
+    { id: 'p3', name: 'API Server', status: 'running', port: 4001, uptime: '2h 14m', type: 'api' },
   ]);
 
   const [connections, setConnections] = useState<Connection[]>([

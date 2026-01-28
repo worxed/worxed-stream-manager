@@ -4,19 +4,20 @@
   "description": "Professional Twitch stream overlay and management system",
   "private": true,
   "scripts": {
-    "dev": "npm run dev:backend & npm run dev:frontend",
-    "dev:backend": "cd backend && npm run dev",
+    "start": "node supervisor.js",
+    "dev": "node supervisor.js",
+    "dev:admin": "cd backend/admin && npm run dev",
     "dev:frontend": "cd frontend && npm run dev",
-    "start:backend": "cd backend && npm start",
-    "start:frontend": "cd frontend && npm run dev",
-    "build": "cd frontend && npm run build",
-    "start": "cd backend && npm start",
-    "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install",
+    "build": "npm run build:admin && npm run build:frontend",
+    "build:admin": "cd backend/admin && npm run build",
+    "build:frontend": "cd frontend && npm run build",
+    "install:all": "npm install && cd backend && npm install && cd admin && npm install && cd ../../frontend && npm install",
     "setup": "cd backend && npm run setup"
   },
-  "devDependencies": {
-    "concurrently": "^9.0.1"
+  "dependencies": {
+    "ws": "^8.16.0"
   },
+  "devDependencies": {},
   "keywords": [
     "twitch",
     "streaming",
