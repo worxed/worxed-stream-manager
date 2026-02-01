@@ -82,16 +82,17 @@
 
 ### Database Layer (High Priority)
 
-- [ ] Implement SQLite for local storage (zero setup)
-- [ ] Schema design:
-  - [ ] `users` - User preferences, theme settings
-  - [ ] `alerts` - Alert configurations per user
-  - [ ] `events` - Event history (follows, subs, raids, donations)
-  - [ ] `endpoints` - Custom endpoint definitions
-  - [ ] `analytics` - Aggregated metrics and stats
-- [ ] Alert history storage
-- [ ] User preferences persistence
-- [ ] Analytics data collection
+- [x] Implement SQLite for local storage (better-sqlite3, WAL mode)
+- [x] Schema design:
+  - [x] `settings` - Key-value preferences with categories
+  - [x] `alert_configs` - Alert configurations per type
+  - [x] `events` - Event history (follows, subs, raids, donations)
+  - [x] `endpoints` - Custom endpoint definitions
+  - [x] `analytics` - Aggregated metrics and stats
+  - [x] `_migrations` - Schema version tracking
+- [x] Alert history storage (DB-backed, replaces in-memory)
+- [x] User preferences persistence (settings API)
+- [x] Analytics data collection (analytics table + helpers)
 - [ ] Backup/restore functionality
 - [ ] Data export (JSON/CSV)
 
@@ -260,4 +261,4 @@
 - 🎯 Medium - Quality of life improvements
 - 🚀 Low - Nice to have features
 
-**Last Updated:** January 28, 2026
+**Last Updated:** February 1, 2026

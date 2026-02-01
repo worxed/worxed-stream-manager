@@ -1,20 +1,43 @@
 /**
  * WORXED STREAM MANAGER - Supervisor
  *
- * Lightweight process manager that controls the backend server.
- * Exposes REST API for status checks and restart commands.
- * Streams real-time logs via WebSocket.
+ * Process manager + admin UI host. Controls backend and frontend services.
+ * Serves the Vue admin console, proxies /api/* to backend.
+ * Exposes REST API for process control. Streams logs via WebSocket.
  *
  * Ports:
- * - Supervisor API: 4000
- * - Backend (API + Admin UI): 4001 (spawned as child process)
+ * - Supervisor + Admin UI: 4000
+ * - Backend (API only): 4001 (spawned as child process)
  * - Frontend (Stream overlays): 5173 (Vite dev server)
  */
 
 const http = require('http');
+const fs = require('fs');
 const { spawn } = require('child_process');
 const path = require('path');
 const { WebSocketServer } = require('ws');
+const db = require('./shared');
+
+const ADMIN_DIR = path.join(__dirname, 'backend', 'public');
+const BACKEND_PORT = 4001;
+
+// MIME types for static file serving
+const MIME_TYPES = {
+  '.html': 'text/html',
+  '.js': 'application/javascript',
+  '.css': 'text/css',
+  '.json': 'application/json',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.gif': 'image/gif',
+  '.svg': 'image/svg+xml',
+  '.ico': 'image/x-icon',
+  '.woff': 'font/woff',
+  '.woff2': 'font/woff2',
+  '.ttf': 'font/ttf',
+  '.map': 'application/json',
+};
 
 const SUPERVISOR_PORT = process.env.SUPERVISOR_PORT || 4000;
 const BACKEND_PATH = path.join(__dirname, 'backend', 'server.js');
@@ -259,13 +282,81 @@ function getStatus() {
   };
 }
 
-// HTTP Server for supervisor API
+// ===========================================
+// PROXY: Forward /api/* requests to backend
+// ===========================================
+function proxyToBackend(req, res) {
+  const options = {
+    hostname: 'localhost',
+    port: BACKEND_PORT,
+    path: req.url,
+    method: req.method,
+    headers: { ...req.headers, host: `localhost:${BACKEND_PORT}` },
+  };
+
+  const proxyReq = http.request(options, (proxyRes) => {
+    res.writeHead(proxyRes.statusCode, proxyRes.headers);
+    proxyRes.pipe(res);
+  });
+
+  proxyReq.on('error', (err) => {
+    res.writeHead(502, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Backend unreachable', message: err.message }));
+  });
+
+  req.pipe(proxyReq);
+}
+
+// ===========================================
+// STATIC FILE SERVER: Serve admin UI
+// ===========================================
+function serveStatic(req, res) {
+  let urlPath = req.url.split('?')[0];
+  if (urlPath === '/') urlPath = '/index.html';
+
+  const filePath = path.join(ADMIN_DIR, urlPath);
+
+  // Security: prevent path traversal
+  if (!filePath.startsWith(ADMIN_DIR)) {
+    res.writeHead(403);
+    res.end('Forbidden');
+    return;
+  }
+
+  fs.readFile(filePath, (err, data) => {
+    if (err) {
+      // SPA fallback: serve index.html for any non-file route
+      const indexPath = path.join(ADMIN_DIR, 'index.html');
+      fs.readFile(indexPath, (err2, indexData) => {
+        if (err2) {
+          res.writeHead(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({
+            error: 'Admin UI not built',
+            hint: 'Run "npm run build:admin" from the root directory'
+          }));
+          return;
+        }
+        res.writeHead(200, { 'Content-Type': 'text/html' });
+        res.end(indexData);
+      });
+      return;
+    }
+
+    const ext = path.extname(filePath).toLowerCase();
+    const contentType = MIME_TYPES[ext] || 'application/octet-stream';
+    res.writeHead(200, { 'Content-Type': contentType });
+    res.end(data);
+  });
+}
+
+// ===========================================
+// HTTP SERVER
+// ===========================================
 const server = http.createServer((req, res) => {
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  res.setHeader('Content-Type', 'application/json');
 
   if (req.method === 'OPTIONS') {
     res.writeHead(204);
@@ -273,16 +364,31 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  const url = req.url;
+  const url = req.url.split('?')[0];
 
-  // GET /status - Get supervisor and backend status
+  // --- Proxy /api/* to backend ---
+  if (url.startsWith('/api/')) {
+    proxyToBackend(req, res);
+    return;
+  }
+
+  // --- Proxy /webhooks/* to backend ---
+  if (url.startsWith('/webhooks/')) {
+    proxyToBackend(req, res);
+    return;
+  }
+
+  // --- Supervisor API routes (JSON responses) ---
+  res.setHeader('Content-Type', 'application/json');
+
+  // GET /status
   if (req.method === 'GET' && url === '/status') {
     res.writeHead(200);
     res.end(JSON.stringify(getStatus(), null, 2));
     return;
   }
 
-  // POST /restart - Restart the backend
+  // POST /restart
   if (req.method === 'POST' && url === '/restart') {
     restartBackend();
     res.writeHead(200);
@@ -290,7 +396,7 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // POST /stop - Stop the backend
+  // POST /stop
   if (req.method === 'POST' && url === '/stop') {
     stopBackend();
     res.writeHead(200);
@@ -298,7 +404,7 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // POST /start - Start the backend
+  // POST /start
   if (req.method === 'POST' && url === '/start') {
     if (backendStatus === 'running') {
       res.writeHead(400);
@@ -311,7 +417,7 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // Frontend control endpoints
+  // Frontend control
   if (req.method === 'POST' && url === '/frontend/start') {
     if (frontendStatus === 'running') {
       res.writeHead(400);
@@ -338,7 +444,7 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // Start all services
+  // Start/stop all
   if (req.method === 'POST' && url === '/start-all') {
     if (backendStatus !== 'running') startBackend();
     setTimeout(() => {
@@ -349,7 +455,6 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // Stop all services
   if (req.method === 'POST' && url === '/stop-all') {
     stopFrontend();
     stopBackend();
@@ -358,41 +463,94 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // 404 for everything else
-  res.writeHead(404);
-  res.end(JSON.stringify({ error: 'Not found' }));
+  // GET /db/status
+  if (req.method === 'GET' && url === '/db/status') {
+    try {
+      const stats = db.getStats();
+      const migration = db.getMigrationStatus();
+      res.writeHead(200);
+      res.end(JSON.stringify({ ...stats, migration }, null, 2));
+    } catch (err) {
+      res.writeHead(500);
+      res.end(JSON.stringify({ error: err.message }));
+    }
+    return;
+  }
+
+  // GET /db/settings
+  if (req.method === 'GET' && url === '/db/settings') {
+    res.writeHead(200);
+    res.end(JSON.stringify(db.settings.getAll(), null, 2));
+    return;
+  }
+
+  // --- If not an API route, serve admin UI ---
+  res.removeHeader('Content-Type'); // Let serveStatic set it
+  serveStatic(req, res);
 });
 
-// Graceful shutdown - clean up all processes
+// Graceful shutdown - stop children first, then close everything
 function gracefulShutdown(signal) {
   if (isShuttingDown) return;
   isShuttingDown = true;
 
   log(`Received ${signal}, shutting down gracefully...`, 'yellow');
 
-  // Stop all child processes
-  stopFrontend();
-  stopBackend();
+  // Track child process exits so we can wait for them
+  const exitPromises = [];
 
-  // Close WebSocket connections
-  wsClients.forEach(client => {
+  if (frontendProcess) {
+    exitPromises.push(new Promise(resolve => {
+      frontendProcess.once('close', resolve);
+      // If it doesn't exit in 3s, we'll force-kill via the timeout below
+    }));
+    stopFrontend();
+  }
+
+  if (backendProcess) {
+    exitPromises.push(new Promise(resolve => {
+      backendProcess.once('close', resolve);
+    }));
+    stopBackend();
+  }
+
+  // Wait for children to exit (up to 3s), then clean up
+  const childTimeout = setTimeout(() => {
+    log('Children did not exit in time, continuing shutdown...', 'yellow');
+    finish();
+  }, 3000);
+
+  Promise.all(exitPromises).then(() => {
+    clearTimeout(childTimeout);
+    log('All child processes exited', 'green');
+    finish();
+  });
+
+  function finish() {
+    // Close database
     try {
-      client.close();
+      db.close();
+      log('Database closed', 'green');
     } catch (e) {}
-  });
-  wsClients.clear();
 
-  // Close HTTP server
-  server.close(() => {
-    log('All services stopped. Goodbye!', 'yellow');
-    process.exit(0);
-  });
+    // Close WebSocket connections
+    wsClients.forEach(client => {
+      try { client.close(); } catch (e) {}
+    });
+    wsClients.clear();
 
-  // Force exit after 5 seconds if graceful shutdown fails
-  setTimeout(() => {
-    log('Forcing exit...', 'red');
-    process.exit(1);
-  }, 5000);
+    // Close HTTP server
+    server.close(() => {
+      log('All services stopped. Goodbye!', 'yellow');
+      process.exit(0);
+    });
+
+    // Force exit after 2 more seconds if server.close hangs
+    setTimeout(() => {
+      log('Forcing exit...', 'red');
+      process.exit(1);
+    }, 2000);
+  }
 }
 
 process.on('SIGINT', () => gracefulShutdown('SIGINT'));
@@ -444,17 +602,28 @@ wss.on('connection', (ws) => {
 
 // Start everything
 server.listen(SUPERVISOR_PORT, () => {
+  // Initialize database
+  try {
+    db.init();
+    db.events.insert('system', 'supervisor', { action: 'startup' });
+    log('Database initialized', 'green');
+  } catch (err) {
+    log(`Database init failed: ${err.message}`, 'red');
+  }
+
   console.log('');
   console.log(`${c.cyan}╔════════════════════════════════════════════════════════════╗${c.reset}`);
   console.log(`${c.cyan}║${c.reset}     ${c.green}WORXED SUPERVISOR${c.reset}                                     ${c.cyan}║${c.reset}`);
   console.log(`${c.cyan}╠════════════════════════════════════════════════════════════╣${c.reset}`);
-  console.log(`${c.cyan}║${c.reset}  Supervisor:  http://localhost:${SUPERVISOR_PORT}                      ${c.cyan}║${c.reset}`);
-  console.log(`${c.cyan}║${c.reset}  Admin:       http://localhost:4001                        ${c.cyan}║${c.reset}`);
+  console.log(`${c.cyan}║${c.reset}  Admin:       http://localhost:${SUPERVISOR_PORT}                      ${c.cyan}║${c.reset}`);
+  console.log(`${c.cyan}║${c.reset}  Backend API: http://localhost:${BACKEND_PORT}                      ${c.cyan}║${c.reset}`);
   console.log(`${c.cyan}║${c.reset}  Frontend:    http://localhost:5173                        ${c.cyan}║${c.reset}`);
   console.log(`${c.cyan}╠════════════════════════════════════════════════════════════╣${c.reset}`);
   console.log(`${c.cyan}║${c.reset}  Backend:  /start, /stop, /restart                         ${c.cyan}║${c.reset}`);
   console.log(`${c.cyan}║${c.reset}  Frontend: /frontend/start, /frontend/stop                 ${c.cyan}║${c.reset}`);
   console.log(`${c.cyan}║${c.reset}  All:      /start-all, /stop-all                           ${c.cyan}║${c.reset}`);
+  console.log(`${c.cyan}║${c.reset}  DB:       /db/status, /db/settings                        ${c.cyan}║${c.reset}`);
+  console.log(`${c.cyan}║${c.reset}  Proxy:    /api/* -> backend:${BACKEND_PORT}                        ${c.cyan}║${c.reset}`);
   console.log(`${c.cyan}╠════════════════════════════════════════════════════════════╣${c.reset}`);
   console.log(`${c.cyan}║${c.reset}  Press Ctrl+C to stop all services                         ${c.cyan}║${c.reset}`);
   console.log(`${c.cyan}╚════════════════════════════════════════════════════════════╝${c.reset}`);

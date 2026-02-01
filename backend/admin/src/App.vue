@@ -27,12 +27,16 @@ import {
   IconPlayerPlay,
   IconPlayerStop,
   IconExternalLink,
+  IconDatabase,
 } from '@tabler/icons-vue';
 
 import StatusCard from './components/StatusCard.vue';
 import ProcessManager from './components/ProcessManager.vue';
 import LogViewer from './components/LogViewer.vue';
 import LiveTerminal from './components/LiveTerminal.vue';
+import DatabaseStatus from './components/DatabaseStatus.vue';
+import ConfigManager from './components/ConfigManager.vue';
+import EventViewer from './components/EventViewer.vue';
 
 // Supervisor state
 const supervisorStatus = ref(null);
@@ -43,7 +47,7 @@ const activeMenu = ref('dashboard');
 // Fetch status from supervisor
 async function fetchStatus() {
   try {
-    const res = await fetch('/supervisor/status');
+    const res = await fetch('/status');
     supervisorStatus.value = await res.json();
     isConnected.value = true;
   } catch (err) {
@@ -55,7 +59,7 @@ async function fetchStatus() {
 // Control actions - Backend
 async function restartBackend() {
   try {
-    await fetch('/supervisor/restart', { method: 'POST' });
+    await fetch('/restart', { method: 'POST' });
     addLog('Backend restart command sent', 'info');
     setTimeout(fetchStatus, 1000);
   } catch (err) {
@@ -65,7 +69,7 @@ async function restartBackend() {
 
 async function stopBackend() {
   try {
-    await fetch('/supervisor/stop', { method: 'POST' });
+    await fetch('/stop', { method: 'POST' });
     addLog('Backend stop command sent', 'warning');
     setTimeout(fetchStatus, 500);
   } catch (err) {
@@ -75,7 +79,7 @@ async function stopBackend() {
 
 async function startBackend() {
   try {
-    await fetch('/supervisor/start', { method: 'POST' });
+    await fetch('/start', { method: 'POST' });
     addLog('Backend start command sent', 'success');
     setTimeout(fetchStatus, 1000);
   } catch (err) {
@@ -86,7 +90,7 @@ async function startBackend() {
 // Control actions - Frontend
 async function startFrontend() {
   try {
-    await fetch('/supervisor/frontend/start', { method: 'POST' });
+    await fetch('/frontend/start', { method: 'POST' });
     addLog('Frontend start command sent', 'success');
     setTimeout(fetchStatus, 1000);
   } catch (err) {
@@ -96,7 +100,7 @@ async function startFrontend() {
 
 async function stopFrontend() {
   try {
-    await fetch('/supervisor/frontend/stop', { method: 'POST' });
+    await fetch('/frontend/stop', { method: 'POST' });
     addLog('Frontend stop command sent', 'warning');
     setTimeout(fetchStatus, 500);
   } catch (err) {
@@ -106,7 +110,7 @@ async function stopFrontend() {
 
 async function restartFrontend() {
   try {
-    await fetch('/supervisor/frontend/restart', { method: 'POST' });
+    await fetch('/frontend/restart', { method: 'POST' });
     addLog('Frontend restart command sent', 'info');
     setTimeout(fetchStatus, 1000);
   } catch (err) {
@@ -117,7 +121,7 @@ async function restartFrontend() {
 // Control all
 async function startAll() {
   try {
-    await fetch('/supervisor/start-all', { method: 'POST' });
+    await fetch('/start-all', { method: 'POST' });
     addLog('Starting all services...', 'success');
     setTimeout(fetchStatus, 2000);
   } catch (err) {
@@ -127,7 +131,7 @@ async function startAll() {
 
 async function stopAll() {
   try {
-    await fetch('/supervisor/stop-all', { method: 'POST' });
+    await fetch('/stop-all', { method: 'POST' });
     addLog('Stopping all services...', 'warning');
     setTimeout(fetchStatus, 500);
   } catch (err) {
@@ -146,6 +150,7 @@ const menuOptions = [
   { label: 'Dashboard', key: 'dashboard', icon: IconActivity },
   { label: 'Processes', key: 'processes', icon: IconServer },
   { label: 'Logs', key: 'logs', icon: IconTerminal2 },
+  { label: 'Database', key: 'database', icon: IconDatabase },
   { label: 'Settings', key: 'settings', icon: IconSettings },
 ];
 
@@ -359,13 +364,17 @@ onUnmounted(() => {
             <LiveTerminal :max-lines="1000" />
           </div>
 
+          <!-- Database View -->
+          <div v-else-if="activeMenu === 'database'">
+            <div style="display: flex; flex-direction: column; gap: 16px;">
+              <DatabaseStatus />
+              <EventViewer />
+            </div>
+          </div>
+
           <!-- Settings View -->
           <div v-else-if="activeMenu === 'settings'">
-            <NCard title="Settings">
-              <NAlert type="info" title="Coming Soon">
-                Settings panel will be available in a future update.
-              </NAlert>
-            </NCard>
+            <ConfigManager />
           </div>
         </NLayoutContent>
       </NLayout>

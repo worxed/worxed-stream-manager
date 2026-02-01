@@ -15,9 +15,9 @@
     "setup": "cd backend && npm run setup"
   },
   "dependencies": {
+    "better-sqlite3": "^12.6.2",
     "ws": "^8.16.0"
   },
-  "devDependencies": {},
   "keywords": [
     "twitch",
     "streaming",
@@ -31,5 +31,10 @@
   "license": "MIT",
   "engines": {
     "node": ">=18.0.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "better-sqlite3"
+    ]
   }
 }

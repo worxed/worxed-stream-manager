@@ -7,39 +7,20 @@ const cors = require('cors');
 const fetch = require('node-fetch');
 const crypto = require('crypto');
 require('dotenv').config();
+const db = require('../shared');
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: ['http://localhost:5173', 'http://localhost:4001', 'http://localhost:4002'],
-    methods: ['GET', 'POST']
+    origin: ['http://localhost:5173', 'http://localhost:4000', 'http://localhost:4001', 'http://localhost:4002'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE']
   }
 });
 
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
-
-// Proxy /supervisor/* requests to the supervisor at port 4000
-const SUPERVISOR_URL = process.env.SUPERVISOR_URL || 'http://localhost:4000';
-app.use('/supervisor', async (req, res) => {
-  try {
-    const targetUrl = `${SUPERVISOR_URL}${req.url}`;
-    const response = await fetch(targetUrl, {
-      method: req.method,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: req.method !== 'GET' && req.method !== 'HEAD' ? JSON.stringify(req.body) : undefined,
-    });
-    const data = await response.json();
-    res.status(response.status).json(data);
-  } catch (err) {
-    res.status(502).json({ error: 'Supervisor unreachable', message: err.message });
-  }
-});
 
 // ===========================================
 // STATE MANAGEMENT
@@ -57,12 +38,20 @@ const recentEvents = {
   raids: []
 };
 
-const alertSettings = {
-  follow: { enabled: true, sound: true, duration: 5000 },
-  subscribe: { enabled: true, sound: true, duration: 7000 },
-  donation: { enabled: true, sound: true, duration: 10000 },
-  raid: { enabled: true, sound: true, duration: 8000 }
-};
+// Alert settings are now DB-backed. This helper returns the legacy format.
+function getAlertSettings() {
+  try {
+    return db.alerts.toLegacyFormat();
+  } catch {
+    // Fallback if DB not ready
+    return {
+      follow: { enabled: true, sound: true, duration: 5000 },
+      subscribe: { enabled: true, sound: true, duration: 7000 },
+      donation: { enabled: true, sound: true, duration: 10000 },
+      raid: { enabled: true, sound: true, duration: 8000 }
+    };
+  }
+}
 
 // ===========================================
 // TWITCH API CONFIGURATION
@@ -291,6 +280,9 @@ function initializeTwitchChat() {
       recentEvents.subscribers.shift();
     }
 
+    // Persist to DB
+    db.events.insert('subscribe', username, { method, message, months: subData.months });
+
     io.emit('new-subscriber', subData);
   });
 
@@ -307,6 +299,9 @@ function initializeTwitchChat() {
       recentEvents.raids.shift();
     }
 
+    // Persist to DB
+    db.events.insert('raid', username, { viewers });
+
     io.emit('raid', raidData);
   });
 
@@ -322,7 +317,7 @@ io.on('connection', (socket) => {
 
   // Send initial state
   socket.emit('recent-events', recentEvents);
-  socket.emit('alert-settings', alertSettings);
+  socket.emit('alert-settings', getAlertSettings());
 
   // Handle test alerts
   socket.on('test-alert', (data) => {
@@ -345,8 +340,11 @@ io.on('connection', (socket) => {
 
   // Handle alert settings
   socket.on('update-alert-settings', (data) => {
-    Object.assign(alertSettings, data);
-    io.emit('alert-settings', alertSettings);
+    // Persist each alert type to DB
+    for (const [type, config] of Object.entries(data)) {
+      db.alerts.update(type, config);
+    }
+    io.emit('alert-settings', getAlertSettings());
   });
 
   socket.on('disconnect', () => {
@@ -389,7 +387,15 @@ app.get('/api/navigation', (req, res) => {
         { method: 'GET', path: '/analytics', description: 'Stream analytics' },
         { method: 'GET', path: '/alerts', description: 'Alert settings' },
         { method: 'POST', path: '/alerts', description: 'Update alert settings' },
+        { method: 'GET', path: '/alerts/configs', description: 'Detailed alert configs' },
+        { method: 'PUT', path: '/alerts/configs/:type', description: 'Update alert config' },
         { method: 'POST', path: '/test-alert', description: 'Trigger test alert' },
+        { method: 'GET', path: '/settings', description: 'All settings' },
+        { method: 'GET', path: '/settings/:key', description: 'Get setting' },
+        { method: 'PUT', path: '/settings/:key', description: 'Set setting' },
+        { method: 'GET', path: '/events', description: 'Event history' },
+        { method: 'GET', path: '/events/summary', description: 'Event counts by type' },
+        { method: 'GET', path: '/db/status', description: 'Database status' },
         { method: 'GET', path: '/navigation', description: 'This endpoint' }
       ]
     }
@@ -436,13 +442,16 @@ app.get('/api/analytics', async (req, res) => {
 });
 
 app.get('/api/alerts', (req, res) => {
-  res.json(alertSettings);
+  res.json(getAlertSettings());
 });
 
 app.post('/api/alerts', (req, res) => {
-  Object.assign(alertSettings, req.body);
-  io.emit('alert-settings', alertSettings);
-  res.json({ success: true, settings: alertSettings });
+  for (const [type, config] of Object.entries(req.body)) {
+    db.alerts.update(type, config);
+  }
+  const settings = getAlertSettings();
+  io.emit('alert-settings', settings);
+  res.json({ success: true, settings });
 });
 
 app.post('/api/test-alert', (req, res) => {
@@ -501,6 +510,7 @@ app.post('/webhooks/twitch', express.json({ verify: (req, res, buf) => { req.raw
 
     switch (subscriptionType) {
       case 'channel.follow':
+        db.events.insert('follow', event.user_name, { followed_at: event.followed_at });
         io.emit('new-follower', {
           id: Date.now().toString(),
           username: event.user_name,
@@ -508,6 +518,7 @@ app.post('/webhooks/twitch', express.json({ verify: (req, res, buf) => { req.raw
         });
         break;
       case 'channel.subscribe':
+        db.events.insert('subscribe', event.user_name, { tier: event.tier });
         io.emit('new-subscriber', {
           id: Date.now().toString(),
           username: event.user_name,
@@ -516,6 +527,7 @@ app.post('/webhooks/twitch', express.json({ verify: (req, res, buf) => { req.raw
         });
         break;
       case 'channel.raid':
+        db.events.insert('raid', event.from_broadcaster_user_name, { viewers: event.viewers });
         io.emit('raid', {
           id: Date.now().toString(),
           username: event.from_broadcaster_user_name,
@@ -530,18 +542,77 @@ app.post('/webhooks/twitch', express.json({ verify: (req, res, buf) => { req.raw
 });
 
 // ===========================================
-// SPA FALLBACK (Serve Vue Admin)
+// DATABASE API ROUTES
 // ===========================================
-// Any route not matching API or static files serves the admin app
-app.get('*', (req, res) => {
-  const indexPath = path.join(__dirname, 'public', 'index.html');
-  if (require('fs').existsSync(indexPath)) {
-    res.sendFile(indexPath);
-  } else {
-    res.status(404).json({
-      error: 'Admin UI not built',
-      hint: 'Run "npm run build:admin" from the root directory'
-    });
+
+// Settings CRUD
+app.get('/api/settings', (req, res) => {
+  const category = req.query.category || null;
+  res.json(db.settings.getAll(category));
+});
+
+app.get('/api/settings/:key', (req, res) => {
+  const value = db.settings.get(req.params.key);
+  if (value === null) {
+    return res.status(404).json({ error: 'Setting not found' });
+  }
+  res.json({ key: req.params.key, value });
+});
+
+app.put('/api/settings/:key', (req, res) => {
+  const { value, category } = req.body;
+  db.settings.set(req.params.key, value, category || 'general');
+  res.json({ success: true, key: req.params.key, value });
+});
+
+app.delete('/api/settings/:key', (req, res) => {
+  db.settings.delete(req.params.key);
+  res.json({ success: true });
+});
+
+// Event history
+app.get('/api/events', (req, res) => {
+  const { type, limit, offset, since, until } = req.query;
+  const events = db.events.query({
+    type,
+    limit: parseInt(limit) || 50,
+    offset: parseInt(offset) || 0,
+    since,
+    until
+  });
+  const total = db.events.count(type || null);
+  res.json({ events, total });
+});
+
+app.get('/api/events/summary', (req, res) => {
+  res.json({
+    total: db.events.count(),
+    byType: db.events.countByType()
+  });
+});
+
+// Alert configs (detailed DB view)
+app.get('/api/alerts/configs', (req, res) => {
+  res.json(db.alerts.getAll());
+});
+
+app.put('/api/alerts/configs/:type', (req, res) => {
+  const updated = db.alerts.update(req.params.type, req.body);
+  if (!updated) {
+    return res.status(404).json({ error: 'Alert type not found' });
+  }
+  io.emit('alert-settings', getAlertSettings());
+  res.json(updated);
+});
+
+// Database status
+app.get('/api/db/status', (req, res) => {
+  try {
+    const stats = db.getStats();
+    const migration = db.getMigrationStatus();
+    res.json({ ...stats, migration });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
@@ -550,6 +621,14 @@ app.get('*', (req, res) => {
 // ===========================================
 async function initialize() {
   console.log('🚀 Initializing Worxed Stream Manager...');
+
+  // Initialize database
+  try {
+    db.init();
+    console.log('✅ Database initialized');
+  } catch (err) {
+    console.error('❌ Database init failed:', err.message);
+  }
 
   await validateTwitchToken();
   await getTwitchAccessToken();

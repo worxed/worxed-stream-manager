@@ -15,10 +15,10 @@ const scrollRef = ref(null);
 let ws = null;
 
 function connect() {
-  // Connect to supervisor WebSocket
+  // Connect to supervisor WebSocket (same host as admin)
   const wsUrl = import.meta.env.DEV
     ? 'ws://localhost:4000'
-    : `ws://${window.location.hostname}:4000`;
+    : `ws://${window.location.host}`;
 
   ws = new WebSocket(wsUrl);
 
