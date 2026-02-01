@@ -1,21 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git status:*)",
-      "Bash(git diff:*)",
-      "Bash(git log:*)",
-      "Bash(git add:*)",
-      "Bash(git commit:*)",
-      "Bash(git ls-tree:*)",
-      "Bash(tree:*)",
-      "Bash(ls:*)",
-      "Bash(npm install:*)",
-      "Bash(npm run:*)",
-      "Bash(pnpm install:*)",
-      "Bash(pnpm run:*)",
-      "Bash(node supervisor.js:*)",
-      "Bash(curl http://localhost:*)",
-      "Bash(timeout 5 node:*)"
+      "Edit",
+      "Write",
+      "Bash(*)"
     ]
   }
 }

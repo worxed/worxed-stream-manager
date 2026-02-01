@@ -1,4 +1,4 @@
-import type { StreamData, AlertSettings } from '../types';
+import type { StreamData, AlertSettings, SettingEntry, CustomEndpoint } from '../types';
 
 const API_BASE = '/api';
 
@@ -114,6 +114,17 @@ export async function triggerTestAlert(
     method: 'POST',
     body: JSON.stringify({ type, username, message, amount }),
   });
+}
+
+// Settings
+export async function getSettings(category?: string) {
+  const query = category ? `?category=${encodeURIComponent(category)}` : '';
+  return fetchApi<SettingEntry[]>(`/settings${query}`);
+}
+
+// Endpoints
+export async function getEndpoints() {
+  return fetchApi<CustomEndpoint[]>('/endpoints');
 }
 
 // Helpers

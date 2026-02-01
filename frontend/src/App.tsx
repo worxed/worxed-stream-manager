@@ -6,7 +6,6 @@ import {
   NavLink,
   Box,
   Badge,
-  Button,
 } from '@mantine/core';
 import {
   IconDashboard,
@@ -19,16 +18,30 @@ import {
 } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import { socketService } from './services/socket';
+import { getSettings } from './services/api';
 import { applyTheme, getSavedTheme, getSavedMode } from './themes/themes';
+import type { ThemeName, ThemeMode } from './themes/themes';
 import Dashboard from './components/Dashboard';
 import Alerts from './components/Alerts';
 import Customizer from './components/Customizer';
 import BackendDashboard from './components/BackendDashboard';
 import ThemeSwitcher from './components/ThemeSwitcher';
+import Overlay from './components/Overlay';
+
+// Route check before hooks — overlay gets its own render tree
+const isOverlay = window.location.pathname === '/overlay';
 
 type View = 'dashboard' | 'alerts' | 'customizer' | 'backend';
 
 export default function App() {
+  if (isOverlay) {
+    return <Overlay />;
+  }
+
+  return <AppMain />;
+}
+
+function AppMain() {
   const [activeView, setActiveView] = useState<View>('dashboard');
   const [connected, setConnected] = useState(false);
 
@@ -38,6 +51,34 @@ export default function App() {
 
     // Connect to socket
     socketService.connect();
+
+    // Fetch overlay settings from DB and apply on top of localStorage defaults
+    getSettings('overlay').then(result => {
+      if (!result.data) return;
+      for (const setting of result.data) {
+        if (setting.key === 'overlay.theme') {
+          const theme = setting.value as ThemeName;
+          applyTheme(theme, getSavedMode());
+        } else if (setting.key === 'overlay.mode') {
+          const mode = setting.value as ThemeMode;
+          applyTheme(getSavedTheme(), mode);
+        } else if (setting.key === 'overlay.fontSize' && typeof setting.value === 'number') {
+          document.documentElement.style.fontSize = `${setting.value}px`;
+        }
+      }
+    });
+
+    // Listen for live settings changes from admin
+    const unsubSettings = socketService.onSettingsChanged((event) => {
+      if (event.deleted) return;
+      if (event.key === 'overlay.theme') {
+        applyTheme(event.value as ThemeName, getSavedMode());
+      } else if (event.key === 'overlay.mode') {
+        applyTheme(getSavedTheme(), event.value as ThemeMode);
+      } else if (event.key === 'overlay.fontSize' && typeof event.value === 'number') {
+        document.documentElement.style.fontSize = `${event.value}px`;
+      }
+    });
 
     const unsubConnect = socketService.onConnect(() => {
       setConnected(true);
@@ -58,6 +99,7 @@ export default function App() {
     });
 
     return () => {
+      unsubSettings();
       unsubConnect();
       unsubDisconnect();
       socketService.disconnect();

@@ -1,105 +1,63 @@
 # Worxed Stream Manager - Tasks & Planning
 
-## 🔴 Critical Issues
+## Completed (v1.0 → v1.1)
 
-- [ ] Backend port conflict detection and handling
-- [ ] WebSocket reconnection logic improvements
-- [ ] Error boundary implementation for React components
-
-## 🎨 Theme System Overhaul (High Priority)
-
-### Phase 1: Multi-Theme Implementation
-
-- [ ] Create 3 professional theme palettes:
-  - [ ] **Magma Forge** (Console aesthetic) - High contrast, industrial
-  - [ ] **Techno-Organic** (Amber aesthetic) - Warm amber tones
-  - [ ] **Synthetica** (Monolith aesthetic) - Monochromatic, OLED-optimized
-- [ ] Implement light/dark mode toggle for each theme
-- [ ] Update `themes.ts` with comprehensive color palettes
-- [ ] Add mode switcher UI component alongside theme selector
-- [ ] Store theme + mode preference in localStorage
-
-### Phase 2: Architecture Updates
-
-- [ ] Implement gap-based layout system (12-16px between panels)
-- [ ] Apply 85-90% opacity to sidebar for floating aesthetic
-- [ ] Update AppShell spacing and panel styling
-- [ ] Add panel elevation/shadow effects
-- [ ] Test responsive behavior on different screen sizes
-
-## 🎯 UI/UX Improvements
-
-### Accessibility
-
-- [x] Replace terminal font (VT323) with Inter for readability
-- [x] Increase font sizes for 2K monitors (18px base)
-- [ ] Add keyboard navigation support
-- [ ] Implement focus indicators
-- [ ] Test color contrast ratios (WCAG AA compliance)
-- [ ] Add aria-labels to interactive elements
-
-### Dashboard Enhancements
-
-- [ ] Real-time viewer count display
-- [ ] Stream uptime tracker
-- [ ] Chat activity graph
-- [ ] Quick stats cards (follows, subs, bits)
-- [ ] Recent events timeline
-
-### Alerts System
-
-- [ ] Alert history viewer
-- [ ] Test alert functionality
-- [ ] Sound preview for alerts
-- [ ] Alert queue management
-- [ ] Custom alert templates
-
-### Overlay Customizer
-
-- [ ] Live preview iframe
-- [ ] Drag-and-drop positioning
-- [ ] Font selection for overlays
-- [ ] Animation speed controls
-- [ ] Export/import overlay configs
-
-### Backend Console
-
-- [ ] Add process restart button
-- [ ] Real-time log filtering
-- [ ] Log export functionality
-- [ ] System resource monitoring graphs
-- [ ] Connection history table
-
-## 🔧 Backend Features
-
-### Twitch Integration
-
-- [ ] Token refresh logic
-- [ ] Channel points redemption handling
-- [ ] Raid detection and alerts
-- [ ] Hype train events
-- [ ] Poll/Prediction integration
-
-### Database Layer (High Priority)
-
+### Database Layer
 - [x] Implement SQLite for local storage (better-sqlite3, WAL mode)
-- [x] Schema design:
-  - [x] `settings` - Key-value preferences with categories
-  - [x] `alert_configs` - Alert configurations per type
-  - [x] `events` - Event history (follows, subs, raids, donations)
-  - [x] `endpoints` - Custom endpoint definitions
-  - [x] `analytics` - Aggregated metrics and stats
-  - [x] `_migrations` - Schema version tracking
+- [x] Schema: settings, alert_configs, events, endpoints, analytics, _migrations
 - [x] Alert history storage (DB-backed, replaces in-memory)
 - [x] User preferences persistence (settings API)
 - [x] Analytics data collection (analytics table + helpers)
-- [ ] Backup/restore functionality
-- [ ] Data export (JSON/CSV)
+- [x] Graceful shutdown (waits for child processes before closing DB)
+- [x] Move admin UI from backend (4001) to supervisor (4000)
+- [x] Supervisor proxies /api/* and /webhooks/* to backend
 
-### Endpoint Builder (High Priority)
+### Endpoint Builder (Backend)
+- [x] CRUD API for custom endpoints (/api/endpoints)
+- [x] Dynamic /custom/* catch-all route handler
+- [x] Handler types: json, redirect, webhook, event
+- [x] Template resolution ({{body.key}}, {{query.key}}, etc.)
+- [x] Dry-run endpoint testing (/api/endpoints/:id/test)
+- [x] Path validation and duplicate detection
+- [x] Socket.IO events for endpoint CRUD changes
 
-- [ ] Visual API endpoint creator in admin console
-- [ ] Custom webhook handlers for external services
+### Settings & Endpoint Integration (Frontend ↔ Backend)
+- [x] Backend emits `settings-changed` on PUT/DELETE settings
+- [x] Frontend types: SettingEntry, SettingsChangedEvent, CustomEndpoint, CustomEvent
+- [x] Frontend API client: getSettings(), getEndpoints()
+- [x] Socket service: onSettingsChanged(), generic on(), onAnyCustomEvent()
+- [x] App.tsx: live settings sync (overlay.theme, overlay.mode, overlay.fontSize)
+- [x] EventFeed component on Dashboard (live custom endpoint events)
+- [x] OBS Overlay page (/overlay route) with alert + chat + custom event modes
+- [x] Overlay uses transparent background, inline styles, CSS animations
+
+### Theme System
+- [x] Create 3 professional theme palettes (Magma Forge, Techno-Organic, Synthetica)
+- [x] Implement light/dark mode toggle for each theme (6 variants)
+- [x] Update themes.ts with comprehensive color palettes
+- [x] Mode switcher UI component alongside theme selector
+- [x] Store theme + mode preference in localStorage
+- [x] DB settings override localStorage (overlay.theme, overlay.mode)
+- [x] Real-time theme propagation via settings-changed Socket.IO event
+
+### Accessibility
+- [x] Replace terminal font (VT323) with Inter for readability
+- [x] Increase font sizes for 2K monitors (18px base)
+
+### Admin Console Components
+- [x] DatabaseStatus - DB health, table counts, migration info
+- [x] ConfigManager - Settings CRUD with category filtering
+- [x] EventViewer - Event history browser with type filters
+- [x] EndpointBuilder - Visual custom endpoint creator
+- [x] JsonDesigner - JSON payload editor
+- [x] SettingsManager - Category-based settings UI
+
+---
+
+## In Progress
+
+### Endpoint Builder (Admin UI Polish)
+- [ ] Visual API endpoint creator improvements
 - [ ] Integration templates:
   - [ ] Discord webhooks (stream notifications)
   - [ ] OBS WebSocket commands
@@ -107,21 +65,65 @@
   - [ ] Slack notifications
 - [ ] Drag-and-drop endpoint configuration
 - [ ] Request/response mapping UI
-- [ ] Test endpoint functionality
 - [ ] Endpoint analytics (call counts, response times)
 
-### API Endpoints
+---
 
-- [ ] GET /api/stream-info
-- [ ] GET /api/alerts/history
-- [ ] POST /api/alerts/test
-- [ ] GET /api/analytics
-- [ ] WebSocket event documentation
+## Backlog
 
-## 🏗️ Architecture & Code Quality
+### Critical Issues
+- [ ] Backend port conflict detection and handling
+- [ ] WebSocket reconnection logic improvements
+- [ ] Error boundary implementation for React components
 
-### Code Organization
+### Theme System Polish
+- [ ] Implement gap-based layout system (12-16px between panels)
+- [ ] Apply 85-90% opacity to sidebar for floating aesthetic
+- [ ] Update AppShell spacing and panel styling
+- [ ] Add panel elevation/shadow effects
+- [ ] Test responsive behavior on different screen sizes
 
+### Accessibility
+- [ ] Add keyboard navigation support
+- [ ] Implement focus indicators
+- [ ] Test color contrast ratios (WCAG AA compliance)
+- [ ] Add aria-labels to interactive elements
+
+### Dashboard Enhancements
+- [ ] Real-time viewer count display
+- [ ] Stream uptime tracker
+- [ ] Chat activity graph
+- [ ] Quick stats cards (follows, subs, bits)
+
+### Alerts System
+- [ ] Alert history viewer
+- [ ] Sound preview for alerts
+- [ ] Alert queue management
+- [ ] Custom alert templates
+
+### Overlay Customizer
+- [ ] Live preview iframe
+- [ ] Drag-and-drop positioning
+- [ ] Font selection for overlays
+- [ ] Animation speed controls
+- [ ] Export/import overlay configs
+
+### Backend Console
+- [ ] Real-time log filtering
+- [ ] Log export functionality
+- [ ] System resource monitoring graphs
+- [ ] Connection history table
+
+### Database
+- [ ] Backup/restore functionality
+- [ ] Data export (JSON/CSV)
+
+### Twitch Integration
+- [ ] Channel points redemption handling
+- [ ] Hype train events
+- [ ] Poll/Prediction integration
+
+### Code Quality
 - [ ] Separate concerns (hooks, utils, constants)
 - [ ] Create custom hooks for socket management
 - [ ] Add TypeScript strict mode
@@ -129,7 +131,6 @@
 - [ ] Add loading states for async operations
 
 ### Performance
-
 - [ ] Implement React.memo for heavy components
 - [ ] Lazy load dashboard components
 - [ ] Optimize WebSocket message handling
@@ -137,31 +138,32 @@
 - [ ] Bundle size optimization
 
 ### Testing
-
 - [ ] Set up Vitest for unit tests
 - [ ] Add component tests (React Testing Library)
 - [ ] Integration tests for API routes
 - [ ] E2E tests for critical flows
 - [ ] WebSocket connection tests
 
-## 📚 Documentation
-
+### Documentation
 - [ ] API documentation (endpoints, events)
-- [ ] Component documentation (Storybook?)
 - [ ] Setup guide for new users
-- [ ] Environment variables reference
 - [ ] Troubleshooting guide
-- [ ] Architecture decision records (ADRs)
 
-## 🚀 Feature Roadmap
+---
 
-### v1.1 - Core Stability
+## Feature Roadmap
 
-- Theme system overhaul (3 themes × 2 modes)
-- Accessibility improvements (WCAG AA)
-- SQLite database integration
-- Better error handling & reconnection logic
-- Endpoint builder (basic)
+### v1.1 - Core Stability (Current)
+
+- ~~SQLite database integration~~ Done
+- ~~Endpoint builder (backend CRUD + handler)~~ Done
+- ~~Settings & endpoint frontend integration~~ Done
+- ~~OBS overlay page~~ Done
+- ~~Theme system (3 themes x 2 modes)~~ Done
+- Endpoint builder UI polish
+- Theme layout refinements (gaps, elevation)
+- WebSocket reconnection + error boundaries
+- Port conflict detection
 
 ### v1.2 - Integrations & Data
 
@@ -206,14 +208,17 @@
 - Twitch Extension companion
 - API for third-party developers
 
-## 🐛 Known Bugs
+---
 
-- [ ] Port 3001 conflict when backend crashes
+## Known Bugs
+
+- [ ] Port conflict when backend crashes (no detection/handling)
 - [ ] WebSocket disconnect doesn't always trigger reconnect
-- [ ] Theme switcher needs backend console case added to renderView
 - [ ] React strict mode console warnings
 
-## 💡 Ideas & Future Considerations
+---
+
+## Ideas & Future Considerations
 
 ### Integrations (Exploring)
 
@@ -256,9 +261,9 @@
 
 **Priority Legend:**
 
-- 🔴 Critical - Blocks functionality
-- 🎨 High - Significantly improves UX
-- 🎯 Medium - Quality of life improvements
-- 🚀 Low - Nice to have features
+- Critical - Blocks functionality
+- High - Significantly improves UX
+- Medium - Quality of life improvements
+- Low - Nice to have features
 
 **Last Updated:** February 1, 2026

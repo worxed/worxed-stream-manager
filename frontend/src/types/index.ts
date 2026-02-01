@@ -88,3 +88,39 @@ export interface RecentEvents {
   chatMessages: ChatMessage[];
   raids: ActivityItem[];
 }
+
+// Settings Types
+export interface SettingEntry {
+  key: string;
+  value: unknown;
+  category: string;
+  updated_at: string;
+}
+
+export interface SettingsChangedEvent {
+  key: string;
+  value: unknown;
+  category?: string;
+  deleted?: boolean;
+}
+
+// Custom Endpoint Types
+export interface CustomEndpoint {
+  id: number;
+  name: string;
+  path: string;
+  method: string;
+  handler: { type: string; event?: string; body?: unknown; url?: string; data?: unknown };
+  enabled: number;
+  description: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CustomEvent {
+  id: string;
+  eventName: string;
+  data: Record<string, unknown>;
+  endpointName?: string;
+  timestamp: string;
+}

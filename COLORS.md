@@ -1,39 +1,33 @@
-# 🎨 Worxed Stream Manager - Color System
+# Worxed Stream Manager - Color System
 
-## Current Theme: Neon Ember (Transitioning)
+## Multi-Theme System (Implemented)
 
-**Status:** The application is transitioning from a pure red/cyan cyberpunk theme to a multi-theme system with accessibility improvements.
+**Status:** Three professional themes with dark/light mode support are fully implemented in `frontend/src/themes/themes.ts`. Themes can be switched via the frontend ThemeSwitcher or remotely via admin settings (`overlay.theme`, `overlay.mode`). Changes propagate in real-time to all connected clients and OBS overlays.
 
-### Current Colors (Neon Ember)
-
-| Color Name | Hex Code | RGB | Usage |
-|------------|----------|-----|-------|
-| **Fire Red** | `#FF2D55` | rgb(255, 45, 85) | Primary accent, live indicators, critical alerts |
-| **Electric Cyan** | `#00FBFF` | rgb(0, 251, 255) | Secondary accent, data visualization |
-| **Nightshade** | `#0F0E17` | rgb(15, 14, 23) | Primary background |
-| **Cool Slate** | `#2C2C2E` | rgb(44, 44, 46) | Card backgrounds, neutral UI elements |
-
-### CSS Variables
+### CSS Variables (set dynamically by applyTheme)
 
 ```css
 :root {
-  --primary-bg: #0F0E17;
-  --fire-red: #FF2D55;
-  --electric-cyan: #00FBFF;
-  --cool-slate: #2C2C2E;
-  --border-color: rgba(255, 45, 85, 0.4);
-  --text-primary: #FF2D55;
-  --text-secondary: #00FBFF;
-  --text-muted: rgba(255, 45, 85, 0.7);
-  --card-bg: rgba(255, 45, 85, 0.08);
-  --hover-bg: rgba(255, 45, 85, 0.12);
-  --active-bg: rgba(255, 45, 85, 0.18);
+  /* Canvas */
+  --primary-bg, --surface, --surface-elevated, --card-bg, --card-elevated
+  /* Brand */
+  --primary, --secondary, --accent, --fire-red
+  /* Semantic */
+  --success, --warning, --danger
+  /* Structure */
+  --border-color, --divider
+  /* Typography */
+  --text-primary, --text-secondary, --text-muted
+  /* Interaction */
+  --hover-bg, --active-bg
+  /* Legacy mappings */
+  --electric-cyan, --cool-slate, --primary-green, --secondary-purple
 }
 ```
 
 ---
 
-## 🚀 Upcoming Theme System
+## Theme Definitions
 
 ### Theme 1: **Magma Forge** (Console Aesthetic)
 
@@ -202,10 +196,18 @@ function applyTheme(themeName: string) {
 }
 ```
 
-### Persistence
-- Theme preference stored in localStorage
-- Automatically applied on app load
-- Per-user customization support ready
+### Persistence & Sync
+- Theme preference stored in localStorage (fast fallback)
+- DB settings (`overlay.theme`, `overlay.mode`) are source of truth when reachable
+- Automatically applied on app load (localStorage first, then DB override)
+- Real-time sync via `settings-changed` Socket.IO event
+- Admin can change any connected frontend's theme remotely
+- OBS overlays at `/overlay` receive theme updates live
+
+### OBS Overlay Colors
+- The `/overlay` route accepts URL params for custom colors: `?primary=#FF3B30&secondary=#8B0000&bg=transparent`
+- Overlay uses inline styles (no Mantine) for OBS compatibility
+- Transparent background by default for compositing
 
 ---
 
@@ -223,4 +225,4 @@ function applyTheme(themeName: string) {
 
 ---
 
-**Last Updated:** January 28, 2026
+**Last Updated:** February 1, 2026

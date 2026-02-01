@@ -22,6 +22,7 @@ import {
 import { socketService } from '../services/socket';
 import { getStreamInfo, getAnalytics } from '../services/api';
 import type { StreamData, ActivityItem, ChatMessage } from '../types';
+import EventFeed from './EventFeed';
 
 export default function Dashboard() {
   const [streamData, setStreamData] = useState<StreamData>({
@@ -520,6 +521,8 @@ export default function Dashboard() {
           </Card>
         </Grid.Col>
       </Grid>
+
+      <EventFeed />
     </Stack>
   );
 }

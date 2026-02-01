@@ -7,13 +7,16 @@ Thanks for your interest in contributing! This guide will help you get started.
 ```
 worxed-stream-manager/
 ├── supervisor.js         # Process manager - START HERE for architecture
+├── shared/               # SQLite database layer (used by supervisor + backend)
 ├── backend/
-│   ├── server.js         # Express API + Socket.IO + Twitch
-│   └── admin/            # Vue admin console
-├── frontend/             # React stream manager
+│   ├── server.js         # Express API + Socket.IO + Twitch + Endpoint Builder
+│   └── admin/            # Vue admin console (11 components)
+├── frontend/             # React stream manager + OBS overlay
+│   └── src/components/   # Dashboard, Alerts, Customizer, EventFeed, Overlay
 ├── ARCHITECTURE.md       # Technical deep-dive
 ├── TASKS.md              # Roadmap & task tracking
-└── COLORS.md             # Theme specifications
+├── COLORS.md             # Theme specifications
+└── CLAUDE.md             # Claude Code context
 ```
 
 ## Quick Start for Contributors
@@ -34,8 +37,9 @@ cp .env.example .env
 npm start
 
 # 5. Access the apps
-# Admin Console: http://localhost:4001
+# Admin Console: http://localhost:4000
 # Stream Manager: http://localhost:5173
+# OBS Overlay: http://localhost:5173/overlay?type=alerts
 ```
 
 ## Development Workflow
@@ -43,10 +47,10 @@ npm start
 ### Ports Reference
 | Port | Service | When to use |
 |------|---------|-------------|
-| 4000 | Supervisor | Process management changes |
-| 4001 | Backend + Admin | API or Vue admin changes |
+| 4000 | Supervisor + Admin | Process management, Vue admin changes |
+| 4001 | Backend | API, Twitch, Endpoint Builder changes |
 | 4002 | Admin Dev | `npm run dev:admin` for hot reload |
-| 5173 | Frontend | React/UI changes |
+| 5173 | Frontend | React/UI changes, OBS overlay (/overlay) |
 
 ### Running Individual Services
 
@@ -70,9 +74,12 @@ npm run build:admin
 
 Check [TASKS.md](TASKS.md) for the full roadmap. Current priorities:
 
-1. **Database Layer** - SQLite integration for persistent storage
-2. **Endpoint Builder** - Visual API endpoint creator
-3. **Theme System** - Implement 3 themes × 2 modes from COLORS.md
+1. ~~**Database Layer**~~ Done
+2. ~~**Endpoint Builder**~~ Done
+3. ~~**Settings & Endpoint Integration**~~ Done
+4. **Endpoint Builder UI polish** - integration templates, drag-and-drop
+5. **Theme layout refinements** - gaps, elevation, floating sidebar
+6. **Quality** - WebSocket reconnection, error boundaries
 
 ### Good First Issues
 
@@ -81,7 +88,7 @@ Check [TASKS.md](TASKS.md) for the full roadmap. Current priorities:
 - Bug fixes (see Known Bugs in TASKS.md)
 - Test coverage
 
-### Bigger Features
+### Bigger Features (v1.2+)
 
 - OBS WebSocket integration
 - Stream Deck plugin
@@ -141,7 +148,7 @@ docs: update API endpoints in ARCHITECTURE.md
 
 3. **Test locally**
    - Run `npm start` and verify everything works
-   - Check both Admin (4001) and Frontend (5173)
+   - Check Admin (4000) and Frontend (5173)
 
 4. **Update documentation** if needed
    - README.md for user-facing changes

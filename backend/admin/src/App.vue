@@ -16,6 +16,7 @@ import {
   NTag,
   NAlert,
   NScrollbar,
+  NMessageProvider,
   darkTheme,
 } from 'naive-ui';
 import {
@@ -28,6 +29,7 @@ import {
   IconPlayerStop,
   IconExternalLink,
   IconDatabase,
+  IconApi,
 } from '@tabler/icons-vue';
 
 import StatusCard from './components/StatusCard.vue';
@@ -35,8 +37,9 @@ import ProcessManager from './components/ProcessManager.vue';
 import LogViewer from './components/LogViewer.vue';
 import LiveTerminal from './components/LiveTerminal.vue';
 import DatabaseStatus from './components/DatabaseStatus.vue';
-import ConfigManager from './components/ConfigManager.vue';
+import SettingsManager from './components/SettingsManager.vue';
 import EventViewer from './components/EventViewer.vue';
+import EndpointBuilder from './components/EndpointBuilder.vue';
 
 // Supervisor state
 const supervisorStatus = ref(null);
@@ -150,6 +153,7 @@ const menuOptions = [
   { label: 'Dashboard', key: 'dashboard', icon: IconActivity },
   { label: 'Processes', key: 'processes', icon: IconServer },
   { label: 'Logs', key: 'logs', icon: IconTerminal2 },
+  { label: 'Endpoints', key: 'endpoints', icon: IconApi },
   { label: 'Database', key: 'database', icon: IconDatabase },
   { label: 'Settings', key: 'settings', icon: IconSettings },
 ];
@@ -168,6 +172,7 @@ onUnmounted(() => {
 
 <template>
   <NConfigProvider :theme="darkTheme">
+    <NMessageProvider>
     <NLayout has-sider style="height: 100vh;">
       <!-- Sidebar -->
       <NLayoutSider
@@ -364,6 +369,11 @@ onUnmounted(() => {
             <LiveTerminal :max-lines="1000" />
           </div>
 
+          <!-- Endpoints View -->
+          <div v-else-if="activeMenu === 'endpoints'">
+            <EndpointBuilder />
+          </div>
+
           <!-- Database View -->
           <div v-else-if="activeMenu === 'database'">
             <div style="display: flex; flex-direction: column; gap: 16px;">
@@ -374,11 +384,12 @@ onUnmounted(() => {
 
           <!-- Settings View -->
           <div v-else-if="activeMenu === 'settings'">
-            <ConfigManager />
+            <SettingsManager />
           </div>
         </NLayoutContent>
       </NLayout>
     </NLayout>
+    </NMessageProvider>
   </NConfigProvider>
 </template>
 

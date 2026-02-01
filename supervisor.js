@@ -18,6 +18,10 @@ const path = require('path');
 const { WebSocketServer } = require('ws');
 const db = require('./shared');
 
+function getSetting(key, defaultValue) {
+  try { return db.settings.get(key, defaultValue); } catch { return defaultValue; }
+}
+
 const ADMIN_DIR = path.join(__dirname, 'backend', 'public');
 const BACKEND_PORT = 4001;
 
@@ -57,8 +61,8 @@ let frontendLastStartTime = null;
 
 // WebSocket clients for log streaming
 const wsClients = new Set();
-const logBuffer = []; // Keep last 100 logs for new connections
-const MAX_LOG_BUFFER = 100;
+const logBuffer = [];
+function getMaxLogBuffer() { return getSetting('general.log_buffer_size', 100); }
 
 // ANSI colors for console output
 const c = {
@@ -83,7 +87,7 @@ function broadcastLog(source, message, type = 'info') {
 
   // Add to buffer
   logBuffer.push(logEntry);
-  if (logBuffer.length > MAX_LOG_BUFFER) {
+  if (logBuffer.length > getMaxLogBuffer()) {
     logBuffer.shift();
   }
 
@@ -170,7 +174,7 @@ function restartBackend() {
   restartCount++;
   log(`Restarting backend (restart #${restartCount})...`, 'cyan');
   stopBackend();
-  setTimeout(startBackend, 500); // Small delay to ensure clean shutdown
+  setTimeout(startBackend, getSetting('services.restart_delay', 500));
 }
 
 // ===========================================
@@ -253,7 +257,7 @@ function stopFrontend() {
 function restartFrontend() {
   log('Restarting frontend...', 'cyan');
   stopFrontend();
-  setTimeout(startFrontend, 500);
+  setTimeout(startFrontend, getSetting('services.restart_delay', 500));
 }
 
 function getStatus() {
@@ -374,6 +378,12 @@ const server = http.createServer((req, res) => {
 
   // --- Proxy /webhooks/* to backend ---
   if (url.startsWith('/webhooks/')) {
+    proxyToBackend(req, res);
+    return;
+  }
+
+  // --- Proxy /custom/* to backend ---
+  if (url.startsWith('/custom/')) {
     proxyToBackend(req, res);
     return;
   }
@@ -514,11 +524,12 @@ function gracefulShutdown(signal) {
     stopBackend();
   }
 
-  // Wait for children to exit (up to 3s), then clean up
+  // Wait for children to exit, then clean up
+  const shutdownTimeout = getSetting('services.shutdown_timeout', 3000);
   const childTimeout = setTimeout(() => {
     log('Children did not exit in time, continuing shutdown...', 'yellow');
     finish();
-  }, 3000);
+  }, shutdownTimeout);
 
   Promise.all(exitPromises).then(() => {
     clearTimeout(childTimeout);

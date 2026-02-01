@@ -4,7 +4,8 @@ import type {
   Alert,
   AlertSettings,
   RecentEvents,
-  ActivityItem
+  ActivityItem,
+  SettingsChangedEvent
 } from '../types';
 
 type EventCallback<T> = (data: T) => void;
@@ -25,6 +26,7 @@ class SocketService {
     onNewSubscriber: EventCallback<ActivityItem>[];
     onRaid: EventCallback<ActivityItem>[];
     onOverlayUpdate: EventCallback<unknown>[];
+    onSettingsChanged: EventCallback<SettingsChangedEvent>[];
   } = {
     onConnect: [],
     onDisconnect: [],
@@ -36,7 +38,11 @@ class SocketService {
     onNewSubscriber: [],
     onRaid: [],
     onOverlayUpdate: [],
+    onSettingsChanged: [],
   };
+
+  // Dynamic event callbacks for custom endpoint events
+  private dynamicCallbacks: Map<string, EventCallback<unknown>[]> = new Map();
 
   connect(): void {
     if (this.socket?.connected) {
@@ -100,6 +106,10 @@ class SocketService {
 
     this.socket.on('overlay-update', (data: unknown) => {
       this.callbacks.onOverlayUpdate.forEach(cb => cb(data));
+    });
+
+    this.socket.on('settings-changed', (data: SettingsChangedEvent) => {
+      this.callbacks.onSettingsChanged.forEach(cb => cb(data));
     });
   }
 
@@ -178,6 +188,45 @@ class SocketService {
     return () => {
       this.callbacks.onOverlayUpdate = this.callbacks.onOverlayUpdate.filter(cb => cb !== callback);
     };
+  }
+
+  onSettingsChanged(callback: EventCallback<SettingsChangedEvent>): () => void {
+    this.callbacks.onSettingsChanged.push(callback);
+    return () => {
+      this.callbacks.onSettingsChanged = this.callbacks.onSettingsChanged.filter(cb => cb !== callback);
+    };
+  }
+
+  // Generic event subscription for dynamic event names (custom endpoints)
+  on(eventName: string, callback: EventCallback<unknown>): () => void {
+    if (!this.dynamicCallbacks.has(eventName)) {
+      this.dynamicCallbacks.set(eventName, []);
+      // Register the socket listener once per event name
+      this.socket?.on(eventName, (data: unknown) => {
+        this.dynamicCallbacks.get(eventName)?.forEach(cb => cb(data));
+      });
+    }
+    this.dynamicCallbacks.get(eventName)!.push(callback);
+
+    return () => {
+      const cbs = this.dynamicCallbacks.get(eventName);
+      if (cbs) {
+        const idx = cbs.indexOf(callback);
+        if (idx !== -1) cbs.splice(idx, 1);
+        if (cbs.length === 0) {
+          this.socket?.off(eventName);
+          this.dynamicCallbacks.delete(eventName);
+        }
+      }
+    };
+  }
+
+  // Subscribe to multiple custom event names with a single callback
+  onAnyCustomEvent(eventNames: string[], callback: EventCallback<{ eventName: string; data: unknown }>): () => void {
+    const unsubs = eventNames.map(name =>
+      this.on(name, (data) => callback({ eventName: name, data }))
+    );
+    return () => unsubs.forEach(unsub => unsub());
   }
 
   // Emit methods
