@@ -1,0 +1,88 @@
+/* Neon Ember - Cyberpunk Minimalist Theme */
+:root {
+  --primary-bg: #0F0E17;
+  --fire-red: #FF2D55;
+  --electric-cyan: #00FBFF;
+  --cool-slate: #2C2C2E;
+  --border-color: rgba(255, 45, 85, 0.4);
+  --text-primary: #FF2D55;
+  --text-secondary: #00FBFF;
+  --text-muted: rgba(255, 45, 85, 0.7);
+  --card-bg: rgba(255, 45, 85, 0.08);
+  --hover-bg: rgba(255, 45, 85, 0.12);
+  --active-bg: rgba(255, 45, 85, 0.18);
+  
+  /* Legacy variable mappings for compatibility */
+  --primary-green: var(--fire-red);
+  --secondary-purple: var(--electric-cyan);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+  background: var(--primary-bg);
+  color: var(--text-primary);
+  font-size: 18px;
+  line-height: 1.6;
+  font-weight: 400;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--primary-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--fire-red);
+}
+
+/* Status indicator animation - Neon Ember */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 8px var(--fire-red);
+  }
+  50% {
+    box-shadow: 0 0 20px var(--fire-red), 0 0 30px rgba(255, 45, 85, 0.5);
+  }
+}
+
+.status-live {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Neon text glow effects */
+.text-glow {
+  text-shadow: 0 0 12px var(--fire-red), 0 0 20px rgba(255, 45, 85, 0.6);
+}
+
+.text-glow-cyan {
+  text-shadow: 0 0 12px var(--electric-cyan), 0 0 20px rgba(0, 251, 255, 0.6);
+}
+
+/* Card hover effects */
+.card-hover:hover {
+  border-color: var(--fire-red);
+  box-shadow: 0 0 24px rgba(255, 45, 85, 0.3), 0 8px 32px rgba(255, 45, 85, 0.15);
+  transform: translateY(-2px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}

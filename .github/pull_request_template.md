@@ -1,32 +1,43 @@
-## 🎯 Description
-Brief description of changes
+## Summary
+Brief description of changes.
 
-## 🔗 Related Issues
-- Closes #issue-number
-- Related to #issue-number
+## Type of Change
+- [ ] Bug fix
+- [ ] New feature
+- [ ] Documentation
+- [ ] Refactoring
+- [ ] Performance improvement
+- [ ] Other (describe):
 
-## 🧪 Testing
-- [ ] Unit tests added/updated
-- [ ] Integration tests pass
-- [ ] Manual testing completed
-- [ ] Cross-browser testing done
+## Changes Made
+- Change 1
+- Change 2
+- Change 3
 
-## 📸 Screenshots
-(if applicable)
+## Testing
+Describe how you tested these changes:
+- [ ] Tested Admin Console (localhost:4001)
+- [ ] Tested Frontend (localhost:5173)
+- [ ] Tested Supervisor controls
+- [ ] Tested on Windows / Mac / Linux
 
-## 🔍 Checklist
-- [ ] Code follows style guidelines
-- [ ] Self-review completed
-- [ ] Documentation updated
-- [ ] No breaking changes (or documented)
-- [ ] Labels and milestone assigned
-- [ ] Reviewers assigned
+## Screenshots (if UI changes)
 
-## 🎨 Design Considerations
-- [ ] Matches worxed.com aesthetic
-- [ ] Terminal/cyberpunk theme maintained
-- [ ] Responsive design implemented
-- [ ] Accessibility considerations
 
-## 🚀 Deployment Notes
-(Any special deployment considerations)
+## Documentation
+- [ ] Updated README.md (if needed)
+- [ ] Updated ARCHITECTURE.md (if structural changes)
+- [ ] Updated TASKS.md (marked items complete)
+- [ ] No documentation needed
+
+## Checklist
+- [ ] Code follows existing style
+- [ ] Self-reviewed my code
+- [ ] Tested locally with `npm start`
+- [ ] No console errors/warnings introduced
+
+## Related Issues
+Closes #
+
+## Notes for Reviewers
+Any specific areas to focus on during review.
