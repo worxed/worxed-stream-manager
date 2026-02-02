@@ -1,6 +1,6 @@
 # Worxed Stream Manager - Git Ignore File
 # =====================================
-
+archive
 # Environment and Configuration Files
 .env
 .env.*
@@ -163,6 +163,7 @@ temp/
 *.temp
 
 # Database Files
+data/
 *.db
 *.sqlite
 *.sqlite3
@@ -241,4 +242,6 @@ storybook-static/
 # Windows Shortcuts
 *.lnk 
 
-
+# AI Assistant specific
+.claude
+CLAUDE.md

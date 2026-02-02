@@ -1,363 +1,414 @@
-# 🎮 Worxed Stream Manager
+# WORXED Stream Manager
 
-A comprehensive, self-hosted streaming overlay and alert system for Twitch streamers. Built with a retro terminal aesthetic and complete independence from third-party services like StreamElements or Streamlabs.
+A comprehensive, self-hosted streaming overlay and alert system for Twitch. Built with a modern **React + Node.js + Vue** stack featuring real-time WebSocket communication, a professional multi-theme interface, and OBS overlay support.
 
-![Terminal Theme](https://img.shields.io/badge/Theme-Terminal-brightgreen)
-![Node.js](https://img.shields.io/badge/Node.js-18+-blue)
+**Complete independence from third-party services** like StreamElements or Streamlabs - you own your data and control your stream experience.
+
+![Node.js](https://img.shields.io/badge/Node.js-18+-green)
+![React](https://img.shields.io/badge/React-18-61dafb)
+![Vue](https://img.shields.io/badge/Vue-3-42b883)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.6-blue)
+![SQLite](https://img.shields.io/badge/SQLite-WAL-003B57)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
-![Twitch](https://img.shields.io/badge/Platform-Twitch-purple)
 
-## ✨ Features
+## Architecture Overview
 
-### 🎨 **Dual Overlay Themes**
-- **Standard Theme**: Clean, modern overlay design
-- **Worxed Terminal Theme**: Retro terminal aesthetic with VT323 font, scanlines, and glowing effects
+```
+                    ┌─────────────────────────────────────┐
+                    │     SUPERVISOR (port 4000)          │
+                    │  Process manager + Admin UI host    │
+                    │  API proxy + WebSocket logs         │
+                    │  SQLite database init               │
+                    └──────────────┬──────────────────────┘
+                                   │ spawns & monitors
+                    ┌──────────────▼──────────────────────┐
+                    │     BACKEND (port 4001)             │
+                    │  Express API + Socket.IO + tmi.js   │
+                    │  Endpoint Builder (/custom/*)       │
+                    │  Twitch OAuth + EventSub            │
+                    │  Settings sync (Socket.IO events)   │
+                    └──────────────┬──────────────────────┘
+                                   │ WebSocket + REST
+                    ┌──────────────▼──────────────────────┐
+                    │   STREAM MANAGER (port 5173)        │
+                    │  React + Mantine + TypeScript       │
+                    │  Dashboard, Alerts, Customizer      │
+                    │  OBS Overlay (/overlay)             │
+                    └─────────────────────────────────────┘
+```
 
-### 🚨 **Complete Alert System**
-- Real-time follower alerts
-- Subscriber notifications (all tiers)
-- Donation alerts (any payment processor)
-- Cheer/bits alerts
-- Raid notifications
-- Custom event alerts
-- Milestone celebrations
+| Service | Port | Description |
+|---------|------|-------------|
+| **Supervisor + Admin** | 4000 | Process manager, Vue admin console, API proxy |
+| **Backend** | 4001 | API server, Twitch integration, Endpoint Builder |
+| **Stream Manager** | 5173 | React frontend, OBS overlays |
 
-### 📊 **Live Overlays**
-- **Chat Overlay**: Real-time chat display with badges
-- **Alert Overlay**: Animated notifications
-- **Stats Overlay**: Live follower/viewer counts
-- **Game Overlay**: Current game and recent followers
-
-### 🛠️ **Management Dashboard**
-- Real-time overlay customization
-- Alert testing and configuration
-- Multi-stream profile management
-- Live analytics and statistics
-- Event logging and monitoring
-
-### 🔧 **Advanced Features**
-- **Production OAuth**: Secure Twitch API integration
-- **Multi-Stream Support**: Manage multiple channels
-- **Webhook System**: Custom donation integrations
-- **Real-time Updates**: WebSocket-powered live data
-- **Export/Import**: Backup and restore configurations
-- **Comprehensive Testing**: 54 automated tests
-
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
-- Node.js 14+ 
-- Twitch Developer Account
-- OBS Studio (for overlays)
 
-### 1. Installation
+- **Node.js 18+**
+- **pnpm** (recommended) or npm
+- **Twitch Developer Account** ([dev.twitch.tv](https://dev.twitch.tv/console))
+
+### Installation
+
 ```bash
+# Clone the repository
 git clone https://github.com/yourusername/worxed-stream-manager.git
 cd worxed-stream-manager
-npm install
+
+# Install all dependencies
+npm run install:all
+
+# Copy and configure environment
+cp .env.example .env
+# Edit .env with your Twitch credentials
 ```
 
-### 2. Configuration
-```bash
-# Copy environment template
-cp env.example .env
+### Configuration
 
-# Run OAuth setup (creates production tokens)
-npm run setup
+Create a `.env` file in the root directory:
 
-# Start the server
-npm start
-```
-
-### 3. Add to OBS
-Add Browser Sources with these URLs:
-- **Chat**: `http://localhost:3000/overlay-worxed/chat`
-- **Alerts**: `http://localhost:3000/overlay-worxed/alerts`
-- **Stats**: `http://localhost:3000/overlay-worxed/stats`
-
-### 4. Access Dashboard
-Open `http://localhost:3000` for the management dashboard.
-
-## 📋 Available Endpoints
-
-### Overlays
-| URL | Description | Theme |
-|-----|-------------|-------|
-| `/overlay/chat` | Chat overlay | Standard |
-| `/overlay/alerts` | Alert notifications | Standard |
-| `/overlay/stats` | Live statistics | Standard |
-| `/overlay/game` | Game information | Standard |
-| `/overlay-worxed/chat` | Chat overlay | Terminal |
-| `/overlay-worxed/alerts` | Alert notifications | Terminal |
-| `/overlay-worxed/stats` | Live statistics | Terminal |
-| `/overlay-worxed/game` | Game information | Terminal |
-
-### Management
-| URL | Description |
-|-----|-------------|
-| `/` | Main dashboard |
-| `/customizer` | Real-time overlay customizer |
-| `/alerts` | Alert manager and testing |
-
-### API Endpoints
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/custom-alert` | POST | Trigger custom alerts |
-| `/webhooks/donation` | POST | Donation webhook |
-| `/webhooks/twitch` | POST | Twitch EventSub webhook |
-| `/api/analytics` | GET | Stream analytics |
-| `/api/config` | GET/POST | Configuration management |
-
-## 🔐 OAuth Setup
-
-### Option 1: Device Code Flow (Recommended)
-```bash
-npm run setup
-```
-- No HTTPS required
-- Perfect for local development
-- Secure production tokens
-
-### Option 2: Manual Setup
-1. Create app at [Twitch Developer Console](https://dev.twitch.tv/console)
-2. Set redirect URI: `http://localhost:3000/auth/callback`
-3. Generate Client ID and Secret
-4. Update `.env` file
-
-## 🎯 Testing
-
-### Run All Tests
-```bash
-npm test
-```
-
-### Specific Test Suites
-```bash
-npm run test:health      # Server health
-npm run test:oauth       # OAuth validation
-npm run test:api         # Twitch API
-npm run test:overlays    # Overlay pages
-npm run test:alerts      # Alert system
-```
-
-### Pre-Test Check
-```bash
-npm run pretest
-```
-
-## 🎨 Customization
-
-### Terminal Theme Colors
-- **Background**: `#121318` (Dark terminal)
-- **Primary**: `#8cffbe` (Pastel green)
-- **Secondary**: `#b893ff` (Pastel purple)
-- **Font**: VT323 (Monospace terminal font)
-
-### Custom Alerts
-```javascript
-// Send custom alert via API
-fetch('/api/custom-alert', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    type: 'milestone',
-    data: {
-      title: '1000 Followers!',
-      message: 'Thank you everyone!',
-      timestamp: new Date().toISOString()
-    }
-  })
-});
-```
-
-### Donation Integration
-```javascript
-// Webhook for payment processors
-fetch('/webhooks/donation', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    username: 'DonorName',
-    amount: '5.00',
-    message: 'Great stream!',
-    currency: 'USD',
-    processor: 'paypal'
-  })
-});
-```
-
-## 🔧 Configuration Management
-
-### Multi-Stream Profiles
-- Save unlimited stream configurations
-- Quick switching between channels
-- Export/import profile backups
-- Real-time configuration updates
-
-### Environment Variables
-```bash
-# Required
+```env
+# Twitch Application (from dev.twitch.tv/console)
 TWITCH_CLIENT_ID=your_client_id
 TWITCH_CLIENT_SECRET=your_client_secret
+
+# OAuth Tokens
 TWITCH_OAUTH_TOKEN=your_oauth_token
 TWITCH_REFRESH_TOKEN=your_refresh_token
-TWITCH_CHANNEL=your_username
-TWITCH_BOT_USERNAME=your_username
 
-# Optional
-PORT=3000
-WEBHOOK_URL=https://your-domain.com/webhooks/twitch
-TWITCH_WEBHOOK_SECRET=your_webhook_secret
+# Channel Configuration
+TWITCH_CHANNEL=your_twitch_username
+TWITCH_BOT_USERNAME=your_twitch_username
+
+# Server (don't change unless needed)
+PORT=4001
 ```
 
-## 📊 Analytics & Monitoring
+### Start Development
 
-### Live Statistics
-- Current viewer count
-- Total followers
-- Chat message count
-- Stream uptime
-- Recent events
-
-### Event Logging
-- All alerts and notifications
-- Configuration changes
-- API requests
-- Error tracking
-- Performance metrics
-
-## 🌐 Production Deployment
-
-### Local Development
 ```bash
+# Start everything (recommended)
 npm start
-# Server runs on http://localhost:3000
+
+# This starts:
+# - Supervisor + Admin on http://localhost:4000
+# - Backend API on http://localhost:4001
+# - Frontend on http://localhost:5173
 ```
 
-### Production (VPS/Cloud)
-1. Set up domain with SSL
-2. Configure reverse proxy (nginx/Apache)
-3. Update `WEBHOOK_URL` in `.env`
-4. Use PM2 for process management
-5. Set up Twitch EventSub webhooks
+### Access Points
 
-### Docker (Optional)
+| URL | What You Get |
+|-----|--------------|
+| `http://localhost:4000` | Admin Console (process management, settings, endpoints) |
+| `http://localhost:5173` | Stream Manager (overlays, alerts, dashboard) |
+| `http://localhost:5173/overlay?type=alerts` | OBS Alert Overlay (transparent, browser source) |
+| `http://localhost:5173/overlay?type=chat` | OBS Chat Overlay (transparent, browser source) |
+| `http://localhost:4000/status` | Supervisor API (JSON status) |
+
+## Features
+
+### Stream Manager (React Frontend)
+
+- **Dashboard** - Real-time stream stats, activity feed, live chat, custom event feed
+- **Alerts** - Configure and test follower/sub/raid/donation alerts
+- **Customizer** - Design overlays, generate OBS browser source URLs
+- **Backend Console** - Monitor system, view logs, run commands
+
+### OBS Overlay
+
+Dedicated overlay page at `/overlay` for OBS browser sources:
+- **Transparent background** for compositing
+- **Alert mode** - Animated popup for follows, subs, raids, donations
+- **Chat mode** - Bottom-aligned chat messages with fade-in
+- **Custom events** - Endpoint builder events appear as popups
+- **Live settings sync** - Admin changes theme/font size, overlay updates instantly
+- URL params for colors, font size, overlay type
+
+### Admin Console (Vue)
+
+- **Process Manager** - Start/stop/restart backend and frontend
+- **Live Terminal** - Real-time log streaming from all services
+- **Status Cards** - Service health, uptime, connection status
+- **Database Status** - DB health, table counts, migration info
+- **Settings Manager** - Category-based key-value settings CRUD
+- **Event Viewer** - Browse event history with type filters
+- **Endpoint Builder** - Create custom API endpoints with handler types:
+  - **JSON** - Return static/templated JSON responses
+  - **Redirect** - HTTP redirects with template URLs
+  - **Webhook** - Forward requests to external services
+  - **Event** - Emit Socket.IO events (shows on Dashboard + Overlay)
+
+### Custom Endpoint Builder
+
+Create API endpoints that external tools (Stream Deck, scripts, webhooks) can call:
+
 ```bash
-docker build -t worxed-stream-manager .
-docker run -p 3000:3000 --env-file .env worxed-stream-manager
+# Example: Create a "hype" endpoint that emits a Socket.IO event
+# (via admin console or API)
+curl -X POST http://localhost:4000/api/endpoints \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Hype","path":"hype","method":"POST","handler":{"type":"event","event":"hype-alert","data":{"message":"LETS GO!"}}}'
+
+# Trigger it
+curl -X POST http://localhost:4000/custom/hype
+
+# → Dashboard EventFeed shows the event
+# → OBS Overlay shows a popup
 ```
 
-## 🛠️ Development
+### Multi-Theme System
 
-### Project Structure
+Three professional themes with light/dark modes:
+
+| Theme | Style | Primary Color |
+|-------|-------|---------------|
+| **Magma Forge** | Industrial command center | `#FF3B30` (Red) |
+| **Techno-Organic** | Warm amber aesthetic | `#FFB627` (Amber) |
+| **Synthetica** | Monochromatic OLED | `#B8C5D6` (Cool gray) |
+
+Themes can be changed from the frontend ThemeSwitcher or remotely via admin settings (`overlay.theme`, `overlay.mode`). Changes propagate in real-time to all connected clients and overlays.
+
+### Real-Time Communication
+
+- **WebSocket** via Socket.IO for instant updates
+- **Twitch IRC** via tmi.js for chat messages
+- **EventSub** webhooks for follows, subs, raids
+- **Settings sync** - Admin changes push to all clients instantly
+- **Custom events** - Endpoint builder events flow to Dashboard + Overlay
+
+### SQLite Database
+
+Persistent storage with WAL mode for concurrent access:
+- **Settings** - Key-value config with categories
+- **Alert configs** - Per-type alert configuration
+- **Events** - Full history of follows, subs, raids, endpoint calls
+- **Endpoints** - Custom API endpoint definitions
+- **Analytics** - Aggregated metrics
+
+## API Reference
+
+### Supervisor API (port 4000)
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/` | GET | Admin console (Vue SPA) |
+| `/status` | GET | Full system status |
+| `/start` | POST | Start backend |
+| `/stop` | POST | Stop backend |
+| `/restart` | POST | Restart backend |
+| `/frontend/start` | POST | Start frontend dev server |
+| `/frontend/stop` | POST | Stop frontend |
+| `/start-all` | POST | Start all services |
+| `/stop-all` | POST | Stop all services |
+| `/db/status` | GET | Database stats |
+| `/db/settings` | GET | All settings |
+| `/api/*` | * | Proxied to backend |
+| `/webhooks/*` | * | Proxied to backend |
+
+### Backend API (port 4001)
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/status` | GET | Server health & connection status |
+| `/api/stream` | GET | Current stream info |
+| `/api/analytics` | GET | Session analytics |
+| `/api/alerts` | GET/POST | Alert settings (legacy format) |
+| `/api/alerts/configs` | GET | Detailed alert configs from DB |
+| `/api/alerts/configs/:type` | PUT | Update specific alert config |
+| `/api/test-alert` | POST | Trigger test alert |
+| `/api/settings` | GET | All settings (?category=) |
+| `/api/settings/:key` | GET/PUT/DELETE | Single setting CRUD |
+| `/api/events` | GET | Event history (?type=&limit=&offset=) |
+| `/api/events/summary` | GET | Event counts by type |
+| `/api/endpoints` | GET/POST | List/create custom endpoints |
+| `/api/endpoints/:id` | GET/PUT/DELETE | Single endpoint CRUD |
+| `/api/endpoints/:id/test` | POST | Dry-run endpoint (no side effects) |
+| `/api/db/status` | GET | Database stats |
+| `/api/navigation` | GET | Service discovery |
+| `/webhooks/twitch` | POST | Twitch EventSub endpoint |
+| `/custom/*` | * | Dynamic custom endpoint handler |
+
+## Project Structure
+
 ```
-├── server.js                 # Main server
-├── public/                   # Frontend files
-│   ├── index.html           # Dashboard
-│   ├── overlay.html         # Standard overlays
-│   ├── overlay-worxed.html  # Terminal overlays
-│   ├── customizer.html      # Overlay customizer
-│   └── alerts-manager.html  # Alert management
-├── test-suite.js            # Comprehensive tests
-├── setup-production-auth-device.js # OAuth setup
-└── env.example              # Environment template
+worxed-stream-manager/
+├── supervisor.js           # Process manager (entry point)
+├── shared/                 # SQLite database layer
+│   ├── database.js         # Connection manager (WAL mode)
+│   ├── schema.js           # Table definitions
+│   ├── migrations.js       # Migration runner
+│   └── index.js            # Query helpers
+├── data/
+│   └── worxed.db           # SQLite database (auto-created)
+├── backend/
+│   ├── server.js           # Express + Socket.IO + Endpoint Builder
+│   ├── admin/              # Vue 3 admin console source
+│   │   └── src/
+│   │       ├── App.vue
+│   │       └── components/ # 11 components
+│   └── public/             # Built admin UI (served by supervisor)
+├── frontend/
+│   ├── src/
+│   │   ├── App.tsx         # Root: /overlay routing + AppMain
+│   │   ├── components/
+│   │   │   ├── Dashboard.tsx     # Stats, chat, activity, EventFeed
+│   │   │   ├── Alerts.tsx        # Alert configuration
+│   │   │   ├── Customizer.tsx    # Overlay designer
+│   │   │   ├── BackendDashboard.tsx
+│   │   │   ├── ThemeSwitcher.tsx
+│   │   │   ├── EventFeed.tsx     # Live custom event feed
+│   │   │   └── Overlay.tsx       # OBS browser source page
+│   │   ├── services/       # socket.ts, api.ts
+│   │   ├── themes/         # 3 themes x 2 modes
+│   │   └── types/          # TypeScript interfaces
+│   └── vite.config.ts
+├── .env                    # Environment variables
+├── ARCHITECTURE.md         # Technical architecture
+├── COLORS.md               # Theme color specifications
+├── TASKS.md                # Project roadmap
+├── CONTRIBUTING.md         # Contribution guidelines
+└── CLAUDE.md               # Claude Code context
 ```
 
-### Adding New Features
-1. Update server endpoints in `server.js`
-2. Add frontend components to `public/`
-3. Create tests in `test-suite.js`
-4. Update documentation
+## Development Commands
 
-### Contributing
-1. Fork the repository
-2. Create feature branch
-3. Add tests for new features
-4. Ensure all tests pass
-5. Submit pull request
+```bash
+# Full stack (supervisor manages everything)
+npm start
 
-## 📝 API Documentation
+# Individual services
+npm run dev:admin      # Admin console only (port 4002)
+npm run dev:frontend   # Stream manager only (port 5173)
 
-### Custom Alert API
-```http
-POST /api/custom-alert
-Content-Type: application/json
-
-{
-  "type": "custom-follow",
-  "data": {
-    "username": "NewFollower",
-    "timestamp": "2024-01-01T00:00:00.000Z"
-  }
-}
+# Build for production
+npm run build          # Build both admin and frontend
+npm run build:admin    # Admin only → backend/public/
+npm run build:frontend # Frontend only
 ```
 
-### Donation Webhook
-```http
-POST /webhooks/donation
-Content-Type: application/json
+## Documentation
 
-{
-  "username": "DonorName",
-  "amount": "5.00",
-  "message": "Great stream!",
-  "currency": "USD",
-  "processor": "paypal"
-}
+| File | Description |
+|------|-------------|
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Technical architecture & system design |
+| [COLORS.md](COLORS.md) | Complete theme color specifications |
+| [TASKS.md](TASKS.md) | Project roadmap & task tracking |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Contribution guidelines & templates |
+| [CLAUDE.md](CLAUDE.md) | Claude Code session context |
+
+## Contributing
+
+We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for:
+
+- Development setup
+- Code guidelines
+- PR/Issue templates
+- Where to contribute (check TASKS.md for priorities)
+
+**Quick start:**
+```bash
+git clone https://github.com/YOUR_USERNAME/worxed-stream-manager.git
+cd worxed-stream-manager
+npm run install:all
+cp .env.example .env
+npm start
 ```
 
-## 🔍 Troubleshooting
+Current priority areas: Endpoint builder UI polish, theme layout refinements, OBS WebSocket integration
 
-### Common Issues
+## Roadmap
 
-**Server won't start**
-- Check if port 3000 is available
-- Verify Node.js version (14+)
-- Run `npm install` to install dependencies
+### v1.1 - Core Stability (Current)
 
-**OAuth errors**
-- Regenerate tokens with `npm run setup`
-- Check Client ID and Secret in `.env`
-- Verify scopes in Twitch Developer Console
+- ~~SQLite database for persistent storage~~ Done
+- ~~Endpoint builder for custom API integrations~~ Done
+- ~~Settings & endpoint frontend integration~~ Done
+- ~~OBS overlay page~~ Done
+- ~~Theme system (3 themes x 2 modes)~~ Done
+- Endpoint builder UI polish
+- Enhanced analytics dashboard
 
-**Overlays not loading**
-- Ensure server is running
-- Check browser console for errors
-- Verify URLs in OBS Browser Source
+### v1.2 - Integrations
 
-**Alerts not working**
-- Test alerts in Alert Manager (`/alerts`)
-- Check WebSocket connection
-- Verify webhook configurations
+- **OBS WebSocket** - Scene switching, source control, recording status
+- **Stream Deck** - Custom actions plugin, alert triggers, quick stats
+- Advanced alert customization
+- Data export/import
 
-### Getting Help
-1. Check the [Issues](https://github.com/yourusername/worxed-stream-manager/issues) page
-2. Run the test suite: `npm test`
-3. Check server logs for errors
-4. Review the troubleshooting guide in `TESTING.md`
+### v1.3 - Multi-Platform
 
-## 📄 License
+- YouTube Live integration
+- Kick integration
+- Unified multi-platform chat
+- Plugin system architecture
 
-MIT License - see [LICENSE](LICENSE) file for details.
+### v1.4 - Community
 
-## 🙏 Acknowledgments
+- Shareable overlay templates
+- Community theme gallery
+- Alert sound library
+- Cloud sync (optional)
 
-- **Twitch API** for real-time streaming data
-- **Socket.IO** for WebSocket communication
-- **VT323 Font** for the authentic terminal aesthetic
-- **TMI.js** for Twitch chat integration
+### v1.5 - Ecosystem
 
-## 🚀 Roadmap
+- Mobile companion app
+- Browser extension
+- Voice command integration
+- Third-party developer API
 
-- [ ] Stream Deck integration
-- [ ] Mobile dashboard app
-- [ ] Advanced analytics dashboard
-- [ ] Multi-platform support (YouTube, etc.)
-- [ ] Plugin system for custom extensions
-- [ ] Cloud deployment templates
+See [TASKS.md](TASKS.md) for detailed task tracking and planning.
+
+## Troubleshooting
+
+**Port already in use:**
+
+```bash
+# Windows
+taskkill /F /IM node.exe
+
+# Mac/Linux
+killall node
+```
+
+**Admin UI not loading at localhost:4000:**
+
+- Run `npm run build:admin` to build the Vue app
+- Check that backend/public/ has index.html
+
+**Frontend can't connect to backend:**
+
+- Verify backend is running on port 4001
+- Check browser console for CORS errors
+- Test API: `curl http://localhost:4001/api/status`
+
+**Twitch authentication errors:**
+
+- Verify credentials in `.env`
+- Check OAuth token hasn't expired
+- Ensure required scopes: `channel:read:subscriptions`, `moderator:read:followers`, `chat:read`
+
+**OBS overlay not transparent:**
+
+- Use Browser Source in OBS
+- Set URL to `http://localhost:5173/overlay?type=alerts`
+- Set width/height to match your canvas
+- Ensure "Shutdown source when not visible" is unchecked
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|------------|
+| **Process Manager** | Node.js + ws |
+| **Database** | SQLite (better-sqlite3, WAL mode) |
+| **Backend** | Express 4.21 + Socket.IO 4.7 + tmi.js 1.8 |
+| **Admin UI** | Vue 3 + Naive UI |
+| **Frontend** | React 18 + TypeScript 5.6 + Mantine 7.15 |
+| **Build** | Vite 6.0 |
 
 ---
 
-**Built with ❤️ for the streaming community**
-
-*Transform your stream with professional overlays and complete control over your alerts - no third-party dependencies required!* 
+**Built for streamers who want complete control over their stream.**
