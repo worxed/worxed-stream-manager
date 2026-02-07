@@ -245,3 +245,6 @@ storybook-static/
 # AI Assistant specific
 .claude
 CLAUDE.md
+
+# Goldmine - preserved archive documentation (local reference only)
+.goldmine/

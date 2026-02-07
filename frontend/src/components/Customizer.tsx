@@ -1,28 +1,29 @@
 import { useState } from 'react';
 import {
-  Grid,
+  MessageSquare,
+  Bell,
+  BarChart3,
+  Gamepad2,
+  Copy,
+  Check,
+  RefreshCw,
+  Palette,
+  Maximize2,
+  Sparkles,
+  ExternalLink,
+} from 'lucide-react';
+import {
   Card,
-  Text,
-  Group,
-  Stack,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
   Button,
   Slider,
-  ColorSwatch,
-  SegmentedControl,
-  Box,
-  CopyButton,
-  ActionIcon,
+  ColorPicker,
   Tooltip,
-} from '@mantine/core';
-import {
-  IconMessage,
-  IconBell,
-  IconChartBar,
-  IconDeviceGamepad2,
-  IconCopy,
-  IconCheck,
-  IconRefresh,
-} from '@tabler/icons-react';
+} from '@/components/ui';
+import { cn } from '@/lib/utils';
 import { socketService } from '../services/socket';
 import type { OverlayType, OverlaySettings, OverlayPreset } from '../types';
 
@@ -31,9 +32,9 @@ const defaultSettings: OverlaySettings = {
   position: { x: 50, y: 50 },
   size: { width: 400, height: 300 },
   colors: {
-    primary: '#8cffbe',
-    secondary: '#b893ff',
-    background: '#121318',
+    primary: '#fafafa',
+    secondary: '#a1a1aa',
+    background: '#09090b',
   },
   fontSize: 16,
   borderOpacity: 30,
@@ -41,11 +42,11 @@ const defaultSettings: OverlaySettings = {
 
 const presets: OverlayPreset[] = [
   {
-    id: 'terminal',
-    name: 'Default Terminal',
-    description: 'Classic worxed terminal theme',
+    id: 'default',
+    name: 'Default Dark',
+    description: 'Clean dark theme',
     settings: {
-      colors: { primary: '#8cffbe', secondary: '#b893ff', background: '#121318' },
+      colors: { primary: '#fafafa', secondary: '#a1a1aa', background: '#09090b' },
       borderOpacity: 30,
     },
   },
@@ -87,21 +88,29 @@ const presets: OverlayPreset[] = [
   },
 ];
 
-const overlayTypes: Array<{ value: OverlayType; label: string; icon: React.ReactNode }> = [
-  { value: 'chat', label: 'CHAT', icon: <IconMessage size={16} /> },
-  { value: 'alerts', label: 'ALERTS', icon: <IconBell size={16} /> },
-  { value: 'stats', label: 'STATS', icon: <IconChartBar size={16} /> },
-  { value: 'game', label: 'GAME', icon: <IconDeviceGamepad2 size={16} /> },
+const overlayTypes: Array<{ value: OverlayType; label: string; icon: React.ReactNode; description: string }> = [
+  { value: 'chat', label: 'Chat', icon: <MessageSquare size={18} />, description: 'Live chat messages' },
+  { value: 'alerts', label: 'Alerts', icon: <Bell size={18} />, description: 'Follow/sub notifications' },
+  { value: 'stats', label: 'Stats', icon: <BarChart3 size={18} />, description: 'Viewer statistics' },
+  { value: 'game', label: 'Game', icon: <Gamepad2 size={18} />, description: 'Current game display' },
 ];
 
 export default function Customizer() {
   const [settings, setSettings] = useState<OverlaySettings>(defaultSettings);
-  const [activePreset, setActivePreset] = useState<string>('terminal');
+  const [activePreset, setActivePreset] = useState<string>('default');
+  const [copied, setCopied] = useState(false);
 
   const updateSettings = (updates: Partial<OverlaySettings>) => {
     const newSettings = { ...settings, ...updates };
     setSettings(newSettings);
     socketService.updateOverlay(newSettings);
+  };
+
+  const updateColor = (key: 'primary' | 'secondary' | 'background', color: string) => {
+    updateSettings({
+      colors: { ...settings.colors, [key]: color },
+    });
+    setActivePreset('');
   };
 
   const applyPreset = (preset: OverlayPreset) => {
@@ -111,7 +120,7 @@ export default function Customizer() {
 
   const resetSettings = () => {
     setSettings(defaultSettings);
-    setActivePreset('terminal');
+    setActivePreset('default');
     socketService.updateOverlay(defaultSettings);
   };
 
@@ -127,91 +136,81 @@ export default function Customizer() {
     return `${window.location.origin}/overlay?${params.toString()}`;
   };
 
+  const copyUrl = async () => {
+    await navigator.clipboard.writeText(getOverlayUrl());
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const openPreview = () => {
+    window.open(getOverlayUrl(), '_blank', 'width=500,height=400');
+  };
+
   const renderPreview = () => {
-    const previewStyle = {
-      width: `${settings.size.width}px`,
+    const previewStyle: React.CSSProperties = {
+      width: `${Math.min(settings.size.width, 500)}px`,
       maxWidth: '100%',
-      height: `${settings.size.height}px`,
-      maxHeight: '250px',
+      height: `${Math.min(settings.size.height, 280)}px`,
       backgroundColor: settings.colors.background,
       border: `2px solid ${settings.colors.primary}`,
       borderRadius: '8px',
       padding: '16px',
       boxShadow: `0 0 20px ${settings.colors.primary}${Math.round(settings.borderOpacity * 2.55).toString(16).padStart(2, '0')}`,
-      fontFamily: '"VT323", monospace',
+      fontFamily: '"Inter", system-ui, sans-serif',
       fontSize: `${settings.fontSize}px`,
       overflow: 'hidden',
+      transition: 'all 0.3s ease',
     };
 
     switch (settings.type) {
       case 'chat':
         return (
-          <Box style={previewStyle}>
-            <Stack gap="xs">
+          <div style={previewStyle}>
+            <div className="flex flex-col gap-1">
               {['worxed', 'viewer123', 'streamer'].map((user, i) => (
-                <Group key={i} gap="xs">
-                  <Text span style={{ color: settings.colors.secondary, fontWeight: 'bold' }}>
-                    {user}:
-                  </Text>
-                  <Text span style={{ color: settings.colors.primary }}>
-                    {['Welcome to the stream!', 'This looks awesome!', 'Terminal vibes'][i]}
-                  </Text>
-                </Group>
+                <div key={i} className="flex gap-2">
+                  <span style={{ color: settings.colors.secondary, fontWeight: 'bold' }}>{user}:</span>
+                  <span style={{ color: settings.colors.primary }}>
+                    {['Welcome to the stream!', 'This looks awesome!', 'Great vibes'][i]}
+                  </span>
+                </div>
               ))}
-            </Stack>
-          </Box>
+            </div>
+          </div>
         );
 
       case 'alerts':
         return (
-          <Box style={{ ...previewStyle, textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
-            <Text style={{ color: settings.colors.primary, fontSize: `${settings.fontSize + 4}px`, textShadow: `0 0 8px ${settings.colors.primary}` }}>
-              NEW FOLLOWER!
-            </Text>
-            <Text style={{ color: settings.colors.secondary, fontSize: `${settings.fontSize + 2}px` }}>
-              worxed_viewer
-            </Text>
-            <Text style={{ color: `${settings.colors.primary}80` }}>
-              Thanks for the follow!
-            </Text>
-          </Box>
+          <div style={{ ...previewStyle, textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+            <p style={{ color: settings.colors.primary, fontSize: `${settings.fontSize + 4}px` }}>
+              New Follower!
+            </p>
+            <p style={{ color: settings.colors.secondary, fontSize: `${settings.fontSize + 2}px` }}>worxed_viewer</p>
+            <p style={{ color: `${settings.colors.primary}80` }}>Thanks for the follow!</p>
+          </div>
         );
 
       case 'stats':
         return (
-          <Box style={previewStyle}>
-            <Stack gap="xs">
-              <Group justify="space-between">
-                <Text style={{ color: `${settings.colors.primary}80` }}>VIEWERS</Text>
-                <Text style={{ color: settings.colors.primary }}>1,234</Text>
-              </Group>
-              <Group justify="space-between">
-                <Text style={{ color: `${settings.colors.primary}80` }}>FOLLOWERS</Text>
-                <Text style={{ color: settings.colors.primary }}>5,678</Text>
-              </Group>
-              <Group justify="space-between">
-                <Text style={{ color: `${settings.colors.primary}80` }}>UPTIME</Text>
-                <Text style={{ color: settings.colors.primary }}>02:34:56</Text>
-              </Group>
-            </Stack>
-          </Box>
+          <div style={previewStyle}>
+            <div className="flex flex-col gap-1">
+              {[['Viewers', '1,234'], ['Followers', '5,678'], ['Uptime', '02:34:56']].map(([label, value]) => (
+                <div key={label} className="flex justify-between">
+                  <span style={{ color: `${settings.colors.primary}80` }}>{label}</span>
+                  <span style={{ color: settings.colors.primary }}>{value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
         );
 
       case 'game':
         return (
-          <Box style={previewStyle}>
-            <Stack gap="xs">
-              <Text style={{ color: settings.colors.secondary, fontSize: `${settings.fontSize - 2}px` }}>
-                NOW PLAYING
-              </Text>
-              <Text style={{ color: settings.colors.primary, fontSize: `${settings.fontSize + 2}px` }}>
-                Cyberpunk 2077
-              </Text>
-              <Text style={{ color: `${settings.colors.primary}80`, fontSize: `${settings.fontSize - 2}px` }}>
-                Night City Adventures
-              </Text>
-            </Stack>
-          </Box>
+          <div style={previewStyle}>
+            <p style={{ color: settings.colors.secondary, fontSize: `${settings.fontSize - 2}px` }}>Now Playing</p>
+            <p style={{ color: settings.colors.primary, fontSize: `${settings.fontSize + 2}px` }}>Cyberpunk 2077</p>
+            <p style={{ color: `${settings.colors.primary}80`, fontSize: `${settings.fontSize - 2}px` }}>Night City Adventures</p>
+          </div>
         );
 
       default:
@@ -220,310 +219,242 @@ export default function Customizer() {
   };
 
   return (
-    <Grid>
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
       {/* Left Sidebar - Controls */}
-      <Grid.Col span={{ base: 12, md: 3 }}>
-        <Stack gap="md">
-          {/* Overlay Type */}
-          <Card
-            padding="md"
-            radius="md"
-            styles={{
-              root: {
-                backgroundColor: 'var(--card-bg)',
-                border: '1px solid var(--border-color)',
-              },
-            }}
-          >
-            <Text
-              size="sm"
-              mb="sm"
-              style={{
-                fontFamily: '"VT323", monospace',
-                color: 'var(--primary-green)',
-                letterSpacing: '1px',
-              }}
-            >
-              OVERLAY TYPE
-            </Text>
-            <SegmentedControl
-              value={settings.type}
-              onChange={(value) => updateSettings({ type: value as OverlayType })}
-              data={overlayTypes.map((t) => ({
-                value: t.value,
-                label: (
-                  <Group gap="xs" wrap="nowrap">
+      <div className="lg:col-span-3 flex flex-col gap-5">
+        {/* Overlay Type */}
+        <Card variant="elevated">
+          <CardHeader border>
+            <CardTitle className="text-sm">Overlay Type</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col gap-1.5">
+              {overlayTypes.map((t) => (
+                <button
+                  key={t.value}
+                  onClick={() => updateSettings({ type: t.value })}
+                  className={cn(
+                    'flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all duration-200',
+                    'hover:bg-accent group',
+                    settings.type === t.value && 'bg-primary/10 border border-primary/30 shadow-sm'
+                  )}
+                >
+                  <span className={cn(
+                    'transition-colors',
+                    settings.type === t.value ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'
+                  )}>
                     {t.icon}
-                    <Text size="xs">{t.label}</Text>
-                  </Group>
-                ),
-              }))}
-              orientation="vertical"
-              fullWidth
-              styles={{
-                root: {
-                  backgroundColor: 'var(--primary-bg)',
-                },
-              }}
-            />
-          </Card>
+                  </span>
+                  <div>
+                    <p className={cn(
+                      'text-sm font-medium',
+                      settings.type === t.value && 'text-foreground'
+                    )}>
+                      {t.label}
+                    </p>
+                    <p className="text-xs text-muted-foreground">{t.description}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
 
-          {/* Size Controls */}
-          <Card
-            padding="md"
-            radius="md"
-            styles={{
-              root: {
-                backgroundColor: 'var(--card-bg)',
-                border: '1px solid var(--border-color)',
-              },
-            }}
-          >
-            <Text
-              size="sm"
-              mb="sm"
-              style={{
-                fontFamily: '"VT323", monospace',
-                color: 'var(--primary-green)',
-                letterSpacing: '1px',
-              }}
-            >
-              SIZE
-            </Text>
-
-            <Stack gap="sm">
-              <Box>
-                <Text size="xs" mb="xs" style={{ color: 'var(--text-muted)' }}>
-                  Width: {settings.size.width}px
-                </Text>
+        {/* Size Controls */}
+        <Card variant="elevated">
+          <CardHeader border>
+            <div className="flex items-center gap-3">
+              <Maximize2 size={16} className="text-muted-foreground" />
+              <CardTitle className="text-sm">Size & Style</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col gap-6">
+              <div>
+                <div className="flex justify-between mb-2">
+                  <span className="text-xs text-muted-foreground">Width</span>
+                  <span className="text-xs font-mono text-foreground">{settings.size.width}px</span>
+                </div>
                 <Slider
                   value={settings.size.width}
                   min={200}
                   max={800}
-                  onChange={(value) =>
-                    updateSettings({ size: { ...settings.size, width: value } })
-                  }
-                  color="green"
-                  size="sm"
+                  onChange={(value) => updateSettings({ size: { ...settings.size, width: value } })}
                 />
-              </Box>
+              </div>
 
-              <Box>
-                <Text size="xs" mb="xs" style={{ color: 'var(--text-muted)' }}>
-                  Height: {settings.size.height}px
-                </Text>
+              <div>
+                <div className="flex justify-between mb-2">
+                  <span className="text-xs text-muted-foreground">Height</span>
+                  <span className="text-xs font-mono text-foreground">{settings.size.height}px</span>
+                </div>
                 <Slider
                   value={settings.size.height}
                   min={100}
                   max={600}
-                  onChange={(value) =>
-                    updateSettings({ size: { ...settings.size, height: value } })
-                  }
-                  color="green"
-                  size="sm"
+                  onChange={(value) => updateSettings({ size: { ...settings.size, height: value } })}
                 />
-              </Box>
+              </div>
 
-              <Box>
-                <Text size="xs" mb="xs" style={{ color: 'var(--text-muted)' }}>
-                  Font Size: {settings.fontSize}px
-                </Text>
+              <div>
+                <div className="flex justify-between mb-2">
+                  <span className="text-xs text-muted-foreground">Font Size</span>
+                  <span className="text-xs font-mono text-foreground">{settings.fontSize}px</span>
+                </div>
                 <Slider
                   value={settings.fontSize}
                   min={12}
                   max={32}
                   onChange={(value) => updateSettings({ fontSize: value })}
-                  color="green"
-                  size="sm"
                 />
-              </Box>
+              </div>
 
-              <Box>
-                <Text size="xs" mb="xs" style={{ color: 'var(--text-muted)' }}>
-                  Border Opacity: {settings.borderOpacity}%
-                </Text>
+              <div>
+                <div className="flex justify-between mb-2">
+                  <span className="text-xs text-muted-foreground">Glow Intensity</span>
+                  <span className="text-xs font-mono text-foreground">{settings.borderOpacity}%</span>
+                </div>
                 <Slider
                   value={settings.borderOpacity}
                   min={0}
                   max={100}
                   onChange={(value) => updateSettings({ borderOpacity: value })}
-                  color="green"
-                  size="sm"
                 />
-              </Box>
-            </Stack>
-          </Card>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-          {/* Colors */}
-          <Card
-            padding="md"
-            radius="md"
-            styles={{
-              root: {
-                backgroundColor: 'var(--card-bg)',
-                border: '1px solid var(--border-color)',
-              },
-            }}
-          >
-            <Text
-              size="sm"
-              mb="sm"
-              style={{
-                fontFamily: '"VT323", monospace',
-                color: 'var(--primary-green)',
-                letterSpacing: '1px',
-              }}
-            >
-              COLORS
-            </Text>
-
-            <Stack gap="sm">
-              <Group justify="space-between">
-                <Text size="xs" style={{ color: 'var(--text-muted)' }}>
-                  Primary
-                </Text>
-                <ColorSwatch color={settings.colors.primary} size={24} />
-              </Group>
-              <Group justify="space-between">
-                <Text size="xs" style={{ color: 'var(--text-muted)' }}>
-                  Secondary
-                </Text>
-                <ColorSwatch color={settings.colors.secondary} size={24} />
-              </Group>
-              <Group justify="space-between">
-                <Text size="xs" style={{ color: 'var(--text-muted)' }}>
-                  Background
-                </Text>
-                <ColorSwatch color={settings.colors.background} size={24} />
-              </Group>
-            </Stack>
-          </Card>
-        </Stack>
-      </Grid.Col>
+        {/* Colors */}
+        <Card variant="elevated">
+          <CardHeader border>
+            <div className="flex items-center gap-3">
+              <Palette size={16} className="text-muted-foreground" />
+              <CardTitle className="text-sm">Colors</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col gap-5">
+              <ColorPicker
+                label="Primary Color"
+                value={settings.colors.primary}
+                onChange={(color) => updateColor('primary', color)}
+              />
+              <ColorPicker
+                label="Secondary Color"
+                value={settings.colors.secondary}
+                onChange={(color) => updateColor('secondary', color)}
+              />
+              <ColorPicker
+                label="Background"
+                value={settings.colors.background}
+                onChange={(color) => updateColor('background', color)}
+              />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Center - Preview */}
-      <Grid.Col span={{ base: 12, md: 6 }}>
-        <Card
-          padding="md"
-          radius="md"
-          h="100%"
-          styles={{
-            root: {
-              backgroundColor: 'var(--card-bg)',
-              border: '1px solid var(--border-color)',
-            },
-          }}
-        >
-          <Group justify="space-between" mb="md">
-            <Text
-              size="sm"
+      <div className="lg:col-span-6">
+        <Card variant="elevated" className="h-full flex flex-col">
+          <CardHeader border>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-sm">Live Preview</CardTitle>
+                <CardDescription>Changes update in real-time</CardDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                <Tooltip content="Open in new window">
+                  <Button variant="ghost" size="sm" onClick={openPreview}>
+                    <ExternalLink size={16} />
+                  </Button>
+                </Tooltip>
+                <Tooltip content={copied ? 'Copied!' : 'Copy overlay URL'}>
+                  <Button variant="ghost" size="sm" onClick={copyUrl}>
+                    {copied ? <Check size={16} className="text-success" /> : <Copy size={16} />}
+                  </Button>
+                </Tooltip>
+                <Tooltip content="Reset to defaults">
+                  <Button variant="ghost" size="sm" onClick={resetSettings}>
+                    <RefreshCw size={16} />
+                  </Button>
+                </Tooltip>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="flex-1 flex items-center justify-center">
+            <div
+              className="w-full flex justify-center items-center p-8 rounded-lg"
               style={{
-                fontFamily: '"VT323", monospace',
-                color: 'var(--primary-green)',
-                letterSpacing: '1px',
+                background: `
+                  linear-gradient(45deg, rgba(113, 113, 122, 0.05) 25%, transparent 25%),
+                  linear-gradient(-45deg, rgba(113, 113, 122, 0.05) 25%, transparent 25%),
+                  linear-gradient(45deg, transparent 75%, rgba(113, 113, 122, 0.05) 75%),
+                  linear-gradient(-45deg, transparent 75%, rgba(113, 113, 122, 0.05) 75%)
+                `,
+                backgroundSize: '24px 24px',
               }}
             >
-              LIVE PREVIEW
-            </Text>
-            <Group gap="xs">
-              <CopyButton value={getOverlayUrl()}>
-                {({ copied, copy }) => (
-                  <Tooltip label={copied ? 'Copied!' : 'Copy overlay URL'}>
-                    <ActionIcon
-                      variant="subtle"
-                      color={copied ? 'green' : 'gray'}
-                      onClick={copy}
-                    >
-                      {copied ? <IconCheck size={16} /> : <IconCopy size={16} />}
-                    </ActionIcon>
-                  </Tooltip>
-                )}
-              </CopyButton>
-              <Tooltip label="Reset to defaults">
-                <ActionIcon variant="subtle" color="gray" onClick={resetSettings}>
-                  <IconRefresh size={16} />
-                </ActionIcon>
-              </Tooltip>
-            </Group>
-          </Group>
-
-          <Box
-            style={{
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              minHeight: '300px',
-              background: `
-                linear-gradient(45deg, rgba(140, 255, 190, 0.02) 25%, transparent 25%),
-                linear-gradient(-45deg, rgba(140, 255, 190, 0.02) 25%, transparent 25%),
-                linear-gradient(45deg, transparent 75%, rgba(140, 255, 190, 0.02) 75%),
-                linear-gradient(-45deg, transparent 75%, rgba(140, 255, 190, 0.02) 75%)
-              `,
-              backgroundSize: '20px 20px',
-              backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0px',
-              borderRadius: '4px',
-            }}
-          >
-            {renderPreview()}
-          </Box>
+              {renderPreview()}
+            </div>
+          </CardContent>
         </Card>
-      </Grid.Col>
+      </div>
 
       {/* Right Sidebar - Presets */}
-      <Grid.Col span={{ base: 12, md: 3 }}>
-        <Card
-          padding="md"
-          radius="md"
-          styles={{
-            root: {
-              backgroundColor: 'var(--card-bg)',
-              border: '1px solid var(--border-color)',
-            },
-          }}
-        >
-          <Text
-            size="sm"
-            mb="sm"
-            style={{
-              fontFamily: '"VT323", monospace',
-              color: 'var(--primary-green)',
-              letterSpacing: '1px',
-            }}
-          >
-            QUICK PRESETS
-          </Text>
-
-          <Stack gap="xs">
-            {presets.map((preset) => (
-              <Button
-                key={preset.id}
-                variant={activePreset === preset.id ? 'filled' : 'subtle'}
-                color="green"
-                fullWidth
-                onClick={() => applyPreset(preset)}
-                styles={{
-                  root: {
-                    fontFamily: '"VT323", monospace',
-                    justifyContent: 'flex-start',
-                    height: 'auto',
-                    padding: '12px',
-                  },
-                  inner: {
-                    justifyContent: 'flex-start',
-                  },
-                }}
-              >
-                <Stack gap={2} align="flex-start">
-                  <Text size="sm">{preset.name}</Text>
-                  <Text size="xs" c="dimmed">
-                    {preset.description}
-                  </Text>
-                </Stack>
-              </Button>
-            ))}
-          </Stack>
+      <div className="lg:col-span-3">
+        <Card variant="elevated" className="h-full">
+          <CardHeader border>
+            <div className="flex items-center gap-3">
+              <Sparkles size={16} className="text-muted-foreground" />
+              <div>
+                <CardTitle className="text-sm">Quick Presets</CardTitle>
+                <CardDescription>One-click themes</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col gap-2">
+              {presets.map((preset) => (
+                <button
+                  key={preset.id}
+                  onClick={() => applyPreset(preset)}
+                  className={cn(
+                    'w-full text-left p-4 rounded-xl transition-all duration-200 group',
+                    'border border-transparent hover:border-border',
+                    'hover:bg-accent',
+                    activePreset === preset.id && 'bg-primary/10 border-primary/30 shadow-sm'
+                  )}
+                >
+                  <div className="flex items-center gap-3">
+                    {/* Color preview dots */}
+                    <div className="flex gap-1.5 shrink-0">
+                      <div
+                        className="w-4 h-4 rounded-full border border-border shadow-sm"
+                        style={{ backgroundColor: preset.settings.colors?.primary }}
+                      />
+                      <div
+                        className="w-4 h-4 rounded-full border border-border shadow-sm"
+                        style={{ backgroundColor: preset.settings.colors?.secondary }}
+                      />
+                    </div>
+                    <div className="min-w-0">
+                      <p className={cn(
+                        'text-sm font-medium truncate',
+                        activePreset === preset.id && 'text-foreground'
+                      )}>
+                        {preset.name}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">{preset.description}</p>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </CardContent>
         </Card>
-      </Grid.Col>
-    </Grid>
+      </div>
+    </div>
   );
 }

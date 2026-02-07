@@ -1,28 +1,16 @@
 import { useState, useEffect, useRef } from 'react';
 import {
-  Stack,
-  Grid,
-  Card,
-  Text,
-  Group,
-  Badge,
-  Button,
-  ScrollArea,
-  Box,
-  TextInput,
-} from '@mantine/core';
-import {
-  IconTerminal,
-  IconServer,
-  IconCpu,
-  IconActivity,
-  IconWifi,
-  IconClock,
-  IconPlayerPlay,
-  IconPlayerStop,
-  IconRefresh,
-  IconTrash,
-} from '@tabler/icons-react';
+  Terminal,
+  Server,
+  Cpu,
+  Activity,
+  Wifi,
+  Clock,
+  Play,
+  Square,
+} from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardContent, Button, ScrollArea, Input } from '@/components/ui';
+import { cn } from '@/lib/utils';
 import { socketService } from '../services/socket';
 
 interface LogEntry {
@@ -54,16 +42,16 @@ export default function BackendDashboard() {
     { time: '12:15:22', message: 'New client connected: Dashboard_01', type: 'info' },
   ]);
   const [command, setCommand] = useState('');
-  const [cpuLoad, setCpuLoad] = useState('18%');
-  const [serverLatency, setServerLatency] = useState('4ms');
-  
+  const [cpuLoad] = useState('18%');
+  const [serverLatency] = useState('4ms');
+
   const [processes, setProcesses] = useState<Process[]>([
     { id: 'p1', name: 'Twitch Chat Client', status: 'running', port: 4001, uptime: '2h 14m', type: 'chat' },
     { id: 'p2', name: 'WebSocket Server', status: 'running', port: 4001, uptime: '2h 14m', type: 'socket' },
     { id: 'p3', name: 'API Server', status: 'running', port: 4001, uptime: '2h 14m', type: 'api' },
   ]);
 
-  const [connections, setConnections] = useState<Connection[]>([
+  const [connections] = useState<Connection[]>([
     { id: 'c1', ip: '192.168.1.15', device: 'OBS Studio', ping: '12ms' },
     { id: 'c2', ip: '127.0.0.1', device: 'Dev Browser', ping: '2ms' },
   ]);
@@ -75,7 +63,6 @@ export default function BackendDashboard() {
   }, [logs]);
 
   useEffect(() => {
-    // Listen for backend events
     const unsubConnect = socketService.onConnect(() => {
       addLog('Client connected to backend', 'success');
     });
@@ -92,7 +79,7 @@ export default function BackendDashboard() {
 
   const addLog = (message: string, type: LogEntry['type'] = 'info') => {
     const time = new Date().toLocaleTimeString();
-    setLogs(prev => [...prev, { time, message, type }]);
+    setLogs((prev) => [...prev, { time, message, type }]);
   };
 
   const handleCommand = (e: React.FormEvent) => {
@@ -100,7 +87,7 @@ export default function BackendDashboard() {
     if (!command.trim()) return;
 
     addLog(`> ${command}`, 'command');
-    
+
     setTimeout(() => {
       if (command === 'clear') {
         setLogs([]);
@@ -113,294 +100,214 @@ export default function BackendDashboard() {
         addLog(`Command processed: ${command}`, 'info');
       }
     }, 300);
-    
+
     setCommand('');
   };
 
   const toggleProcess = (id: string) => {
-    setProcesses(processes.map(p => 
-      p.id === id 
-        ? { ...p, status: p.status === 'running' ? 'stopped' : 'running' }
-        : p
-    ));
+    setProcesses(
+      processes.map((p) =>
+        p.id === id ? { ...p, status: p.status === 'running' ? 'stopped' : 'running' } : p
+      )
+    );
   };
 
   const getLogColor = (type: LogEntry['type']) => {
     switch (type) {
-      case 'success': return 'var(--electric-cyan)';
-      case 'error': return 'var(--fire-red)';
-      case 'warn': return '#FFCC00';
-      case 'command': return 'white';
-      default: return 'var(--text-muted)';
+      case 'success':
+        return 'text-success';
+      case 'error':
+        return 'text-destructive';
+      case 'warn':
+        return 'text-warning';
+      case 'command':
+        return 'text-foreground font-bold';
+      default:
+        return 'text-muted-foreground';
     }
   };
 
-  const StatCard = ({ label, value, color, icon: Icon }: any) => (
-    <Card
-      p="md"
-      radius="md"
-      style={{
-        backgroundColor: 'rgba(255, 45, 85, 0.05)',
-        border: '1px solid rgba(255, 45, 85, 0.2)',
-      }}
-    >
-      <Group gap="xs" mb="xs">
-        <Icon size={14} style={{ color }} />
-        <Text
-          size="10px"
-          tt="uppercase"
-          fw={700}
-          style={{ color: 'var(--text-muted)', letterSpacing: '1px' }}
-        >
-          {label}
-        </Text>
-      </Group>
-      <Text
-        size="xl"
-        fw={500}
-        style={{ fontFamily: 'monospace', color: 'white' }}
-      >
-        {value}
-      </Text>
-    </Card>
-  );
-
   return (
-    <Stack gap="md" p="md">
+    <div className="flex flex-col gap-6">
       {/* Top Stats */}
-      <Grid>
-        <Grid.Col span={{ base: 6, sm: 3 }}>
-          <StatCard label="CPU Load" value={cpuLoad} color="var(--fire-red)" icon={IconCpu} />
-        </Grid.Col>
-        <Grid.Col span={{ base: 6, sm: 3 }}>
-          <StatCard label="Active Clients" value={connections.length} color="var(--electric-cyan)" icon={IconWifi} />
-        </Grid.Col>
-        <Grid.Col span={{ base: 6, sm: 3 }}>
-          <StatCard label="Processes" value={processes.length} color="var(--fire-red)" icon={IconActivity} />
-        </Grid.Col>
-        <Grid.Col span={{ base: 6, sm: 3 }}>
-          <StatCard label="Server Latency" value={serverLatency} color="var(--electric-cyan)" icon={IconClock} />
-        </Grid.Col>
-      </Grid>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-5">
+        <Card variant="stat" padding="sm">
+          <CardContent className="py-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Cpu size={16} className="text-muted-foreground" />
+              <span className="text-xs text-muted-foreground font-medium">CPU Load</span>
+            </div>
+            <p className="text-2xl font-bold text-foreground">{cpuLoad}</p>
+          </CardContent>
+        </Card>
 
-      <Grid>
+        <Card variant="stat" padding="sm">
+          <CardContent className="py-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Wifi size={16} className="text-muted-foreground" />
+              <span className="text-xs text-muted-foreground font-medium">Active Clients</span>
+            </div>
+            <p className="text-2xl font-bold text-foreground">{connections.length}</p>
+          </CardContent>
+        </Card>
+
+        <Card variant="stat" padding="sm">
+          <CardContent className="py-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Activity size={16} className="text-muted-foreground" />
+              <span className="text-xs text-muted-foreground font-medium">Processes</span>
+            </div>
+            <p className="text-2xl font-bold text-foreground">{processes.length}</p>
+          </CardContent>
+        </Card>
+
+        <Card variant="stat" padding="sm">
+          <CardContent className="py-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Clock size={16} className="text-muted-foreground" />
+              <span className="text-xs text-muted-foreground font-medium">Server Latency</span>
+            </div>
+            <p className="text-2xl font-bold text-foreground">{serverLatency}</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
         {/* Process Manager */}
-        <Grid.Col span={{ base: 12, md: 4 }}>
-          <Card
-            p={0}
-            radius="md"
-            style={{
-              backgroundColor: 'rgba(255, 45, 85, 0.08)',
-              border: '1px solid rgba(255, 45, 85, 0.3)',
-              height: '500px',
-              display: 'flex',
-              flexDirection: 'column',
-            }}
-          >
-            <Group
-              p="md"
-              justify="space-between"
-              style={{ borderBottom: '1px solid rgba(255, 45, 85, 0.2)' }}
-            >
-              <Group gap="xs">
-                <IconServer size={16} style={{ color: 'var(--fire-red)' }} />
-                <Text size="xs" fw={700} tt="uppercase" style={{ letterSpacing: '1px' }}>
-                  Backend Processes
-                </Text>
-              </Group>
-            </Group>
-            
-            <ScrollArea style={{ flex: 1 }} p="sm">
-              <Stack gap="xs">
-                {processes.map(proc => (
-                  <Box
-                    key={proc.id}
-                    p="md"
-                    style={{
-                      backgroundColor: 'var(--primary-bg)',
-                      border: '1px solid rgba(255, 45, 85, 0.2)',
-                      borderRadius: '8px',
-                    }}
-                  >
-                    <Group justify="space-between" mb="xs">
-                      <Group gap="xs">
-                        <Box
-                          style={{
-                            width: '8px',
-                            height: '8px',
-                            borderRadius: '50%',
-                            backgroundColor:
-                              proc.status === 'running'
-                                ? 'var(--electric-cyan)'
-                                : proc.status === 'error'
-                                ? 'var(--fire-red)'
-                                : 'var(--cool-slate)',
-                          }}
-                        />
-                        <Text size="sm" fw={500}>{proc.name}</Text>
-                      </Group>
-                      <Group gap={4}>
+        <div className="md:col-span-4">
+          <Card variant="elevated" className="h-[500px] flex flex-col">
+            <CardHeader className="border-b border-border">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-muted">
+                  <Server size={16} className="text-muted-foreground" />
+                </div>
+                <CardTitle className="text-sm">Backend Processes</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="flex-1 overflow-hidden p-3">
+              <ScrollArea className="h-full">
+                <div className="flex flex-col gap-3">
+                  {processes.map((proc) => (
+                    <div
+                      key={proc.id}
+                      className="p-4 bg-background border border-border rounded-xl transition-all duration-200 hover:border-input"
+                    >
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={cn(
+                              'w-2.5 h-2.5 rounded-full',
+                              proc.status === 'running' && 'bg-success',
+                              proc.status === 'error' && 'bg-destructive',
+                              proc.status === 'stopped' && 'bg-muted-foreground'
+                            )}
+                          />
+                          <span className="text-sm font-semibold text-foreground">{proc.name}</span>
+                        </div>
                         <Button
-                          size="xs"
-                          variant="subtle"
-                          color={proc.status === 'running' ? 'red' : 'cyan'}
+                          variant="ghost"
+                          size="sm"
                           onClick={() => toggleProcess(proc.id)}
-                          p={4}
-                        >
-                          {proc.status === 'running' ? (
-                            <IconPlayerStop size={14} />
-                          ) : (
-                            <IconPlayerPlay size={14} />
+                          className={cn(
+                            'p-1.5 h-auto rounded-lg',
+                            proc.status === 'running'
+                              ? 'text-destructive hover:text-destructive hover:bg-destructive/10'
+                              : 'text-success hover:text-success hover:bg-success/10'
                           )}
+                        >
+                          {proc.status === 'running' ? <Square size={14} /> : <Play size={14} />}
                         </Button>
-                      </Group>
-                    </Group>
-                    <Text size="10px" c="dimmed" style={{ fontFamily: 'monospace' }}>
-                      PORT: {proc.port} • UP: {proc.uptime}
-                    </Text>
-                  </Box>
-                ))}
-              </Stack>
-            </ScrollArea>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground font-mono">
+                        PORT: {proc.port} &middot; UP: {proc.uptime}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </ScrollArea>
+            </CardContent>
           </Card>
-        </Grid.Col>
+        </div>
 
         {/* Terminal + Connections */}
-        <Grid.Col span={{ base: 12, md: 8 }}>
-          <Stack gap="md">
-            {/* Terminal */}
-            <Card
-              p={0}
-              radius="md"
-              style={{
-                backgroundColor: '#000000',
-                border: '1px solid rgba(255, 45, 85, 0.3)',
-                height: '360px',
-                display: 'flex',
-                flexDirection: 'column',
-              }}
-            >
-              <Group
-                p="sm"
-                justify="space-between"
-                style={{
-                  backgroundColor: 'rgba(255, 45, 85, 0.05)',
-                  borderBottom: '1px solid rgba(255, 45, 85, 0.2)',
-                }}
-              >
-                <Group gap="xs">
-                  <IconTerminal size={14} style={{ color: 'var(--fire-red)' }} />
-                  <Text size="xs" style={{ fontFamily: 'monospace', color: 'var(--text-muted)' }}>
-                    worxed@backend
-                  </Text>
-                </Group>
-                <Group gap={4}>
-                  <Box w={8} h={8} style={{ borderRadius: '50%', backgroundColor: 'rgba(255, 45, 85, 0.5)' }} />
-                  <Box w={8} h={8} style={{ borderRadius: '50%', backgroundColor: 'rgba(255, 204, 0, 0.5)' }} />
-                  <Box w={8} h={8} style={{ borderRadius: '50%', backgroundColor: 'rgba(0, 251, 255, 0.5)' }} />
-                </Group>
-              </Group>
+        <div className="md:col-span-8 flex flex-col gap-6">
+          {/* Terminal */}
+          <Card variant="elevated" className="h-[360px] flex flex-col bg-background">
+            <CardHeader className="border-b border-border py-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Terminal size={14} className="text-muted-foreground" />
+                  <span className="text-xs font-mono text-muted-foreground">worxed@backend</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-3 h-3 rounded-full bg-chart-5/50" />
+                  <div className="w-3 h-3 rounded-full bg-chart-3/50" />
+                  <div className="w-3 h-3 rounded-full bg-chart-2/50" />
+                </div>
+              </div>
+            </CardHeader>
 
-              <ScrollArea style={{ flex: 1 }} p="md">
-                <Stack gap={4}>
+            <CardContent className="flex-1 overflow-hidden p-0">
+              <ScrollArea className="h-full p-4">
+                <div className="flex flex-col gap-1.5">
                   {logs.map((log, i) => (
-                    <Group key={i} gap="md" wrap="nowrap">
-                      <Text size="xs" c="dimmed" style={{ fontFamily: 'monospace', flexShrink: 0 }}>
+                    <div key={i} className="flex gap-4">
+                      <span className="text-xs text-muted-foreground font-mono shrink-0">
                         [{log.time}]
-                      </Text>
-                      <Text
-                        size="xs"
-                        style={{
-                          fontFamily: 'monospace',
-                          color: getLogColor(log.type),
-                          fontWeight: log.type === 'command' ? 700 : 400,
-                        }}
-                      >
+                      </span>
+                      <span className={cn('text-xs font-mono', getLogColor(log.type))}>
                         {log.message}
-                      </Text>
-                    </Group>
+                      </span>
+                    </div>
                   ))}
                   <div ref={logEndRef} />
-                </Stack>
+                </div>
               </ScrollArea>
+            </CardContent>
 
-              <form onSubmit={handleCommand}>
-                <Group
-                  gap="xs"
-                  p="sm"
-                  style={{
-                    backgroundColor: 'rgba(255, 45, 85, 0.05)',
-                    borderTop: '1px solid rgba(255, 45, 85, 0.2)',
-                  }}
-                >
-                  <Text
-                    size="sm"
-                    fw={700}
-                    style={{ color: 'var(--fire-red)', fontFamily: 'monospace' }}
-                  >
-                    $
-                  </Text>
-                  <TextInput
-                    value={command}
-                    onChange={(e) => setCommand(e.target.value)}
-                    placeholder="Type 'status', 'restart', or 'clear'..."
-                    variant="unstyled"
-                    size="sm"
-                    style={{ flex: 1, fontFamily: 'monospace', color: 'white' }}
-                    styles={{
-                      input: {
-                        color: 'white',
-                        backgroundColor: 'transparent',
-                        fontFamily: 'monospace',
-                      },
-                    }}
-                  />
-                </Group>
-              </form>
-            </Card>
+            <form onSubmit={handleCommand}>
+              <div className="flex items-center gap-3 px-4 py-3 border-t border-border">
+                <span className="text-sm font-bold text-foreground font-mono">$</span>
+                <Input
+                  value={command}
+                  onChange={(e) => setCommand(e.target.value)}
+                  placeholder="Type 'status', 'restart', or 'clear'..."
+                  variant="unstyled"
+                  className="flex-1 font-mono text-sm text-foreground placeholder:text-muted-foreground"
+                />
+              </div>
+            </form>
+          </Card>
 
-            {/* Connections */}
-            <Card
-              p="md"
-              radius="md"
-              style={{
-                backgroundColor: 'rgba(255, 45, 85, 0.08)',
-                border: '1px solid rgba(255, 45, 85, 0.3)',
-              }}
-            >
-              <Group mb="sm" gap="xs">
-                <IconWifi size={16} style={{ color: 'var(--electric-cyan)' }} />
-                <Text size="xs" fw={700} tt="uppercase" style={{ letterSpacing: '1px' }}>
-                  Active WebSocket Connections
-                </Text>
-              </Group>
-              <Group gap="md">
-                {connections.map(conn => (
-                  <Box
+          {/* Connections */}
+          <Card variant="elevated">
+            <CardHeader className="py-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-muted">
+                  <Wifi size={16} className="text-muted-foreground" />
+                </div>
+                <CardTitle className="text-sm">Active WebSocket Connections</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-4">
+                {connections.map((conn) => (
+                  <div
                     key={conn.id}
-                    p="sm"
-                    style={{
-                      backgroundColor: 'var(--primary-bg)',
-                      border: '1px solid rgba(255, 45, 85, 0.2)',
-                      borderRadius: '6px',
-                    }}
+                    className="p-4 bg-background border border-border rounded-xl transition-all duration-200 hover:border-input"
                   >
-                    <Group gap="md">
-                      <Text size="xs" style={{ fontFamily: 'monospace', color: 'var(--fire-red)' }}>
-                        {conn.ip}
-                      </Text>
-                      <Text size="xs">{conn.device}</Text>
-                      <Text size="xs" fw={700} style={{ color: 'var(--electric-cyan)' }}>
-                        {conn.ping}
-                      </Text>
-                    </Group>
-                  </Box>
+                    <div className="flex items-center gap-5">
+                      <span className="text-xs font-mono text-muted-foreground">{conn.ip}</span>
+                      <span className="text-xs font-medium text-foreground">{conn.device}</span>
+                      <span className="text-xs font-semibold text-success">{conn.ping}</span>
+                    </div>
+                  </div>
                 ))}
-              </Group>
-            </Card>
-          </Stack>
-        </Grid.Col>
-      </Grid>
-    </Stack>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
   );
 }

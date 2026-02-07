@@ -1,14 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import {
-  Card,
-  Text,
-  Stack,
-  Group,
-  Badge,
-  ScrollArea,
-  Box,
-} from '@mantine/core';
-import { IconBolt } from '@tabler/icons-react';
+import { Zap } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardContent, Badge, ScrollArea } from '@/components/ui';
 import { socketService } from '../services/socket';
 import { getEndpoints } from '../services/api';
 import type { CustomEvent } from '../types';
@@ -59,66 +51,46 @@ export default function EventFeed() {
   if (eventNames.length === 0 || events.length === 0) return null;
 
   return (
-    <Card
-      padding="lg"
-      radius="md"
-      styles={{
-        root: {
-          backgroundColor: 'var(--card-bg)',
-          border: '1px solid var(--border-color)',
-        },
-      }}
-    >
-      <Group justify="space-between" mb="md">
-        <Group gap="xs">
-          <IconBolt size={18} style={{ color: 'var(--warning)' }} />
-          <Text
-            size="lg"
-            style={{
-              fontFamily: '"VT323", monospace',
-              color: 'var(--primary-green)',
-              letterSpacing: '1px',
-            }}
-          >
-            CUSTOM EVENTS
-          </Text>
-        </Group>
-        <Badge variant="light" color="yellow" size="sm">
-          {events.length}
-        </Badge>
-      </Group>
-
-      <ScrollArea h={200}>
-        <Stack gap="xs">
-          {events.map((evt) => (
-            <Box
-              key={evt.id}
-              p="xs"
-              style={{
-                background: 'var(--primary-bg)',
-                border: '1px solid var(--border-color)',
-                borderRadius: '4px',
-              }}
-            >
-              <Group gap="sm" justify="space-between">
-                <Group gap="xs">
-                  <Badge size="xs" color="yellow" variant="light">
+    <Card variant="elevated">
+      <CardHeader border>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-chart-3/10">
+              <Zap size={18} className="text-chart-3" />
+            </div>
+            <CardTitle>Custom Events</CardTitle>
+          </div>
+          <Badge variant="outline" className="text-xs">
+            {events.length}
+          </Badge>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <ScrollArea className="h-[240px]">
+          <div className="flex flex-col gap-1.5">
+            {events.map((evt) => (
+              <div
+                key={evt.id}
+                className="p-3.5 border border-transparent hover:border-border rounded-xl flex items-center justify-between gap-3 hover:bg-accent/50 transition-all duration-200"
+              >
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <Badge variant="outline" className="text-xs shrink-0">
                     {evt.eventName}
                   </Badge>
-                  <Text size="sm" style={{ color: 'var(--text-secondary)' }}>
+                  <span className="text-sm text-muted-foreground truncate">
                     {Object.entries(evt.data)
                       .map(([k, v]) => `${k}: ${typeof v === 'string' ? v : JSON.stringify(v)}`)
                       .join(', ')}
-                  </Text>
-                </Group>
-                <Text size="xs" style={{ color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+                  </span>
+                </div>
+                <span className="text-xs text-muted-foreground whitespace-nowrap">
                   {new Date(evt.timestamp).toLocaleTimeString()}
-                </Text>
-              </Group>
-            </Box>
-          ))}
-        </Stack>
-      </ScrollArea>
+                </span>
+              </div>
+            ))}
+          </div>
+        </ScrollArea>
+      </CardContent>
     </Card>
   );
 }
