@@ -13,7 +13,7 @@ export default function EmptyState({ icon, title, description }: EmptyStateProps
         {icon}
       </div>
       <p className="text-sm font-semibold text-muted-foreground mb-1">{title}</p>
-      <p className="text-xs text-muted-foreground/60">{description}</p>
+      <p className="text-xs text-muted-foreground\/60">{description}</p>
     </div>
   );
 }

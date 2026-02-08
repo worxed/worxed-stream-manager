@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState, useCallback } from 'react';
-import { Stage, Layer, Rect } from 'react-konva';
+import { Stage, Layer, Rect, Line, Text } from 'react-konva';
 import { Transformer } from 'react-konva';
 import type Konva from 'konva';
 import type { KonvaEventObject } from 'konva/lib/Node';
@@ -7,6 +7,8 @@ import { useEditorStore, useCurrentScene } from '../../stores/editorStore';
 import KonvaElement from './KonvaElement';
 
 const PADDING = 40;
+const OOB = 5000; // out-of-bounds extension for dim overlay
+const DIM_FILL = 'rgba(0,0,0,0.3)';
 
 interface KonvaCanvasProps {
   canvasWidth?: number;
@@ -76,7 +78,7 @@ export default function KonvaCanvas({ canvasWidth = 1920, canvasHeight = 1080 }:
   }, [selectedIds, scene?.elements]);
 
   // Click on background → clear selection
-  const handleStageClick = useCallback((e: KonvaEventObject<MouseEvent>) => {
+  const handleStageClick = useCallback((e: KonvaEventObject<MouseEvent | TouchEvent>) => {
     // If the click target is the stage itself or the background rect, clear selection
     const target = e.target;
     if (target === stageRef.current || target.name() === 'background') {
@@ -85,7 +87,7 @@ export default function KonvaCanvas({ canvasWidth = 1920, canvasHeight = 1080 }:
   }, [clearSelection]);
 
   // Element selection
-  const handleElementSelect = useCallback((id: string, e: KonvaEventObject<MouseEvent>) => {
+  const handleElementSelect = useCallback((id: string, e: KonvaEventObject<MouseEvent | TouchEvent>) => {
     const isShift = e.evt.shiftKey;
     select(id, isShift);
   }, [select]);
@@ -214,7 +216,13 @@ export default function KonvaCanvas({ canvasWidth = 1920, canvasHeight = 1080 }:
         onTap={handleStageClick}
       >
         <Layer>
-          {/* Background rect (click target for deselect) */}
+          {/* Dim overlay outside canvas bounds (letterbox) */}
+          <Rect x={-OOB} y={-OOB} width={canvasWidth + OOB * 2} height={OOB} fill={DIM_FILL} listening={false} />
+          <Rect x={-OOB} y={canvasHeight} width={canvasWidth + OOB * 2} height={OOB} fill={DIM_FILL} listening={false} />
+          <Rect x={-OOB} y={0} width={OOB} height={canvasHeight} fill={DIM_FILL} listening={false} />
+          <Rect x={canvasWidth} y={0} width={OOB} height={canvasHeight} fill={DIM_FILL} listening={false} />
+
+          {/* Canvas area (click target for deselect) */}
           <Rect
             name="background"
             x={0}
@@ -222,9 +230,38 @@ export default function KonvaCanvas({ canvasWidth = 1920, canvasHeight = 1080 }:
             width={canvasWidth}
             height={canvasHeight}
             fill="rgba(0,0,0,0.02)"
-            stroke="var(--color-border, #333)"
+            stroke="rgba(255,255,255,0.15)"
             strokeWidth={1}
             listening={true}
+          />
+
+          {/* Center crosshair guides */}
+          <Line
+            points={[canvasWidth / 2, 0, canvasWidth / 2, canvasHeight]}
+            stroke="rgba(255,255,255,0.06)"
+            strokeWidth={1}
+            dash={[8, 8]}
+            listening={false}
+          />
+          <Line
+            points={[0, canvasHeight / 2, canvasWidth, canvasHeight / 2]}
+            stroke="rgba(255,255,255,0.06)"
+            strokeWidth={1}
+            dash={[8, 8]}
+            listening={false}
+          />
+
+          {/* Resolution label below canvas */}
+          <Text
+            text={`${canvasWidth} \u00d7 ${canvasHeight}`}
+            x={canvasWidth - 200}
+            y={canvasHeight + 12}
+            width={200}
+            fontSize={20}
+            fill="rgba(255,255,255,0.3)"
+            align="right"
+            fontFamily="Inter, system-ui, sans-serif"
+            listening={false}
           />
 
           {/* Elements */}

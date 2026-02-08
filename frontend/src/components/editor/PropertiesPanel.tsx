@@ -317,7 +317,7 @@ export default function PropertiesPanel() {
                   placeholder="hype-alert"
                   className="w-full text-xs mt-1"
                 />
-                <p className="text-[10px] text-muted-foreground mt-1">Socket.IO event name from custom endpoints</p>
+                <p className="text-muted-foreground mt-1" style={{ fontSize: '10px' }}>Socket.IO event name from custom endpoints</p>
               </div>
               <div>
                 <Label>Display Template</Label>
@@ -330,7 +330,7 @@ export default function PropertiesPanel() {
                   className="w-full text-xs mt-1"
                   autoResize
                 />
-                <p className="text-[10px] text-muted-foreground mt-1">Use {'{{field}}'} to insert event data</p>
+                <p className="text-muted-foreground mt-1" style={{ fontSize: '10px' }}>Use {'{{field}}'} to insert event data</p>
               </div>
               <div>
                 <div className="flex justify-between">
@@ -674,7 +674,7 @@ function DataBindingSection({
                 placeholder="progress"
                 className="w-full text-xs mt-1"
               />
-              <p className="text-[10px] text-muted-foreground mt-1">Dot-notation path, e.g. user.name</p>
+              <p className="text-muted-foreground mt-1" style={{ fontSize: '10px' }}>Dot-notation path, e.g. user.name</p>
             </div>
             {mode === 'text' && (
               <div>
@@ -686,7 +686,7 @@ function DataBindingSection({
                   placeholder="Goal: {{progress}}%"
                   className="w-full text-xs mt-1"
                 />
-                <p className="text-[10px] text-muted-foreground mt-1">Leave empty to use raw field value</p>
+                <p className="text-muted-foreground mt-1" style={{ fontSize: '10px' }}>Leave empty to use raw field value</p>
               </div>
             )}
             {mode === 'image' && (
@@ -699,7 +699,7 @@ function DataBindingSection({
                   placeholder="imageUrl"
                   className="w-full text-xs mt-1"
                 />
-                <p className="text-[10px] text-muted-foreground mt-1">Field containing image URL (overrides Data Field Path)</p>
+                <p className="text-muted-foreground mt-1" style={{ fontSize: '10px' }}>Field containing image URL (overrides Data Field Path)</p>
               </div>
             )}
             <div>
@@ -728,7 +728,7 @@ function DataBindingSection({
                 onSlideEnd={handleSliderEnd}
                 className="mt-1"
               />
-              <p className="text-[10px] text-muted-foreground mt-1">0 = persist forever</p>
+              <p className="text-muted-foreground mt-1" style={{ fontSize: '10px' }}>0 = persist forever</p>
             </div>
           </>
         )}

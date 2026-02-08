@@ -231,7 +231,7 @@ export default function BackendDashboard() {
                           {proc.status === 'running' ? <Square size={14} /> : <Play size={14} />}
                         </Button>
                       </div>
-                      <p className="text-[11px] text-muted-foreground font-mono">
+                      <p className="text-muted-foreground font-mono" style={{ fontSize: '11px' }}>
                         PORT: {proc.port} &middot; UP: {proc.uptime}
                       </p>
                     </div>

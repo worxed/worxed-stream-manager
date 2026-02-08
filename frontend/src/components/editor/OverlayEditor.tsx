@@ -94,7 +94,7 @@ export default function OverlayEditor() {
   }));
 
   return (
-    <div className="flex flex-col h-[calc(100vh-140px)]">
+    <div className="flex flex-col" style={{ height: 'calc(100vh - 140px)' }}>
       {/* Toolbar */}
       <div className="flex items-center gap-3 mb-3 flex-wrap">
         <Dropdown
@@ -245,18 +245,18 @@ export default function OverlayEditor() {
       {/* Editor Body */}
       {scene ? (
         <div className="flex flex-col flex-1 border border-border rounded-lg overflow-hidden bg-card">
-          <div className="flex flex-1 overflow-hidden">
-            {/* Left: Toolbox */}
-            <div className="w-52 border-r border-border bg-card shrink-0">
+          <div className="flex-1 overflow-hidden relative">
+            {/* Canvas takes full space */}
+            <KonvaCanvas canvasWidth={scene.width} canvasHeight={scene.height} />
+
+            {/* Floating left panel: Toolbox */}
+            <div className="absolute left-0 top-0 bottom-0 w-52 bg-card/95 backdrop-blur-sm border-r border-border overflow-y-auto z-10">
               <ElementToolbox />
             </div>
 
-            {/* Center: Canvas */}
-            <KonvaCanvas canvasWidth={scene.width} canvasHeight={scene.height} />
-
-            {/* Right: Properties */}
+            {/* Floating right panel: Properties */}
             {hasSelection && selectedElement && (
-              <div className="w-72 border-l border-border bg-card shrink-0">
+              <div className="absolute right-0 top-0 bottom-0 w-72 bg-card/95 backdrop-blur-sm border-l border-border overflow-y-auto z-10">
                 <PropertiesPanel />
               </div>
             )}

@@ -7,7 +7,7 @@ import type { SceneElement, TextConfig, ImageConfig, CustomEventConfig } from '.
 interface Props {
   element: SceneElement;
   isSelected: boolean;
-  onSelect: (id: string, e: KonvaEventObject<MouseEvent>) => void;
+  onSelect: (id: string, e: KonvaEventObject<MouseEvent | TouchEvent>) => void;
   onDragStart: () => void;
   onDragEnd: (id: string, x: number, y: number) => void;
   onTransformEnd: (id: string, attrs: { x: number; y: number; width: number; height: number; rotation: number }) => void;
@@ -45,7 +45,7 @@ export default function KonvaElement({ element, onSelect, onDragStart, onDragEnd
   const groupRef = useRef<Konva.Group>(null);
   const { id, x, y, width, height, rotation, visible, locked, style, config, type, name } = element;
 
-  const handleClick = (e: KonvaEventObject<MouseEvent>) => {
+  const handleClick = (e: KonvaEventObject<MouseEvent | TouchEvent>) => {
     e.cancelBubble = true;
     onSelect(id, e);
   };

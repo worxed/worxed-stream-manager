@@ -12,7 +12,11 @@ worxed-stream-manager/
 │   ├── server.js         # Express API + Socket.IO + Twitch + Endpoint Builder
 │   └── admin/            # Vue admin console (11 components)
 ├── frontend/             # React stream manager + OBS overlay
-│   └── src/components/   # Dashboard, Alerts, Customizer, EventFeed, Overlay
+│   └── src/
+│       ├── components/   # Dashboard, Alerts, editor/, overlay/, common/
+│       ├── stores/       # Zustand stores (editorStore)
+│       ├── services/     # API client, Socket.IO, toast
+│       └── themes/       # Theme definitions (4 themes × 2 modes)
 ├── ARCHITECTURE.md       # Technical deep-dive
 ├── TASKS.md              # Roadmap & task tracking
 ├── COLORS.md             # Theme specifications
@@ -26,20 +30,20 @@ worxed-stream-manager/
 git clone https://github.com/YOUR_USERNAME/worxed-stream-manager.git
 cd worxed-stream-manager
 
-# 2. Install dependencies
-npm run install:all
+# 2. Install dependencies (pnpm workspaces — installs all packages)
+pnpm install
 
 # 3. Set up environment
 cp .env.example .env
 # Edit .env with your Twitch credentials (or use dummy values for UI work)
 
 # 4. Start development
-npm start
+pnpm start
 
 # 5. Access the apps
 # Admin Console: http://localhost:4000
 # Stream Manager: http://localhost:5173
-# OBS Overlay: http://localhost:5173/overlay?type=alerts
+# OBS Overlay: http://localhost:5173/overlay
 ```
 
 ## Development Workflow
@@ -49,23 +53,23 @@ npm start
 |------|---------|-------------|
 | 4000 | Supervisor + Admin | Process management, Vue admin changes |
 | 4001 | Backend | API, Twitch, Endpoint Builder changes |
-| 4002 | Admin Dev | `npm run dev:admin` for hot reload |
+| 4002 | Admin Dev | `pnpm run dev:admin` for hot reload |
 | 5173 | Frontend | React/UI changes, OBS overlay (/overlay) |
 
 ### Running Individual Services
 
 ```bash
 # Full stack (recommended)
-npm start
+pnpm start
 
 # Just admin console with hot reload
-npm run dev:admin
+pnpm run dev:admin
 
 # Just frontend with hot reload
-npm run dev:frontend
+pnpm run dev:frontend
 
 # Rebuild admin after changes
-npm run build:admin
+pnpm run build:admin
 ```
 
 ## Where to Contribute
@@ -77,9 +81,11 @@ Check [TASKS.md](TASKS.md) for the full roadmap. Current priorities:
 1. ~~**Database Layer**~~ Done
 2. ~~**Endpoint Builder**~~ Done
 3. ~~**Settings & Endpoint Integration**~~ Done
-4. **Endpoint Builder UI polish** - integration templates, drag-and-drop
-5. **Theme layout refinements** - gaps, elevation, floating sidebar
-6. **Quality** - WebSocket reconnection, error boundaries
+4. ~~**Multi-Theme System**~~ Done
+5. ~~**Scene Editor + Overlay Renderer**~~ Done
+6. ~~**Editor UX Enhancements**~~ Done
+7. **Responsive layout** - mobile/tablet breakpoints
+8. **Quality** - WebSocket reconnection, error boundaries
 
 ### Good First Issues
 
@@ -100,10 +106,13 @@ Check [TASKS.md](TASKS.md) for the full roadmap. Current priorities:
 - Keep it simple - avoid over-engineering
 - Match existing code style
 - Test your changes manually before submitting
+- Use `pnpm` for all package management (never npm/yarn)
 
-### Frontend (React)
+### Frontend (React + TypeScript)
 - Functional components with hooks
-- Use Mantine UI components
+- PrimeReact components + Tailwind CSS v4 for styling
+- Zustand for state management (see `stores/editorStore.ts`)
+- react-konva for the scene editor canvas
 - Follow existing patterns in `frontend/src/components/`
 - Theme colors via CSS variables (see `index.css`)
 
@@ -132,7 +141,7 @@ Types:
 
 Examples:
 ```
-feat: add SQLite database layer
+feat: add scene editor with react-konva canvas
 fix: resolve WebSocket reconnection issue
 docs: update API endpoints in ARCHITECTURE.md
 ```
@@ -147,7 +156,7 @@ docs: update API endpoints in ARCHITECTURE.md
 2. **Make your changes** - Keep PRs focused on one thing
 
 3. **Test locally**
-   - Run `npm start` and verify everything works
+   - Run `pnpm start` and verify everything works
    - Check Admin (4000) and Frontend (5173)
 
 4. **Update documentation** if needed
@@ -227,7 +236,8 @@ Before making significant changes, read [ARCHITECTURE.md](ARCHITECTURE.md) to un
 - Why we have a separate supervisor process
 - How the admin console and frontend are decoupled
 - The WebSocket communication patterns
-- Future plans (database, endpoint builder, integrations)
+- The scene-based overlay rendering system
+- The multi-theme CSS-variable architecture
 
 ## Questions?
 

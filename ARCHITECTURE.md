@@ -4,69 +4,61 @@
 
 Worxed Stream Manager is a full-stack streaming management platform with four main layers: a process supervisor, a shared SQLite database, a backend API server, and a React-based stream manager frontend with OBS overlay support.
 
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                        SUPERVISOR (port 4000)                           │
-│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐         │
-│  │  Process Mgmt   │  │  Admin UI Host  │  │  Log Streaming  │         │
-│  │  start/stop/    │  │  Vue 3 (/)      │  │  WebSocket to   │         │
-│  │  restart        │  │  API proxy      │  │  admin console  │         │
-│  └─────────────────┘  └─────────────────┘  └─────────────────┘         │
-│                              Node.js + ws + better-sqlite3              │
-└────────────────────────────────┬────────────────────────────────────────┘
-                                 │ spawns & monitors
-┌────────────────────────────────┼────────────────────────────────────────┐
-│                         SHARED DB LAYER                                 │
-│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐         │
-│  │  database.js    │  │  schema.js      │  │  migrations.js  │         │
-│  │  Singleton WAL  │  │  Table defs     │  │  Version runner │         │
-│  └─────────────────┘  └─────────────────┘  └─────────────────┘         │
-│  ┌─────────────────────────────────────────────────────────────┐        │
-│  │  index.js — Query helpers                                   │        │
-│  │  settings · alerts · events · analytics · endpoints         │        │
-│  └─────────────────────────────────────────────────────────────┘        │
-│                        SQLite 3.51 + better-sqlite3 12.6                │
-└────────────────────────────────┼────────────────────────────────────────┘
-                                 │
-┌────────────────────────────────▼────────────────────────────────────────┐
-│                         BACKEND (port 4001)                             │
-│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐         │
-│  │  Express API    │  │  Socket.IO      │  │  Endpoint Builder│        │
-│  │  /api/*         │  │  Real-time      │  │  /custom/* routes│        │
-│  │  /webhooks/*    │  │  events         │  │  dynamic handlers│        │
-│  └─────────────────┘  └─────────────────┘  └─────────────────┘         │
-│  ┌─────────────────┐  ┌─────────────────┐                              │
-│  │  tmi.js         │  │  Twitch OAuth   │                              │
-│  │  IRC Chat       │  │  + Helix API    │                              │
-│  └─────────────────┘  └─────────────────┘                              │
-│                        Node.js + Express + Socket.IO                    │
-└────────────────────────────────┬────────────────────────────────────────┘
-                                 │ WebSocket + REST
-┌────────────────────────────────▼────────────────────────────────────────┐
-│                    STREAM MANAGER FRONTEND (port 5173)                  │
-│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐         │
-│  │  Dashboard      │  │  Alerts         │  │  Customizer     │         │
-│  │  Stream stats   │  │  Configuration  │  │  Overlay design │         │
-│  │  Chat, Activity │  │  Testing        │  │  OBS URLs       │         │
-│  │  EventFeed      │  │                 │  │                 │         │
-│  └─────────────────┘  └─────────────────┘  └─────────────────┘         │
-│  ┌─────────────────┐  ┌─────────────────┐                              │
-│  │  Backend        │  │  OBS Overlay    │  React 18 + TypeScript       │
-│  │  Console        │  │  /overlay route │  Mantine UI + Socket.IO      │
-│  └─────────────────┘  └─────────────────┘                              │
-└─────────────────────────────────────────────────────────────────────────┘
-                                 │
-┌────────────────────────────────▼────────────────────────────────────────┐
-│                        EXTERNAL SERVICES                                │
-│  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐         │
-│  │  Twitch OAuth   │  │  Twitch Helix   │  │  Twitch IRC     │         │
-│  │  Authentication │  │  Stream Data    │  │  Chat (tmi.js)  │         │
-│  └─────────────────┘  └─────────────────┘  └─────────────────┘         │
-│  ┌─────────────────┐  ┌─────────────────┐                              │
-│  │  EventSub       │  │  Future:        │                              │
-│  │  Webhooks       │  │  OBS, Discord   │                              │
-│  └─────────────────┘  └─────────────────┘                              │
-└─────────────────────────────────────────────────────────────────────────┘
+```mermaid
+graph TB
+    subgraph SUPERVISOR["SUPERVISOR (port 4000)"]
+        direction LR
+        PM[Process Manager<br/>start / stop / restart]
+        ADMIN[Admin UI Host<br/>Vue 3 SPA]
+        LOGS[Log Streaming<br/>WebSocket]
+    end
+
+    subgraph SHARED["SHARED DATABASE LAYER"]
+        direction LR
+        DB_CONN[database.js<br/>Singleton · WAL mode]
+        SCHEMA[schema.js<br/>Table definitions]
+        MIGRATE[migrations.js<br/>Version runner]
+        HELPERS[index.js — Query helpers<br/>settings · alerts · events · analytics · endpoints · scenes]
+    end
+
+    subgraph BACKEND["BACKEND (port 4001)"]
+        direction LR
+        EXPRESS[Express API<br/>/api/* · /webhooks/*]
+        SOCKETIO[Socket.IO<br/>Real-time events]
+        ENDPOINTS[Endpoint Builder<br/>/custom/* routes]
+        TWITCH_IRC[tmi.js<br/>IRC Chat]
+        TWITCH_API[Twitch OAuth<br/>+ Helix API]
+    end
+
+    subgraph FRONTEND["STREAM MANAGER FRONTEND (port 5173)"]
+        direction LR
+        DASH[Dashboard<br/>Stats · Chat · Activity]
+        ALERTS_V[Alerts<br/>Configuration]
+        CUSTOM[Customizer<br/>Scene Editor]
+        BACKEND_V[Backend Console<br/>System Monitoring]
+        OVERLAY[OBS Overlay<br/>/overlay route]
+    end
+
+    subgraph EXTERNAL["EXTERNAL SERVICES"]
+        direction LR
+        T_OAUTH[Twitch OAuth]
+        T_HELIX[Twitch Helix API]
+        T_IRC[Twitch IRC]
+        T_EVENTSUB[EventSub Webhooks]
+    end
+
+    SUPERVISOR -->|spawns & monitors| BACKEND
+    SUPERVISOR -->|spawns & monitors| FRONTEND
+    SUPERVISOR --- SHARED
+    BACKEND --- SHARED
+    BACKEND <-->|WebSocket + REST| FRONTEND
+    BACKEND <--> EXTERNAL
+
+    style SUPERVISOR fill:#1e293b,stroke:#3b82f6,color:#e2e8f0
+    style SHARED fill:#1e293b,stroke:#22c55e,color:#e2e8f0
+    style BACKEND fill:#1e293b,stroke:#f59e0b,color:#e2e8f0
+    style FRONTEND fill:#1e293b,stroke:#8b5cf6,color:#e2e8f0
+    style EXTERNAL fill:#1e293b,stroke:#71717a,color:#e2e8f0
 ```
 
 ---
@@ -85,6 +77,7 @@ Worxed Stream Manager is a full-stack streaming management platform with four ma
 ## Tech Stack
 
 ### Supervisor
+
 | Technology | Purpose |
 |------------|---------|
 | **Node.js** | Runtime |
@@ -93,36 +86,45 @@ Worxed Stream Manager is a full-stack streaming management platform with four ma
 | **child_process** | Spawn and manage backend/frontend |
 
 ### Shared Database
+
 | Technology | Version | Purpose |
 |------------|---------|---------|
 | **better-sqlite3** | 12.6 | SQLite bindings (WAL mode) |
 | **SQLite** | 3.51 | Persistent storage |
 
 ### Backend
+
 | Technology | Version | Purpose |
 |------------|---------|---------|
-| **Node.js** | 18+ | Runtime |
+| **Node.js** | 20+ | Runtime |
 | **Express** | 4.21 | HTTP server |
-| **Socket.IO** | 4.7 | WebSocket server |
+| **Socket.IO** | 4.8 | WebSocket server |
 | **tmi.js** | 1.8 | Twitch IRC chat |
-| **node-fetch** | 2.7 | Twitch API requests |
+| **node-fetch** | 2.7 | Twitch API requests (CommonJS) |
 
 ### Admin Console (Vue)
+
 | Technology | Version | Purpose |
 |------------|---------|---------|
-| **Vue** | 3.4 | UI framework |
-| **Naive UI** | 2.38 | Component library |
-| **Vite** | 5.x | Build tool |
-| **Tabler Icons** | - | Icon system |
+| **Vue** | 3.5 | UI framework |
+| **Naive UI** | 2.40 | Component library |
+| **Vite** | 7.3 | Build tool |
+| **Tabler Icons** | 3.30 | Icon system |
 
 ### Frontend (React)
+
 | Technology | Version | Purpose |
 |------------|---------|---------|
-| **React** | 18.3 | UI framework |
-| **TypeScript** | 5.6 | Type safety |
-| **Vite** | 6.0 | Build tool |
-| **Mantine UI** | 7.15 | Component library |
-| **Socket.IO Client** | 4.7 | WebSocket client |
+| **React** | 19.2 | UI framework |
+| **TypeScript** | 5.8 | Type safety |
+| **Vite** | 7.3 | Build tool |
+| **PrimeReact** | 10.x | Component library (unstyled/passthrough) |
+| **react-konva** | 19.2 | Canvas-based scene editor |
+| **Zustand** | 5.0 | State management (editor store) |
+| **Socket.IO Client** | 4.8 | WebSocket client |
+| **Lucide React** | 0.563 | Icon system |
+
+> **Note:** Tailwind CSS was removed in v1.1. All styling uses hand-written utility CSS classes (same names as Tailwind) in `index.css` + a PrimeReact CSS bridge.
 
 ---
 
@@ -136,13 +138,13 @@ worxed-stream-manager/
 │   ├── database.js               # Singleton connection, WAL mode, pragmas
 │   ├── schema.js                 # Table definitions + migration data
 │   ├── migrations.js             # Version-based migration runner
-│   └── index.js                  # Query helpers (settings, alerts, events, analytics, endpoints)
+│   └── index.js                  # Query helpers (settings, alerts, events, analytics, endpoints, scenes)
 │
 ├── data/
 │   └── worxed.db                 # SQLite database (auto-created)
 │
 ├── backend/
-│   ├── server.js                 # Express + Socket.IO server + Endpoint Builder
+│   ├── server.js                 # Express + Socket.IO server + Endpoint Builder + Scene API
 │   ├── admin/                    # Vue admin console source
 │   │   ├── src/
 │   │   │   ├── App.vue           # Main admin layout
@@ -171,21 +173,39 @@ worxed-stream-manager/
 │   ├── src/
 │   │   ├── App.tsx               # Root: /overlay routing + AppMain shell
 │   │   ├── main.tsx              # React entry point
-│   │   ├── index.css             # Global styles, CSS variables
+│   │   ├── index.css             # Global styles, utility CSS, CSS variables, PrimeReact bridge
 │   │   ├── components/
-│   │   │   ├── Dashboard.tsx     # Stream stats, chat, activity, EventFeed
-│   │   │   ├── Alerts.tsx        # Alert configuration
-│   │   │   ├── Customizer.tsx    # Overlay designer
-│   │   │   ├── BackendDashboard.tsx  # System monitoring
-│   │   │   ├── ThemeSwitcher.tsx # Theme selection
-│   │   │   ├── EventFeed.tsx     # Live custom endpoint event feed
-│   │   │   └── Overlay.tsx       # OBS browser source overlay page
+│   │   │   ├── Dashboard.tsx          # Stream stats, chat, activity, EventFeed
+│   │   │   ├── Alerts.tsx             # Alert configuration
+│   │   │   ├── Customizer.tsx         # Scene editor shell
+│   │   │   ├── BackendDashboard.tsx   # System monitoring
+│   │   │   ├── ThemeSwitcher.tsx      # Theme/mode picker (PrimeReact OverlayPanel)
+│   │   │   ├── EventFeed.tsx          # Live custom endpoint event feed
+│   │   │   ├── Overlay.tsx            # OBS scene-based overlay renderer
+│   │   │   ├── ColorPicker.tsx        # Color picker component
+│   │   │   ├── common/
+│   │   │   │   └── EmptyState.tsx     # Reusable empty state
+│   │   │   ├── editor/               # Figma-like scene editor
+│   │   │   │   ├── OverlayEditor.tsx  # Editor shell (toolbar, resolution, preview)
+│   │   │   │   ├── KonvaCanvas.tsx    # Konva Stage/Layer/Transformer + guides
+│   │   │   │   ├── KonvaElement.tsx   # Element rendering on canvas
+│   │   │   │   ├── ElementToolbox.tsx # Add elements + layers panel
+│   │   │   │   ├── PropertiesPanel.tsx# Per-element property editor
+│   │   │   │   └── TestingPanel.tsx   # Alert/chat/event test buttons
+│   │   │   └── overlay/              # OBS overlay renderers (DOM-based)
+│   │   │       ├── ElementRenderer.tsx
+│   │   │       ├── AlertBoxRenderer.tsx
+│   │   │       ├── ChatRenderer.tsx
+│   │   │       ├── TextRenderer.tsx
+│   │   │       └── ImageRenderer.tsx
+│   │   ├── stores/
+│   │   │   └── editorStore.ts    # Zustand store (scenes, elements, undo/redo)
 │   │   ├── services/
 │   │   │   ├── socket.ts         # Socket.IO client (typed + generic on())
-│   │   │   └── api.ts            # REST API client
+│   │   │   ├── api.ts            # REST API client
+│   │   │   └── toast.ts          # Toast notification service
 │   │   ├── themes/
-│   │   │   ├── themes.ts         # Theme definitions (3×2)
-│   │   │   └── worxed.ts         # Mantine theme config
+│   │   │   └── themes.ts         # Theme definitions (4 themes × 2 modes)
 │   │   └── types/
 │   │       └── index.ts          # TypeScript interfaces
 │   ├── vite.config.ts
@@ -193,6 +213,7 @@ worxed-stream-manager/
 │
 ├── .env                          # Root environment (PORT=4001)
 ├── package.json                  # Workspace scripts
+├── pnpm-workspace.yaml           # pnpm workspace config
 ├── README.md
 ├── ARCHITECTURE.md               # This file
 ├── COLORS.md                     # Theme color specifications
@@ -229,6 +250,7 @@ REST endpoints for process control + admin UI host:
 | `/webhooks/*` | * | Proxied to backend (port 4001) |
 
 WebSocket for log streaming:
+
 - Connects to admin console
 - Broadcasts logs from backend/frontend stdout/stderr
 - Maintains 100-entry log buffer for new connections
@@ -247,6 +269,8 @@ REST endpoints:
 | `/api/alerts/configs` | GET | Detailed alert configs from DB |
 | `/api/alerts/configs/:type` | PUT | Update specific alert config |
 | `/api/test-alert` | POST | Trigger test alert |
+| `/api/test-chat` | POST | Trigger test chat message |
+| `/api/test-event` | POST | Trigger custom Socket.IO event |
 | `/api/settings` | GET | All settings (?category=) |
 | `/api/settings/:key` | GET/PUT/DELETE | Single setting CRUD |
 | `/api/events` | GET | Event history (?type=&limit=&offset=&since=&until=) |
@@ -255,13 +279,54 @@ REST endpoints:
 | `/api/endpoints/:id` | GET/PUT/DELETE | Single endpoint CRUD |
 | `/api/endpoints/:id/test` | POST | Dry-run endpoint handler |
 | `/api/db/status` | GET | Database stats |
+| `/api/scenes` | GET/POST | List/create scenes |
+| `/api/scenes/active` | GET | Get active scene (for overlay) |
+| `/api/scenes/:id` | GET/PUT/DELETE | Single scene CRUD |
+| `/api/scenes/:id/activate` | PUT | Set scene as active |
 | `/api/navigation` | GET | Service discovery (all URLs) |
 | `/webhooks/twitch` | POST | Twitch EventSub handler |
 | `/custom/*` | * | Dynamic custom endpoint handler |
 
-Socket.IO events:
+### Socket.IO Events
 
-**Server → Client:**
+```mermaid
+sequenceDiagram
+    participant Twitch
+    participant Backend
+    participant DB as SQLite
+    participant Frontend
+    participant Overlay as OBS Overlay
+
+    Note over Backend,Frontend: Server → Client Events
+
+    Twitch->>Backend: IRC message / EventSub webhook
+    Backend->>DB: db.events.insert()
+    Backend->>Frontend: chat-message / new-follower / new-subscriber / raid
+    Backend->>Overlay: alert { type, username, message }
+
+    Note over Backend,Frontend: Settings Sync
+
+    Frontend->>Backend: PUT /api/settings/:key
+    Backend->>DB: db.settings.set()
+    Backend->>Frontend: settings-changed { key, value, category }
+    Backend->>Overlay: settings-changed (live theme update)
+
+    Note over Backend,Frontend: Scene Editor Sync
+
+    Frontend->>Backend: PUT /api/scenes/:id
+    Backend->>DB: db.scenes.update()
+    Backend->>Frontend: scene-updated { id, elements }
+    Backend->>Overlay: scene-updated (live preview)
+
+    Note over Backend,Frontend: Custom Endpoints
+
+    Twitch->>Backend: POST /custom/{path}
+    Backend->>Frontend: <custom-event> { data }
+    Backend->>Overlay: <custom-event> (popup)
+```
+
+**Server → Client events:**
+
 | Event | Payload | Description |
 |-------|---------|-------------|
 | `chat-message` | `{ username, message, color, ... }` | New chat message |
@@ -276,9 +341,14 @@ Socket.IO events:
 | `endpoint-created` | `{ id, name, path, ... }` | New custom endpoint |
 | `endpoint-updated` | `{ id, name, path, ... }` | Endpoint modified |
 | `endpoint-deleted` | `{ id }` | Endpoint removed |
+| `scene-created` | `{ id, name, ... }` | New scene created |
+| `scene-updated` | `{ id, name, elements, ... }` | Scene modified |
+| `scene-deleted` | `{ id }` | Scene removed |
+| `scene-activated` | `{ id, name, ... }` | Scene set as active |
 | `<custom-event>` | `<user-defined>` | Dynamic event from endpoint builder |
 
-**Client → Server:**
+**Client → Server events:**
+
 | Event | Payload | Description |
 |-------|---------|-------------|
 | `test-alert` | `{ type, username?, message? }` | Trigger test |
@@ -291,95 +361,78 @@ Socket.IO events:
 
 ### Startup Sequence
 
-```
-1. User runs: npm start
-   ↓
-2. supervisor.js starts on port 4000
-   - Initializes SQLite database (shared/database.js)
-   - Runs migrations (shared/migrations.js)
-   - Serves Vue admin from backend/public/
-   ↓
-3. Supervisor spawns: node backend/server.js
-   ↓
-4. Backend starts on port 4001
-   - Loads .env configuration
-   - Initializes database connection
-   - Initializes Express + Socket.IO
-   - Registers API routes + custom endpoint catch-all
-   - Connects to Twitch (OAuth validation, tmi.js)
-   ↓
-5. Supervisor spawns: npm run dev (in frontend/)
-   ↓
-6. Frontend starts on port 5173
-   - Vite dev server with HMR
-   - Proxies /api and /socket.io to port 4001
-   ↓
-7. User accesses:
-   - http://localhost:4000 → Admin Console (Vue)
-   - http://localhost:5173 → Stream Manager (React)
-   - http://localhost:5173/overlay?type=alerts → OBS Overlay
+```mermaid
+graph TD
+    A["pnpm start"] --> B["supervisor.js (port 4000)"]
+    B --> C[Initialize SQLite DB]
+    C --> D[Run migrations]
+    D --> E[Serve Vue admin from backend/public/]
+    B --> F["Spawn: node backend/server.js"]
+    F --> G["Backend (port 4001)"]
+    G --> G1[Load .env config]
+    G1 --> G2[Init Express + Socket.IO]
+    G2 --> G3[Register API routes + /custom/* catch-all]
+    G3 --> G4[Connect to Twitch OAuth + IRC]
+    B --> H["Spawn: pnpm run dev (frontend/)"]
+    H --> I["Frontend (port 5173)"]
+    I --> I1[Vite dev server + HMR]
+    I1 --> I2[Proxy /api + /socket.io → 4001]
+
+    J["User accesses"] --> K["localhost:4000 → Admin Console"]
+    J --> L["localhost:5173 → Stream Manager"]
+    J --> M["localhost:5173/overlay → OBS Overlay"]
+
+    style A fill:#22c55e,stroke:#16a34a,color:#000
+    style B fill:#3b82f6,stroke:#2563eb,color:#fff
+    style G fill:#f59e0b,stroke:#d97706,color:#000
+    style I fill:#8b5cf6,stroke:#7c3aed,color:#fff
 ```
 
 ### Real-Time Event Flow
 
-```
-Twitch Event (follow, sub, chat, raid)
-   ↓
-tmi.js IRC client / EventSub webhook
-   ↓
-Backend event handler (server.js)
-   ↓
-Database insert (db.events.insert)
-   ↓
-Socket.IO broadcast to all connected clients
-   ↓
-Frontend Socket.IO client (socket.ts)
-   ↓
-React component state update → Dashboard + Overlay
-   ↓
-Mantine UI re-renders with new data
+```mermaid
+graph LR
+    A[Twitch Event<br/>follow / sub / chat / raid] --> B[tmi.js IRC /<br/>EventSub webhook]
+    B --> C[Backend handler<br/>server.js]
+    C --> D[DB insert<br/>db.events.insert]
+    C --> E[Socket.IO broadcast<br/>to all clients]
+    E --> F[Frontend<br/>socket.ts]
+    F --> G[React state update<br/>Dashboard + Overlay]
+
+    style A fill:#9333ea,stroke:#7c3aed,color:#fff
+    style C fill:#f59e0b,stroke:#d97706,color:#000
+    style D fill:#22c55e,stroke:#16a34a,color:#000
+    style G fill:#8b5cf6,stroke:#7c3aed,color:#fff
 ```
 
 ### Settings Sync Flow
 
-```
-Admin saves setting (PUT /api/settings/:key)
-   ↓
-Backend writes to DB (db.settings.set)
-   ↓
-io.emit('settings-changed', { key, value, category })
-   ↓
-Frontend App.tsx listener → applyTheme() / fontSize
-   ↓
-OBS Overlay listener → live update without refresh
+```mermaid
+graph LR
+    A[Admin saves setting<br/>PUT /api/settings/:key] --> B[Backend writes to DB<br/>db.settings.set]
+    B --> C["io.emit('settings-changed',<br/>{ key, value, category })"]
+    C --> D[Frontend App.tsx<br/>applyTheme / fontSize]
+    C --> E[OBS Overlay<br/>live update]
+
+    style A fill:#3b82f6,stroke:#2563eb,color:#fff
+    style B fill:#22c55e,stroke:#16a34a,color:#000
+    style D fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style E fill:#8b5cf6,stroke:#7c3aed,color:#fff
 ```
 
 ### Custom Endpoint Event Flow
 
-```
-External trigger (curl, Stream Deck, webhook)
-   ↓
-POST /custom/{path} → backend catch-all
-   ↓
-executeHandler(type=event) → io.emit(eventName, data)
-   ↓
-Frontend EventFeed (Dashboard) → shows in live feed
-   ↓
-OBS Overlay → custom event popup (auto-dismiss)
-```
+```mermaid
+graph LR
+    A[External trigger<br/>curl / Stream Deck / webhook] --> B["POST /custom/{path}<br/>backend catch-all"]
+    B --> C["executeHandler(type=event)<br/>io.emit(eventName, data)"]
+    C --> D[Dashboard EventFeed<br/>live feed]
+    C --> E[OBS Overlay<br/>custom event popup]
 
-### Admin Console → Supervisor Flow
-
-```
-Admin Console (Vue at :4000)
-   ↓
-fetch('/restart', { method: 'POST' })
-   ↓
-Supervisor API (port 4000)
-   ↓
-Supervisor kills and respawns backend process
-   ↓
-WebSocket broadcasts restart logs to admin console
+    style A fill:#71717a,stroke:#52525b,color:#fff
+    style B fill:#f59e0b,stroke:#d97706,color:#000
+    style D fill:#8b5cf6,stroke:#7c3aed,color:#fff
+    style E fill:#8b5cf6,stroke:#7c3aed,color:#fff
 ```
 
 ---
@@ -389,6 +442,7 @@ WebSocket broadcasts restart logs to admin console
 ### Supervisor (supervisor.js)
 
 Single-file process manager:
+
 - Spawns backend and frontend as child processes
 - Captures stdout/stderr and broadcasts via WebSocket
 - REST API for process control
@@ -400,14 +454,16 @@ Single-file process manager:
 ### Shared Database Layer (shared/)
 
 SQLite database with WAL mode:
+
 - **database.js**: Singleton connection, WAL mode, pragmas
 - **schema.js**: Table definitions (settings, alert_configs, events, endpoints, analytics, _migrations)
 - **migrations.js**: Version-based migration runner
-- **index.js**: Query helpers for settings, alerts, events, analytics, endpoints
+- **index.js**: Query helpers for settings, alerts, events, analytics, endpoints, scenes
 
 ### Backend (backend/server.js)
 
 Express server:
+
 - **State Management**: In-memory buffers for recent events + DB persistence
 - **Twitch Integration**: OAuth validation, token refresh, Helix API calls
 - **Chat Client**: tmi.js for IRC connection
@@ -415,10 +471,13 @@ Express server:
 - **Settings API**: CRUD with `settings-changed` Socket.IO broadcast
 - **Endpoint Builder**: CRUD for custom endpoints + dynamic /custom/* catch-all
 - **Handler Types**: json, redirect, webhook, event (with template resolution)
+- **Scene API**: CRUD for scenes + activate + Socket.IO sync (scene-created/updated/deleted/activated)
+- **Test endpoints**: test-alert, test-chat, test-event for editor testing panel
 
 ### Admin Console (backend/admin/)
 
 Vue 3 application served by supervisor at port 4000:
+
 - **App.vue**: Main layout with sidebar navigation
 - **LiveTerminal**: WebSocket connection to supervisor for log streaming
 - **ProcessManager**: Start/stop/restart buttons for services
@@ -432,25 +491,81 @@ Vue 3 application served by supervisor at port 4000:
 
 ### Frontend (frontend/)
 
-React 18 application with 5 views + OBS overlay:
+React 19 application with 4 views + OBS overlay:
+
 - **Dashboard**: Stream stats, chat monitor, activity feed, EventFeed
-- **Alerts**: Alert configuration, testing, history
-- **Customizer**: Overlay design, theme selection, OBS URL generator
+- **Alerts**: Alert configuration, testing
+- **Customizer**: Figma-like scene editor (Konva canvas, Zustand state)
 - **BackendDashboard**: System monitoring, terminal access
-- **Overlay** (`/overlay`): Transparent OBS browser source page
+- **Overlay** (`/overlay`): Scene-based OBS browser source page
+
+#### Scene Editor
+
+```mermaid
+graph TB
+    subgraph Editor["Scene Editor (Customizer tab)"]
+        OE[OverlayEditor.tsx<br/>Toolbar · Scene CRUD · Resolution · Preview]
+        KC[KonvaCanvas.tsx<br/>Stage / Layer / Transformer<br/>Zoom-to-fit · Letterbox guides]
+        KE[KonvaElement.tsx<br/>Per-element rendering<br/>alert-box · chat · text · image · custom-event]
+        ET[ElementToolbox.tsx<br/>Add elements · Layers panel<br/>Visibility / Lock / Reorder]
+        PP[PropertiesPanel.tsx<br/>Position · Size · Rotation<br/>Style · Type-specific config]
+        TP[TestingPanel.tsx<br/>Test alerts · Chat · Events]
+    end
+
+    subgraph Store["Zustand Store"]
+        ES[editorStore.ts<br/>Scenes · Elements · Selection<br/>Undo/Redo · Clipboard · Auto-save]
+    end
+
+    subgraph Overlay["OBS Overlay (/overlay)"]
+        OV[Overlay.tsx<br/>Load active scene · Live sync]
+        ER[ElementRenderer.tsx<br/>Type dispatcher]
+        ABR[AlertBoxRenderer]
+        CR[ChatRenderer]
+        TR[TextRenderer]
+        IR[ImageRenderer]
+    end
+
+    OE --> KC
+    OE --> ET
+    OE --> PP
+    OE --> TP
+    KC --> KE
+    Editor <--> Store
+    Store <-->|Socket.IO sync| Overlay
+    OV --> ER
+    ER --> ABR
+    ER --> CR
+    ER --> TR
+    ER --> IR
+
+    style Editor fill:#1e1b4b,stroke:#8b5cf6,color:#e2e8f0
+    style Store fill:#172554,stroke:#3b82f6,color:#e2e8f0
+    style Overlay fill:#1a2e05,stroke:#22c55e,color:#e2e8f0
+```
+
+- **KonvaCanvas**: Stage/Layer/Transformer with zoom-to-fit, letterbox guides, resolution label
+- **KonvaElement**: Per-element rendering (alert-box, chat, text, image, custom-event)
+- **OverlayEditor**: Toolbar with scene CRUD, resolution presets, undo/redo, preview
+- **ElementToolbox**: Floating panel — add elements + layers with visibility/lock/reorder
+- **PropertiesPanel**: Floating panel — per-element properties (position, style, type-specific config)
+- **TestingPanel**: Collapsible panel — fire test alerts, chat messages, custom events
+- **editorStore**: Zustand store with `subscribeWithSelector` — all state + auto-save + Socket.IO sync
 
 #### Overlay Component
 
 The overlay is a standalone page at `/overlay` designed for OBS browser sources:
-- Transparent background for compositing
-- URL params: `type` (alerts/chat), `primary`, `secondary`, `bg`, `fontSize`
-- Subscribes to alerts, chat, custom endpoint events, settings changes
-- Pure inline styles (no Mantine) for OBS compatibility
-- CSS animations: fadeInUp for alerts, fadeIn for chat
+
+- Loads active scene from `GET /api/scenes/active` (or `?scene=ID` URL param override)
+- Renders scene elements at their positions using DOM-based renderers
+- Subscribes to `scene-updated`, `scene-activated` for live sync from editor
+- Subscribes to alerts, chat, custom endpoint events
+- Pure inline styles for OBS compatibility
+- Element renderers: AlertBoxRenderer, ChatRenderer, TextRenderer, ImageRenderer
 
 #### EventFeed Component
 
 Live feed of custom endpoint events on the Dashboard:
+
 - Fetches enabled event-type endpoints on mount
 - Subscribes dynamically via `socketService.onAnyCustomEvent()`
 - Renders nothing until events arrive (lazy)
@@ -459,6 +574,7 @@ Live feed of custom endpoint events on the Dashboard:
 #### Socket Service
 
 Enhanced Socket.IO client wrapper:
+
 - Typed callbacks for all standard events
 - `onSettingsChanged()` for live settings sync
 - `on(eventName, callback)` — generic subscription for dynamic events
@@ -469,30 +585,70 @@ Enhanced Socket.IO client wrapper:
 
 ## Database Schema
 
-```sql
--- Key-value settings with categories
-settings (key TEXT PK, value TEXT, category TEXT, updated_at TEXT)
+```mermaid
+erDiagram
+    settings {
+        TEXT key PK
+        TEXT value
+        TEXT category
+        TEXT updated_at
+    }
 
--- Alert configurations per type
-alert_configs (type TEXT PK, enabled INT, sound INT, duration INT,
-              volume REAL, custom_sound TEXT, custom_image TEXT,
-              message_template TEXT, updated_at TEXT)
+    alert_configs {
+        TEXT type PK
+        INT enabled
+        INT sound
+        INT duration
+        REAL volume
+        TEXT custom_sound
+        TEXT custom_image
+        TEXT message_template
+        TEXT updated_at
+    }
 
--- Event history (follows, subs, raids, donations, endpoint_call)
-events (id INTEGER PK, type TEXT, username TEXT, data TEXT,
-        created_at TEXT)
+    events {
+        INTEGER id PK
+        TEXT type
+        TEXT username
+        TEXT data
+        TEXT created_at
+    }
 
--- Custom endpoint definitions
-endpoints (id INTEGER PK, name TEXT, path TEXT UNIQUE, method TEXT,
-          handler TEXT, enabled INT, description TEXT,
-          created_at TEXT, updated_at TEXT)
+    endpoints {
+        INTEGER id PK
+        TEXT name
+        TEXT path
+        TEXT method
+        TEXT handler
+        INT enabled
+        TEXT description
+        TEXT created_at
+        TEXT updated_at
+    }
 
--- Aggregated metrics
-analytics (id INTEGER PK, metric TEXT, value REAL, period TEXT,
-          recorded_at TEXT)
+    scenes {
+        INTEGER id PK
+        TEXT name
+        INT width
+        INT height
+        TEXT elements
+        INT is_active
+        TEXT created_at
+        TEXT updated_at
+    }
 
--- Schema version tracking
-_migrations (version INT PK, applied_at TEXT)
+    analytics {
+        INTEGER id PK
+        TEXT metric
+        REAL value
+        TEXT period
+        TEXT recorded_at
+    }
+
+    _migrations {
+        INT version PK
+        TEXT applied_at
+    }
 ```
 
 ---
@@ -501,65 +657,82 @@ _migrations (version INT PK, applied_at TEXT)
 
 ### Architecture
 
-```
-┌─────────────────────────────────────┐
-│   themes.ts (Theme Definitions)     │
-│   3 themes × 2 modes = 6 variants   │
-│   - Magma Forge (red)               │
-│   - Techno-Organic (amber)          │
-│   - Synthetica (cool gray)          │
-└─────────────────┬───────────────────┘
-                  ↓
-┌─────────────────────────────────────┐
-│   CSS Custom Properties (:root)     │
-│   --primary-bg, --surface, etc.     │
-└─────────────────┬───────────────────┘
-                  ↓
-┌─────────────────────────────────────┐
-│   ThemeSwitcher.tsx (UI)            │
-│   Dropdown + light/dark toggle      │
-└─────────────────┬───────────────────┘
-                  ↓
-┌────────────────────┬────────────────┐
-│   localStorage     │   DB Settings  │
-│   (fast fallback)  │   (source of   │
-│                    │   truth)        │
-└────────────────────┴────────────────┘
+```mermaid
+graph TB
+    subgraph Definitions["Theme Definitions"]
+        TD[themes.ts<br/>4 themes × 2 modes = 8 variants<br/>Zinc · Synthetica · Magma · Arctic]
+    end
+
+    subgraph CSS["CSS Variables (index.css)"]
+        ROOT[":root defaults = Zinc light<br/>.dark = Zinc dark"]
+        THEME["[data-theme=X] = theme override<br/>[data-theme=X].dark = theme dark"]
+    end
+
+    subgraph UI["ThemeSwitcher.tsx"]
+        PICKER[PrimeReact OverlayPanel<br/>Theme list + Light/Dark toggle<br/>applyTheme + initTheme]
+    end
+
+    subgraph Persist["Persistence"]
+        LS[localStorage<br/>fast fallback]
+        DBS[DB Settings<br/>source of truth]
+    end
+
+    TD --> CSS
+    CSS --> UI
+    UI --> LS
+    UI --> DBS
+
+    style Definitions fill:#1e293b,stroke:#f59e0b,color:#e2e8f0
+    style CSS fill:#1e293b,stroke:#22c55e,color:#e2e8f0
+    style UI fill:#1e293b,stroke:#8b5cf6,color:#e2e8f0
+    style Persist fill:#1e293b,stroke:#3b82f6,color:#e2e8f0
 ```
 
 Settings sync: Admin can change theme via `overlay.theme` / `overlay.mode` settings. The `settings-changed` Socket.IO event propagates to all connected frontends and overlays in real-time.
 
+`applyTheme()` sets/removes `data-theme` attribute on `<html>` and toggles `.dark` class. Zinc uses bare `:root`/`.dark` defaults. Other themes override via `[data-theme]` CSS specificity.
+
 ### CSS Variables
 
 ```css
+/* :root defaults = Zinc light theme */
 :root {
-  /* Canvas */
-  --primary-bg: #0a0a0a;
-  --surface: #141414;
-  --surface-elevated: #1f1f1f;
-
-  /* Brand */
-  --primary: #ff3b30;
-  --secondary: #8b0000;
-  --accent: #e5e5e5;
-
-  /* Semantic */
-  --success: #32d74b;
-  --warning: #ff9f0a;
-  --danger: #ff3b30;
-
-  /* Typography */
-  --text-primary: #ffffff;
-  --text-secondary: #a1a1aa;
-  --text-muted: #71717a;
+  --background: #ffffff;
+  --foreground: #09090b;
+  --primary: #18181b;
+  --card: #ffffff;
+  --border: #e4e4e7;
+  --muted-foreground: #71717a;
+  /* ... shadcn-style semantic variables */
 }
+
+/* Dark mode overrides */
+.dark {
+  --background: #09090b;
+  --foreground: #fafafa;
+  /* ... */
+}
+
+/* Per-theme overrides */
+[data-theme="synthetica"] { --primary: #334680; }
+[data-theme="magma"] { --primary: #b45309; }
+[data-theme="arctic"] { --primary: #0c4a6e; }
 ```
+
+### Styling Approach
+
+All styling uses three layers:
+
+1. **CSS Variables** — Semantic color tokens defined in `:root`, `.dark`, and `[data-theme]` selectors
+2. **Utility CSS Classes** — Hand-written classes in `index.css` matching Tailwind naming (`.flex`, `.text-sm`, `.bg-card`, etc.)
+3. **PrimeReact CSS Bridge** — Maps PrimeReact component classes to CSS variables for consistent theming
 
 ---
 
 ## Security
 
 ### Authentication
+
 - **Twitch OAuth 2.0**: Device code flow for initial setup
 - **Token Storage**: .env file (gitignored)
 - **Auto-Refresh**: Token refresh before expiry
@@ -569,12 +742,14 @@ Settings sync: Admin can change theme via `overlay.theme` / `overlay.mode` setti
   - `chat:read`
 
 ### API Security
+
 - **CORS**: Configured for localhost origins
 - **EventSub Validation**: HMAC signature verification
 - **No Auth on Local**: Supervisor/backend APIs are localhost-only
 - **Endpoint Builder**: Path validation (alphanumeric, hyphens, underscores, slashes only)
 
 ### Environment Variables
+
 ```bash
 # Required
 TWITCH_CLIENT_ID=xxx
@@ -596,34 +771,38 @@ SUPERVISOR_URL=http://localhost:4000
 ## Deployment
 
 ### Development (Current)
+
 ```
-npm start
+pnpm start
 → Supervisor + Admin: http://localhost:4000
 → Backend API: http://localhost:4001
 → Frontend: http://localhost:5173
-→ OBS Overlay: http://localhost:5173/overlay?type=alerts
+→ OBS Overlay: http://localhost:5173/overlay
 ```
 
 ### Production (Planned)
-```
-┌─────────────────────────────────────┐
-│      Reverse Proxy (nginx)          │
-│   stream.example.com                │
-│   /api/* → backend:4001             │
-│   /admin/* → supervisor:4000        │
-│   /* → frontend static              │
-└─────────────────────────────────────┘
-          ↓
-┌─────────────────────────────────────┐
-│   PM2 Process Manager               │
-│   - supervisor.js (cluster mode)    │
-└─────────────────────────────────────┘
-          ↓
-┌─────────────────────────────────────┐
-│   Built Static Files                │
-│   - frontend/dist/                  │
-│   - backend/public/                 │
-└─────────────────────────────────────┘
+
+```mermaid
+graph TB
+    PROXY["Reverse Proxy (nginx)<br/>stream.example.com"]
+    PROXY -->|"/api/*"| BACKEND["Backend :4001"]
+    PROXY -->|"/admin/*"| SUPER["Supervisor :4000"]
+    PROXY -->|"/*"| STATIC["Frontend Static Files"]
+
+    PM2["PM2 Process Manager"] --> SUPER
+    SUPER --> BACKEND
+
+    subgraph Built["Built Static Files"]
+        FD["frontend/dist/"]
+        BP["backend/public/"]
+    end
+
+    STATIC --> FD
+    SUPER --> BP
+
+    style PROXY fill:#1e293b,stroke:#3b82f6,color:#e2e8f0
+    style PM2 fill:#1e293b,stroke:#f59e0b,color:#e2e8f0
+    style Built fill:#1e293b,stroke:#22c55e,color:#e2e8f0
 ```
 
 ---
@@ -631,16 +810,19 @@ npm start
 ## Future Architecture
 
 ### Integration Layer (Planned)
-```
-┌─────────────────────────────────────┐
-│   Integration Manager               │
-│   ├── OBS WebSocket                 │
-│   ├── Stream Deck Plugin            │
-│   ├── Discord Webhooks              │
-│   └── Custom HTTP Endpoints ✓       │
-└─────────────────────────────────────┘
+
+```mermaid
+graph LR
+    IM["Integration Manager"]
+    IM --> OBS["OBS WebSocket"]
+    IM --> SD["Stream Deck Plugin"]
+    IM --> DC["Discord Webhooks"]
+    IM --> CE["Custom HTTP Endpoints ✓"]
+
+    style IM fill:#1e293b,stroke:#f59e0b,color:#e2e8f0
+    style CE fill:#22c55e,stroke:#16a34a,color:#000
 ```
 
 ---
 
-**Last Updated:** February 1, 2026
+**Last Updated:** February 8, 2026

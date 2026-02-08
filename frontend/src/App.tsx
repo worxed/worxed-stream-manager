@@ -88,7 +88,7 @@ function SlideNav({ activeView, setActiveView }: { activeView: View; setActiveVi
       })}
       {/* Sliding pill cursor */}
       <motion.div
-        className="absolute z-[5] rounded-full bg-foreground"
+        className="absolute z-5 rounded-full bg-foreground"
         style={{ top: 15, bottom: 15 }}
         animate={{
           left: cursor.left,
@@ -190,7 +190,7 @@ function AppMain() {
             <h1 className="text-xl font-bold text-foreground tracking-tight">
               worxed-stream-manager
             </h1>
-            <Tag value="v1.0" severity="secondary" className="text-[10px]" rounded style={{ padding: 5 }} />
+            <Tag value="v1.0" severity="secondary" rounded style={{ padding: 5, fontSize: '10px' }} />
           </div>
 
           <div className="flex items-center gap-3">
