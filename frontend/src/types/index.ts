@@ -124,3 +124,89 @@ export interface CustomEvent {
   endpointName?: string;
   timestamp: string;
 }
+
+// Scene / Overlay Editor Types
+export type ElementType = 'alert-box' | 'chat' | 'text' | 'image' | 'custom-event';
+
+export interface SceneElementStyle {
+  backgroundColor?: string;
+  borderRadius?: number;
+  border?: string;
+  opacity?: number;
+  fontFamily?: string;
+  fontSize?: number;
+  color?: string;
+  padding?: number;
+  boxShadow?: string;
+  textAlign?: string;
+}
+
+export interface AlertBoxConfig {
+  alertTypes: AlertType[];
+  duration: number;
+  animation: string;
+}
+
+export interface ChatConfig {
+  maxMessages: number;
+  showBadges: boolean;
+  fadeAfter: number;
+}
+
+export interface DataBindingConfig {
+  enabled: boolean;
+  eventName: string;
+  fieldPath: string;
+  template?: string;
+  fieldForSrc?: string;
+  defaultValue?: string;
+  timeout?: number;
+}
+
+export interface TextConfig {
+  content: string;
+  fontWeight: string;
+  lineHeight: number;
+  dataBinding?: DataBindingConfig;
+}
+
+export interface ImageConfig {
+  src: string;
+  objectFit: 'cover' | 'contain' | 'fill';
+  dataBinding?: DataBindingConfig;
+}
+
+export interface CustomEventConfig {
+  eventName: string;
+  template: string;
+  duration: number;
+  animation: string;
+  maxQueueSize: number;
+}
+
+export interface SceneElement {
+  id: string;
+  type: ElementType;
+  name: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  rotation: number;
+  zIndex: number;
+  visible: boolean;
+  locked: boolean;
+  style: SceneElementStyle;
+  config: AlertBoxConfig | ChatConfig | TextConfig | ImageConfig | CustomEventConfig | Record<string, unknown>;
+}
+
+export interface Scene {
+  id?: number;
+  name: string;
+  width: number;
+  height: number;
+  elements: SceneElement[];
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+}

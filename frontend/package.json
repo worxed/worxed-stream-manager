@@ -10,13 +10,16 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
+    "framer-motion": "^12.33.0",
+    "konva": "10",
     "lucide-react": "^0.468.0",
+    "primeicons": "^7.0.0",
+    "primereact": "^10.9.7",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-konva": "18.2.14",
     "socket.io-client": "^4.7.2",
-    "tailwind-merge": "^2.6.0"
+    "zustand": "5"
   },
   "devDependencies": {
     "@eslint/js": "^9.15.0",

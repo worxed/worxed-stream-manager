@@ -2,7 +2,7 @@
 
 @import "tailwindcss";
 
-/* Worxed Stream Manager - Design System (shadcn/zinc) */
+/* Worxed Stream Manager - Design System (PrimeReact + Tailwind) */
 
 @theme inline {
   /* Core tokens */
@@ -123,9 +123,231 @@
   --chart-5: #ef4444;
 }
 
-/* Content container - pixel-based so base font size can't inflate it */
+/* ═══════════════════════════════════════════════
+   Synthetica — Cool blue-gray cyberpunk
+   ═══════════════════════════════════════════════ */
+
+[data-theme="synthetica"] {
+  --background: #f0f2f8;
+  --foreground: #1a1d2e;
+  --card: #ffffff;
+  --card-foreground: #1a1d2e;
+  --popover: #ffffff;
+  --popover-foreground: #1a1d2e;
+  --primary: #334680;
+  --primary-foreground: #f0f2f8;
+  --secondary: #e4e7f0;
+  --secondary-foreground: #1a1d2e;
+  --muted: #e4e7f0;
+  --muted-foreground: #6b7194;
+  --accent: #dde1ee;
+  --accent-foreground: #1a1d2e;
+  --destructive: #dc3545;
+  --destructive-foreground: #f0f2f8;
+  --border: #c8cde0;
+  --input: #c8cde0;
+  --ring: #334680;
+
+  --success: #16a34a;
+  --success-foreground: #ffffff;
+  --warning: #ca8a04;
+  --warning-foreground: #ffffff;
+  --info: #4a6bc5;
+  --info-foreground: #ffffff;
+
+  --chart-1: #7c5cbf;
+  --chart-2: #2ebd6e;
+  --chart-3: #d4a832;
+  --chart-4: #4a8fe7;
+  --chart-5: #e04858;
+}
+
+[data-theme="synthetica"].dark {
+  --background: #0d1020;
+  --foreground: #d0d5e8;
+  --card: #141830;
+  --card-foreground: #d0d5e8;
+  --popover: #1a1f38;
+  --popover-foreground: #d0d5e8;
+  --primary: #6889c8;
+  --primary-foreground: #0d1020;
+  --secondary: #1e2440;
+  --secondary-foreground: #d0d5e8;
+  --muted: #1e2440;
+  --muted-foreground: #7b82a8;
+  --accent: #232950;
+  --accent-foreground: #d0d5e8;
+  --destructive: #dc3545;
+  --destructive-foreground: #d0d5e8;
+  --border: #2a3158;
+  --input: #2a3158;
+  --ring: #6889c8;
+
+  --success: #22c55e;
+  --success-foreground: #0d1020;
+  --warning: #eab308;
+  --warning-foreground: #0d1020;
+  --info: #6889c8;
+  --info-foreground: #ffffff;
+
+  --chart-1: #a78bfa;
+  --chart-2: #34d399;
+  --chart-3: #fbbf24;
+  --chart-4: #60a5fa;
+  --chart-5: #f87171;
+}
+
+/* ═══════════════════════════════════════════════
+   Magma Forge — Warm amber and fire
+   ═══════════════════════════════════════════════ */
+
+[data-theme="magma"] {
+  --background: #faf6f0;
+  --foreground: #2a1f14;
+  --card: #ffffff;
+  --card-foreground: #2a1f14;
+  --popover: #ffffff;
+  --popover-foreground: #2a1f14;
+  --primary: #b44d1e;
+  --primary-foreground: #faf6f0;
+  --secondary: #f0e6d8;
+  --secondary-foreground: #2a1f14;
+  --muted: #f0e6d8;
+  --muted-foreground: #8c7560;
+  --accent: #eddccc;
+  --accent-foreground: #2a1f14;
+  --destructive: #dc2626;
+  --destructive-foreground: #faf6f0;
+  --border: #ddd0c0;
+  --input: #ddd0c0;
+  --ring: #b44d1e;
+
+  --success: #2d8a4e;
+  --success-foreground: #ffffff;
+  --warning: #c87f1a;
+  --warning-foreground: #ffffff;
+  --info: #c07028;
+  --info-foreground: #ffffff;
+
+  --chart-1: #a855f7;
+  --chart-2: #e07830;
+  --chart-3: #eab308;
+  --chart-4: #d4553a;
+  --chart-5: #ef4444;
+}
+
+[data-theme="magma"].dark {
+  --background: #1a1008;
+  --foreground: #e8ddd0;
+  --card: #221810;
+  --card-foreground: #e8ddd0;
+  --popover: #2a1e14;
+  --popover-foreground: #e8ddd0;
+  --primary: #e07830;
+  --primary-foreground: #1a1008;
+  --secondary: #302018;
+  --secondary-foreground: #e8ddd0;
+  --muted: #302018;
+  --muted-foreground: #9c8570;
+  --accent: #3a2820;
+  --accent-foreground: #e8ddd0;
+  --destructive: #dc2626;
+  --destructive-foreground: #e8ddd0;
+  --border: #3e2e22;
+  --input: #3e2e22;
+  --ring: #e07830;
+
+  --success: #22c55e;
+  --success-foreground: #1a1008;
+  --warning: #eab308;
+  --warning-foreground: #1a1008;
+  --info: #e07830;
+  --info-foreground: #ffffff;
+
+  --chart-1: #c084fc;
+  --chart-2: #f59e0b;
+  --chart-3: #fbbf24;
+  --chart-4: #ef6c4a;
+  --chart-5: #f87171;
+}
+
+/* ═══════════════════════════════════════════════
+   Arctic Command — Icy blue clarity
+   ═══════════════════════════════════════════════ */
+
+[data-theme="arctic"] {
+  --background: #f0f6fc;
+  --foreground: #0c1e36;
+  --card: #ffffff;
+  --card-foreground: #0c1e36;
+  --popover: #ffffff;
+  --popover-foreground: #0c1e36;
+  --primary: #1565c0;
+  --primary-foreground: #f0f6fc;
+  --secondary: #dce8f5;
+  --secondary-foreground: #0c1e36;
+  --muted: #dce8f5;
+  --muted-foreground: #5a7a9c;
+  --accent: #d0e0f2;
+  --accent-foreground: #0c1e36;
+  --destructive: #dc2626;
+  --destructive-foreground: #f0f6fc;
+  --border: #bdd0e8;
+  --input: #bdd0e8;
+  --ring: #1565c0;
+
+  --success: #16a34a;
+  --success-foreground: #ffffff;
+  --warning: #ca8a04;
+  --warning-foreground: #ffffff;
+  --info: #1976d2;
+  --info-foreground: #ffffff;
+
+  --chart-1: #7c3aed;
+  --chart-2: #059669;
+  --chart-3: #d97706;
+  --chart-4: #2563eb;
+  --chart-5: #ef4444;
+}
+
+[data-theme="arctic"].dark {
+  --background: #08111e;
+  --foreground: #cddaea;
+  --card: #0e1828;
+  --card-foreground: #cddaea;
+  --popover: #142030;
+  --popover-foreground: #cddaea;
+  --primary: #42a5f5;
+  --primary-foreground: #08111e;
+  --secondary: #152538;
+  --secondary-foreground: #cddaea;
+  --muted: #152538;
+  --muted-foreground: #6890b5;
+  --accent: #1a2d45;
+  --accent-foreground: #cddaea;
+  --destructive: #dc2626;
+  --destructive-foreground: #cddaea;
+  --border: #1e3350;
+  --input: #1e3350;
+  --ring: #42a5f5;
+
+  --success: #22c55e;
+  --success-foreground: #08111e;
+  --warning: #eab308;
+  --warning-foreground: #08111e;
+  --info: #42a5f5;
+  --info-foreground: #ffffff;
+
+  --chart-1: #a78bfa;
+  --chart-2: #34d399;
+  --chart-3: #fbbf24;
+  --chart-4: #60a5fa;
+  --chart-5: #f87171;
+}
+
+/* Content container - pixel-based to ensure consistent centering */
 .content-container {
-  max-width: 1100px;
+  max-width: 1200px;
   margin-left: auto;
   margin-right: auto;
   width: 100%;
@@ -141,13 +363,14 @@
 }
 
 html {
-  font-size: 18px;
+  font-size: 16px;
 }
 
 body {
   font-family: var(--font-sans);
-  background: var(--color-background);
-  color: var(--color-foreground);
+  font-size: 18px;
+  background: var(--background);
+  color: var(--foreground);
   line-height: 1.5;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
@@ -156,6 +379,210 @@ body {
 
 #root {
   min-height: 100vh;
+}
+
+/* Override PrimeReact's base body styles so our theme wins */
+.p-component {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+}
+
+/* ═══════════════════════════════════════════════
+   PrimeReact Theme Bridge
+   Override PrimeReact CSS variables to use our
+   design tokens so dark/light mode switching works
+   ═══════════════════════════════════════════════ */
+
+:root {
+  /* Map PrimeReact vars → our tokens */
+  --surface-ground: var(--background);
+  --surface-section: var(--background);
+  --surface-card: var(--card);
+  --surface-overlay: var(--popover);
+  --surface-border: var(--border);
+  --surface-hover: var(--accent);
+  --text-color: var(--foreground);
+  --text-color-secondary: var(--muted-foreground);
+  --primary-color: var(--primary);
+  --primary-color-text: var(--primary-foreground);
+  --font-family: var(--font-sans);
+  --content-padding: 1.25rem;
+  --inline-spacing: 0.5rem;
+  --border-radius: 12px;
+  --focus-ring: 0 0 0 2px var(--ring);
+  --maskbg: rgba(0, 0, 0, 0.4);
+  --highlight-bg: color-mix(in srgb, var(--primary) 16%, transparent);
+  --highlight-text-color: var(--primary);
+
+  /* Surface scale mapped to our palette */
+  --surface-0: var(--background);
+  --surface-50: var(--card);
+  --surface-100: var(--secondary);
+  --surface-200: var(--border);
+  --surface-300: var(--input);
+  --surface-400: var(--muted-foreground);
+  --surface-500: var(--muted-foreground);
+  --surface-600: var(--foreground);
+  --surface-700: var(--foreground);
+  --surface-800: var(--foreground);
+  --surface-900: var(--foreground);
+}
+
+/* Global Card overrides */
+.p-card {
+  border-radius: 16px;
+  overflow: hidden;
+  transition: all 0.2s ease;
+  border: 1px solid var(--surface-border);
+  background: var(--surface-card);
+  color: var(--text-color);
+}
+
+.p-card .p-card-body { padding: 1.25rem; }
+.p-card .p-card-content { padding: 0; }
+
+.p-card:hover {
+  border-color: var(--surface-300);
+}
+
+/* Panel overrides — matches Card styling */
+.p-panel {
+  border-radius: 16px;
+  overflow: hidden;
+  transition: all 0.2s ease;
+  border: 1px solid var(--surface-border);
+  background: var(--surface-card);
+  color: var(--text-color);
+}
+.p-panel .p-panel-header {
+  background: transparent;
+  border-bottom: 1px solid var(--surface-border);
+  padding: 1.25rem;
+}
+.p-panel .p-panel-content {
+  padding: 1.25rem;
+}
+.p-panel:hover {
+  border-color: var(--surface-300);
+}
+
+/* Variant modifiers — work on both Card and Panel */
+.card-elevated {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+}
+
+.dark .card-elevated {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.3);
+}
+
+.card-inset {
+  background: color-mix(in srgb, var(--surface-ground) 50%, transparent);
+  border-color: color-mix(in srgb, var(--surface-border) 50%, transparent);
+  box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.05);
+}
+
+.card-accent {
+  border-color: color-mix(in srgb, var(--primary-color) 30%, transparent);
+  background: color-mix(in srgb, var(--primary-color) 5%, transparent);
+}
+
+.card-ghost {
+  border-color: transparent;
+  background: transparent;
+}
+
+.card-stat {
+  background: linear-gradient(135deg, var(--surface-card), var(--surface-ground));
+  border-color: var(--surface-border);
+}
+
+/* PrimeReact Button overrides */
+.p-button {
+  border-radius: 12px;
+  font-family: var(--font-sans);
+  transition: all 0.2s ease;
+}
+
+.p-button:active {
+  transform: scale(0.97);
+}
+
+/* PrimeReact InputText overrides */
+.p-inputtext {
+  border-radius: 12px;
+  font-family: var(--font-sans);
+}
+
+.p-inputtext-unstyled.p-inputtext {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+
+/* PrimeReact Tag (Badge) overrides */
+.p-tag {
+  font-family: var(--font-sans);
+}
+
+.worxed-badge-follow {
+  background-color: var(--chart-1) !important;
+  color: white !important;
+}
+
+.worxed-badge-donation {
+  background-color: var(--chart-3) !important;
+  color: black !important;
+}
+
+.worxed-badge-live {
+  background-color: var(--chart-5) !important;
+  color: white !important;
+}
+
+.worxed-badge-offline {
+  background-color: var(--text-color-secondary) !important;
+  color: white !important;
+}
+
+/* PrimeReact InputSwitch overrides */
+.p-inputswitch {
+  border-radius: 9999px;
+}
+
+.p-inputswitch.p-inputswitch-checked .p-inputswitch-slider {
+  background: var(--primary-color);
+}
+.p-slider {
+  border-radius: 9999px;
+  background: var(--surface-border);
+}
+
+.p-slider .p-slider-range {
+  background: var(--primary-color);
+}
+
+.p-slider .p-slider-handle {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+/* PrimeReact ScrollPanel overrides */
+.p-scrollpanel-bar {
+  background: var(--surface-border) !important;
+  border-radius: 4px !important;
+  opacity: 1 !important;
+}
+
+.p-scrollpanel-bar:hover {
+  background: var(--text-color-secondary) !important;
+}
+
+/* PrimeReact Tooltip overrides */
+.p-tooltip .p-tooltip-text {
+  border-radius: 8px;
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
 }
 
 /* Status indicators */

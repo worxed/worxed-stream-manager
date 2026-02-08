@@ -6,16 +6,19 @@ import {
   Users,
   Volume2,
   VolumeX,
-  Trash2,
-  Loader2,
   Bell,
 } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardContent, Button, Badge, ScrollArea, Switch, Slider } from '@/components/ui';
-import { cn } from '@/lib/utils';
-import { toast } from '@/components/ui/toast';
+import { Panel } from 'primereact/panel';
+import { Button } from 'primereact/button';
+import { Tag } from 'primereact/tag';
+import { ScrollPanel } from 'primereact/scrollpanel';
+import { InputSwitch } from 'primereact/inputswitch';
+import { Slider } from 'primereact/slider';
+import { showToast } from '../services/toast';
 import { socketService } from '../services/socket';
 import { getAlertSettings, updateAlertSettings, triggerTestAlert } from '../services/api';
 import type { AlertSettings, Alert } from '../types';
+import EmptyState from './common/EmptyState';
 
 const defaultSettings: AlertSettings = {
   follow: { enabled: true, sound: true, duration: 5000 },
@@ -34,11 +37,7 @@ export default function Alerts() {
 
     const unsubAlert = socketService.onAlert((alert) => {
       setRecentAlerts((prev) => [alert, ...prev.slice(0, 49)]);
-      toast({
-        title: `New ${alert.type}!`,
-        message: `${alert.username}${alert.amount ? ` - $${alert.amount}` : ''}`,
-        type: 'success',
-      });
+      showToast('success', `New ${alert.type}!`, `${alert.username}${alert.amount ? ` - $${alert.amount}` : ''}`);
     });
 
     const unsubSettings = socketService.onAlertSettings((newSettings) => {
@@ -124,13 +123,21 @@ export default function Alerts() {
     }
   };
 
-  const getBadgeVariant = (type: string) => {
+  const getBadgeClass = (type: string) => {
     switch (type) {
-      case 'follow': return 'follow';
-      case 'subscribe': return 'subscribe';
-      case 'donation': return 'donation';
-      case 'raid': return 'raid';
-      default: return 'outline';
+      case 'follow': return 'worxed-badge-follow';
+      case 'donation': return 'worxed-badge-donation';
+      default: return '';
+    }
+  };
+
+  const getBadgeSeverity = (type: string) => {
+    switch (type) {
+      case 'follow': return null;
+      case 'subscribe': return 'success';
+      case 'donation': return null;
+      case 'raid': return 'info';
+      default: return 'secondary';
     }
   };
 
@@ -148,153 +155,140 @@ export default function Alerts() {
     { key: 'raid', label: 'Raids' },
   ];
 
+  const recentAlertsIcons = (
+    <Button
+      icon="pi pi-trash"
+      label="Clear"
+      text
+      size="small"
+      severity="danger"
+      onClick={clearAlerts}
+    />
+  );
+
   return (
     <div className="flex flex-col gap-8">
       {/* Alert Settings */}
-      <Card variant="elevated">
-        <CardHeader border>
-          <CardTitle>Alert Settings</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col gap-4">
-            {alertTypes.map(({ key, label }) => {
-              const colors = alertColorMap[key];
-              return (
-                <div
-                  key={key}
-                  className="flex items-center gap-5 p-5 bg-background border border-border rounded-xl transition-all duration-200 hover:border-input"
-                >
-                  {/* Icon + Name */}
-                  <div className="flex items-center gap-3 w-40 shrink-0">
-                    <div className={cn('p-2 rounded-xl', colors.bg)}>
-                      <span className={colors.text}>
-                        {getAlertIcon(key)}
-                      </span>
-                    </div>
-                    <span className="text-sm font-semibold text-foreground">{label}</span>
-                  </div>
-
-                  {/* Enabled */}
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs text-muted-foreground font-medium">Enabled</span>
-                    <Switch
-                      checked={settings[key].enabled}
-                      onCheckedChange={() => handleToggle(key, 'enabled')}
-                    />
-                  </div>
-
-                  {/* Sound */}
-                  <div className="flex items-center gap-3">
-                    {settings[key].sound ? (
-                      <Volume2 size={14} className="text-foreground" />
-                    ) : (
-                      <VolumeX size={14} className="text-muted-foreground" />
-                    )}
-                    <Switch
-                      checked={settings[key].sound}
-                      onCheckedChange={() => handleToggle(key, 'sound')}
-                    />
-                  </div>
-
-                  {/* Duration */}
-                  <div className="flex items-center gap-3 flex-1 min-w-[160px]">
-                    <span className="text-xs text-muted-foreground font-medium tabular-nums shrink-0 w-8">
-                      {(settings[key].duration / 1000).toFixed(1)}s
+      <Panel header="Alert Settings" className="card-elevated">
+        <div className="flex flex-col gap-5">
+          {alertTypes.map(({ key, label }) => {
+            const colors = alertColorMap[key];
+            return (
+              <div
+                key={key}
+                className="flex items-center gap-5 p-5 bg-background border border-border rounded-xl transition-all duration-200 hover:border-input"
+              >
+                {/* Icon + Name */}
+                <div className="flex items-center gap-3 w-40 shrink-0">
+                  <div className={`p-2 rounded-xl ${colors.bg}`}>
+                    <span className={colors.text}>
+                      {getAlertIcon(key)}
                     </span>
-                    <Slider
-                      value={settings[key].duration}
-                      min={2000}
-                      max={15000}
-                      step={500}
-                      onChange={(value) => handleDurationChange(key, value)}
-                      onChangeEnd={(value) => handleDurationCommit(key, value)}
-                    />
                   </div>
-
-                  {/* Test button */}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleTestAlert(key)}
-                    disabled={loading}
-                    className={cn(
-                      'shrink-0',
-                      colors.border, colors.text, colors.hover
-                    )}
-                  >
-                    {loading ? <Loader2 size={14} className="animate-spin" /> : 'Test'}
-                  </Button>
+                  <span className="text-sm font-semibold text-foreground">{label}</span>
                 </div>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
+
+                {/* Enabled */}
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-muted-foreground font-medium">Enabled</span>
+                  <InputSwitch
+                    checked={settings[key].enabled}
+                    onChange={() => handleToggle(key, 'enabled')}
+                  />
+                </div>
+
+                {/* Sound */}
+                <div className="flex items-center gap-3">
+                  {settings[key].sound ? (
+                    <Volume2 size={14} className="text-foreground" />
+                  ) : (
+                    <VolumeX size={14} className="text-muted-foreground" />
+                  )}
+                  <InputSwitch
+                    checked={settings[key].sound}
+                    onChange={() => handleToggle(key, 'sound')}
+                  />
+                </div>
+
+                {/* Duration */}
+                <div className="flex items-center gap-3 flex-1 min-w-40">
+                  <span className="text-xs text-muted-foreground font-medium tabular-nums shrink-0 w-8">
+                    {(settings[key].duration / 1000).toFixed(1)}s
+                  </span>
+                  <Slider
+                    value={settings[key].duration}
+                    min={2000}
+                    max={15000}
+                    step={500}
+                    onChange={(e) => handleDurationChange(key, e.value as number)}
+                    onSlideEnd={(e) => handleDurationCommit(key, e.value as number)}
+                    className="flex-1"
+                  />
+                </div>
+
+                {/* Test button */}
+                <Button
+                  label={loading ? undefined : 'Test'}
+                  icon={loading ? 'pi pi-spin pi-spinner' : undefined}
+                  outlined
+                  size="small"
+                  onClick={() => handleTestAlert(key)}
+                  disabled={loading}
+                  className={`shrink-0 ${colors.border} ${colors.text} ${colors.hover}`}
+                />
+              </div>
+            );
+          })}
+        </div>
+      </Panel>
 
       {/* Recent Alerts */}
-      <Card variant="elevated">
-        <CardHeader border>
-          <div className="flex items-center justify-between">
-            <CardTitle>Recent Alerts</CardTitle>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={clearAlerts}
-              className="gap-2 text-destructive hover:text-destructive"
-            >
-              <Trash2 size={14} />
-              <span>Clear</span>
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <ScrollArea className="h-[340px]">
-            <div className="flex flex-col gap-1.5">
-              {recentAlerts.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <div className="mb-4 p-4 rounded-2xl bg-muted/50 opacity-60">
-                    <Bell size={36} className="text-muted-foreground" />
-                  </div>
-                  <p className="text-sm font-semibold text-muted-foreground mb-1">No recent alerts</p>
-                  <p className="text-xs text-muted-foreground/60">Alerts will appear here when triggered</p>
+      <Panel header="Recent Alerts" icons={recentAlertsIcons} className="card-elevated">
+        <ScrollPanel style={{ width: '100%', height: '340px' }}>
+          <div className="flex flex-col gap-2">
+            {recentAlerts.length === 0 ? (
+              <EmptyState
+                icon={<Bell size={36} className="text-muted-foreground" />}
+                title="No recent alerts"
+                description="Alerts will appear here when triggered"
+              />
+            ) : (
+              recentAlerts.map((alert) => (
+                <div
+                  key={alert.id}
+                  className="flex items-center gap-4 p-3.5 border border-transparent hover:border-border hover:bg-accent/50 transition-all duration-200 rounded-xl"
+                >
+                  <Tag
+                    value={alert.type}
+                    severity={getBadgeSeverity(alert.type) as any}
+                    className={`gap-1.5 text-xs${getBadgeClass(alert.type) ? ` ${getBadgeClass(alert.type)}` : ''}`}
+                    icon={getAlertIcon(alert.type)}
+                    rounded
+                  />
+
+                  <span className="text-sm text-foreground flex-1 font-medium">
+                    {alert.username}
+                  </span>
+
+                  {alert.amount && (
+                    <Tag value={`$${alert.amount}`} className="text-xs worxed-badge-donation" rounded />
+                  )}
+
+                  {alert.message && (
+                    <span className="text-xs text-muted-foreground max-w-50 truncate">
+                      {alert.message}
+                    </span>
+                  )}
+
+                  <span className="text-xs text-muted-foreground">
+                    {new Date(alert.timestamp).toLocaleTimeString()}
+                  </span>
                 </div>
-              ) : (
-                recentAlerts.map((alert) => (
-                  <div
-                    key={alert.id}
-                    className="flex items-center gap-4 p-3.5 border border-transparent hover:border-border hover:bg-accent/50 transition-all duration-200 rounded-xl"
-                  >
-                    <Badge variant={getBadgeVariant(alert.type) as any} className="gap-1.5 text-xs">
-                      {getAlertIcon(alert.type)}
-                      {alert.type}
-                    </Badge>
-
-                    <span className="text-sm text-foreground flex-1 font-medium">
-                      {alert.username}
-                    </span>
-
-                    {alert.amount && (
-                      <Badge variant="donation" className="text-xs">
-                        ${alert.amount}
-                      </Badge>
-                    )}
-
-                    {alert.message && (
-                      <span className="text-xs text-muted-foreground max-w-[200px] truncate">
-                        {alert.message}
-                      </span>
-                    )}
-
-                    <span className="text-xs text-muted-foreground">
-                      {new Date(alert.timestamp).toLocaleTimeString()}
-                    </span>
-                  </div>
-                ))
-              )}
-            </div>
-          </ScrollArea>
-        </CardContent>
-      </Card>
+              ))
+            )}
+          </div>
+        </ScrollPanel>
+      </Panel>
     </div>
   );
 }

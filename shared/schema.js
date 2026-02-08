@@ -98,6 +98,60 @@ const migrations = [
       insert.run('bits', 6000);
       insert.run('gift_sub', 7000);
     }
+  },
+  {
+    version: 2,
+    description: 'Add scenes table for overlay scene editor',
+    up(db) {
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS scenes (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL,
+          width INTEGER NOT NULL DEFAULT 1920,
+          height INTEGER NOT NULL DEFAULT 1080,
+          elements TEXT NOT NULL DEFAULT '[]',
+          is_active INTEGER NOT NULL DEFAULT 0,
+          created_at TEXT DEFAULT (datetime('now')),
+          updated_at TEXT DEFAULT (datetime('now'))
+        )
+      `);
+
+      // Seed a default scene with a centered alert-box element
+      const defaultElements = JSON.stringify([
+        {
+          id: 'default-alert-box',
+          type: 'alert-box',
+          name: 'Alert Box',
+          x: 660,
+          y: 390,
+          width: 600,
+          height: 300,
+          rotation: 0,
+          zIndex: 1,
+          visible: true,
+          locked: false,
+          style: {
+            backgroundColor: 'rgba(0, 0, 0, 0.85)',
+            borderRadius: 12,
+            border: '2px solid #FF3B30',
+            opacity: 1,
+            fontFamily: 'Inter, system-ui, sans-serif',
+            fontSize: 24,
+            color: '#ffffff',
+            padding: 32
+          },
+          config: {
+            alertTypes: ['follow', 'subscribe', 'donation', 'raid'],
+            duration: 5000,
+            animation: 'fadeInUp'
+          }
+        }
+      ]);
+
+      db.prepare(
+        `INSERT INTO scenes (name, width, height, elements, is_active) VALUES (?, 1920, 1080, ?, 1)`
+      ).run('Default Scene', defaultElements);
+    }
   }
 ];
 

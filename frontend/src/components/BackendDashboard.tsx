@@ -9,8 +9,11 @@ import {
   Play,
   Square,
 } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardContent, Button, ScrollArea, Input } from '@/components/ui';
-import { cn } from '@/lib/utils';
+import { Card } from 'primereact/card';
+import { Panel } from 'primereact/panel';
+import { Button } from 'primereact/button';
+import { ScrollPanel } from 'primereact/scrollpanel';
+import { InputText } from 'primereact/inputtext';
 import { socketService } from '../services/socket';
 
 interface LogEntry {
@@ -127,65 +130,84 @@ export default function BackendDashboard() {
     }
   };
 
+  const processesHeader = (
+    <div className="flex items-center gap-3">
+      <div className="p-2 rounded-xl bg-muted">
+        <Server size={14} className="text-muted-foreground" />
+      </div>
+      <h3 className="text-sm font-semibold text-foreground">Backend Processes</h3>
+    </div>
+  );
+
+  const terminalHeaderTemplate = (options: any) => {
+    const className = `${options.className}`;
+    return (
+      <div className={className}>
+        <div className="flex items-center gap-3">
+          <Terminal size={14} className="text-muted-foreground" />
+          <span className="text-xs font-mono text-muted-foreground">worxed@backend</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded-full bg-chart-5/50" />
+          <div className="w-3 h-3 rounded-full bg-chart-3/50" />
+          <div className="w-3 h-3 rounded-full bg-chart-2/50" />
+        </div>
+      </div>
+    );
+  };
+
+  const connectionsHeader = (
+    <div className="flex items-center gap-3">
+      <div className="p-2 rounded-xl bg-muted">
+        <Wifi size={14} className="text-muted-foreground" />
+      </div>
+      <h3 className="text-sm font-semibold text-foreground">Active WebSocket Connections</h3>
+    </div>
+  );
+
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-8">
       {/* Top Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-5">
-        <Card variant="stat" padding="sm">
-          <CardContent className="py-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Cpu size={16} className="text-muted-foreground" />
-              <span className="text-xs text-muted-foreground font-medium">CPU Load</span>
-            </div>
-            <p className="text-2xl font-bold text-foreground">{cpuLoad}</p>
-          </CardContent>
+        <Card className="card-stat">
+          <div className="flex items-center gap-2 mb-3">
+            <Cpu size={16} className="text-muted-foreground" />
+            <span className="text-xs text-muted-foreground font-medium">CPU Load</span>
+          </div>
+          <div className="text-2xl font-bold text-foreground">{cpuLoad}</div>
         </Card>
 
-        <Card variant="stat" padding="sm">
-          <CardContent className="py-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Wifi size={16} className="text-muted-foreground" />
-              <span className="text-xs text-muted-foreground font-medium">Active Clients</span>
-            </div>
-            <p className="text-2xl font-bold text-foreground">{connections.length}</p>
-          </CardContent>
+        <Card className="card-stat">
+          <div className="flex items-center gap-2 mb-3">
+            <Wifi size={16} className="text-muted-foreground" />
+            <span className="text-xs text-muted-foreground font-medium">Active Clients</span>
+          </div>
+          <div className="text-2xl font-bold text-foreground">{connections.length}</div>
         </Card>
 
-        <Card variant="stat" padding="sm">
-          <CardContent className="py-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Activity size={16} className="text-muted-foreground" />
-              <span className="text-xs text-muted-foreground font-medium">Processes</span>
-            </div>
-            <p className="text-2xl font-bold text-foreground">{processes.length}</p>
-          </CardContent>
+        <Card className="card-stat">
+          <div className="flex items-center gap-2 mb-3">
+            <Activity size={16} className="text-muted-foreground" />
+            <span className="text-xs text-muted-foreground font-medium">Processes</span>
+          </div>
+          <div className="text-2xl font-bold text-foreground">{processes.length}</div>
         </Card>
 
-        <Card variant="stat" padding="sm">
-          <CardContent className="py-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Clock size={16} className="text-muted-foreground" />
-              <span className="text-xs text-muted-foreground font-medium">Server Latency</span>
-            </div>
-            <p className="text-2xl font-bold text-foreground">{serverLatency}</p>
-          </CardContent>
+        <Card className="card-stat">
+          <div className="flex items-center gap-2 mb-3">
+            <Clock size={16} className="text-muted-foreground" />
+            <span className="text-xs text-muted-foreground font-medium">Server Latency</span>
+          </div>
+          <div className="text-2xl font-bold text-foreground">{serverLatency}</div>
         </Card>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
         {/* Process Manager */}
         <div className="md:col-span-4">
-          <Card variant="elevated" className="h-[500px] flex flex-col">
-            <CardHeader className="border-b border-border">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-muted">
-                  <Server size={16} className="text-muted-foreground" />
-                </div>
-                <CardTitle className="text-sm">Backend Processes</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent className="flex-1 overflow-hidden p-3">
-              <ScrollArea className="h-full">
+          <Panel header={processesHeader} className="card-elevated h-110 flex flex-col">
+            <div className="flex-1 overflow-hidden">
+              <ScrollPanel style={{ width: '100%', height: '100%' }}>
                 <div className="flex flex-col gap-3">
                   {processes.map((proc) => (
                     <div
@@ -195,25 +217,16 @@ export default function BackendDashboard() {
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-3">
                           <div
-                            className={cn(
-                              'w-2.5 h-2.5 rounded-full',
-                              proc.status === 'running' && 'bg-success',
-                              proc.status === 'error' && 'bg-destructive',
-                              proc.status === 'stopped' && 'bg-muted-foreground'
-                            )}
+                            className={`w-2.5 h-2.5 rounded-full${proc.status === 'running' ? ' bg-success' : proc.status === 'error' ? ' bg-destructive' : ' bg-muted-foreground'}`}
                           />
                           <span className="text-sm font-semibold text-foreground">{proc.name}</span>
                         </div>
                         <Button
-                          variant="ghost"
-                          size="sm"
+                          text
+                          size="small"
                           onClick={() => toggleProcess(proc.id)}
-                          className={cn(
-                            'p-1.5 h-auto rounded-lg',
-                            proc.status === 'running'
-                              ? 'text-destructive hover:text-destructive hover:bg-destructive/10'
-                              : 'text-success hover:text-success hover:bg-success/10'
-                          )}
+                          severity={proc.status === 'running' ? 'danger' : 'success'}
+                          className="p-1.5 h-auto rounded-lg"
                         >
                           {proc.status === 'running' ? <Square size={14} /> : <Play size={14} />}
                         </Button>
@@ -224,88 +237,63 @@ export default function BackendDashboard() {
                     </div>
                   ))}
                 </div>
-              </ScrollArea>
-            </CardContent>
-          </Card>
+              </ScrollPanel>
+            </div>
+          </Panel>
         </div>
 
         {/* Terminal + Connections */}
         <div className="md:col-span-8 flex flex-col gap-6">
           {/* Terminal */}
-          <Card variant="elevated" className="h-[360px] flex flex-col bg-background">
-            <CardHeader className="border-b border-border py-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Terminal size={14} className="text-muted-foreground" />
-                  <span className="text-xs font-mono text-muted-foreground">worxed@backend</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-3 h-3 rounded-full bg-chart-5/50" />
-                  <div className="w-3 h-3 rounded-full bg-chart-3/50" />
-                  <div className="w-3 h-3 rounded-full bg-chart-2/50" />
-                </div>
-              </div>
-            </CardHeader>
-
-            <CardContent className="flex-1 overflow-hidden p-0">
-              <ScrollArea className="h-full p-4">
+          <Panel headerTemplate={terminalHeaderTemplate} className="card-elevated h-80 flex flex-col bg-background">
+            <div className="flex-1 overflow-hidden">
+              <ScrollPanel style={{ width: '100%', height: '100%', padding: '1rem' }}>
                 <div className="flex flex-col gap-1.5">
                   {logs.map((log, i) => (
                     <div key={i} className="flex gap-4">
                       <span className="text-xs text-muted-foreground font-mono shrink-0">
                         [{log.time}]
                       </span>
-                      <span className={cn('text-xs font-mono', getLogColor(log.type))}>
+                      <span className={`text-xs font-mono ${getLogColor(log.type)}`}>
                         {log.message}
                       </span>
                     </div>
                   ))}
                   <div ref={logEndRef} />
                 </div>
-              </ScrollArea>
-            </CardContent>
+              </ScrollPanel>
+            </div>
 
             <form onSubmit={handleCommand}>
               <div className="flex items-center gap-3 px-4 py-3 border-t border-border">
                 <span className="text-sm font-bold text-foreground font-mono">$</span>
-                <Input
+                <InputText
                   value={command}
                   onChange={(e) => setCommand(e.target.value)}
                   placeholder="Type 'status', 'restart', or 'clear'..."
-                  variant="unstyled"
-                  className="flex-1 font-mono text-sm text-foreground placeholder:text-muted-foreground"
+                  className="p-inputtext-unstyled flex-1 font-mono text-sm text-foreground"
                 />
               </div>
             </form>
-          </Card>
+          </Panel>
 
           {/* Connections */}
-          <Card variant="elevated">
-            <CardHeader className="py-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-muted">
-                  <Wifi size={16} className="text-muted-foreground" />
-                </div>
-                <CardTitle className="text-sm">Active WebSocket Connections</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-4">
-                {connections.map((conn) => (
-                  <div
-                    key={conn.id}
-                    className="p-4 bg-background border border-border rounded-xl transition-all duration-200 hover:border-input"
-                  >
-                    <div className="flex items-center gap-5">
-                      <span className="text-xs font-mono text-muted-foreground">{conn.ip}</span>
-                      <span className="text-xs font-medium text-foreground">{conn.device}</span>
-                      <span className="text-xs font-semibold text-success">{conn.ping}</span>
-                    </div>
+          <Panel header={connectionsHeader} className="card-elevated">
+            <div className="flex flex-wrap gap-4">
+              {connections.map((conn) => (
+                <div
+                  key={conn.id}
+                  className="p-4 bg-background border border-border rounded-xl transition-all duration-200 hover:border-input"
+                >
+                  <div className="flex items-center gap-5">
+                    <span className="text-xs font-mono text-muted-foreground">{conn.ip}</span>
+                    <span className="text-xs font-medium text-foreground">{conn.device}</span>
+                    <span className="text-xs font-semibold text-success">{conn.ping}</span>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                </div>
+              ))}
+            </div>
+          </Panel>
         </div>
       </div>
     </div>
