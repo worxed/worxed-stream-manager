@@ -1,40 +1,598 @@
-/* Neon Ember - Cyberpunk Minimalist Theme */
-:root {
-  --primary-bg: #0F0E17;
-  --fire-red: #FF2D55;
-  --electric-cyan: #00FBFF;
-  --cool-slate: #2C2C2E;
-  --border-color: rgba(255, 45, 85, 0.4);
-  --text-primary: #FF2D55;
-  --text-secondary: #00FBFF;
-  --text-muted: rgba(255, 45, 85, 0.7);
-  --card-bg: rgba(255, 45, 85, 0.08);
-  --hover-bg: rgba(255, 45, 85, 0.12);
-  --active-bg: rgba(255, 45, 85, 0.18);
-  
-  /* Legacy variable mappings for compatibility */
-  --primary-green: var(--fire-red);
-  --secondary-purple: var(--electric-cyan);
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+@import "tailwindcss";
+
+/* Worxed Stream Manager - Design System (PrimeReact + Tailwind) */
+
+@theme inline {
+  /* Core tokens */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Domain-specific semantic tokens */
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+
+  /* Chart / event type colors */
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  /* Typography */
+  --font-sans: 'Inter', system-ui, sans-serif;
+
+  /* Radius */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
 }
 
+/* Light mode (default) */
+:root {
+  --background: #ffffff;
+  --foreground: #09090b;
+  --card: #ffffff;
+  --card-foreground: #09090b;
+  --popover: #ffffff;
+  --popover-foreground: #09090b;
+  --primary: #18181b;
+  --primary-foreground: #fafafa;
+  --secondary: #f4f4f5;
+  --secondary-foreground: #18181b;
+  --muted: #f4f4f5;
+  --muted-foreground: #71717a;
+  --accent: #f4f4f5;
+  --accent-foreground: #18181b;
+  --destructive: #ef4444;
+  --destructive-foreground: #fafafa;
+  --border: #e4e4e7;
+  --input: #e4e4e7;
+  --ring: #18181b;
+
+  --success: #16a34a;
+  --success-foreground: #ffffff;
+  --warning: #ca8a04;
+  --warning-foreground: #ffffff;
+  --info: #2563eb;
+  --info-foreground: #ffffff;
+
+  --chart-1: #a855f7;
+  --chart-2: #22c55e;
+  --chart-3: #eab308;
+  --chart-4: #3b82f6;
+  --chart-5: #ef4444;
+}
+
+/* Dark mode */
+.dark {
+  --background: #09090b;
+  --foreground: #fafafa;
+  --card: #0a0a0a;
+  --card-foreground: #fafafa;
+  --popover: #18181b;
+  --popover-foreground: #fafafa;
+  --primary: #fafafa;
+  --primary-foreground: #18181b;
+  --secondary: #27272a;
+  --secondary-foreground: #fafafa;
+  --muted: #27272a;
+  --muted-foreground: #a1a1aa;
+  --accent: #27272a;
+  --accent-foreground: #fafafa;
+  --destructive: #dc2626;
+  --destructive-foreground: #fafafa;
+  --border: #27272a;
+  --input: #27272a;
+  --ring: #d4d4d8;
+
+  --success: #22c55e;
+  --success-foreground: #09090b;
+  --warning: #eab308;
+  --warning-foreground: #09090b;
+  --info: #3b82f6;
+  --info-foreground: #ffffff;
+
+  --chart-1: #a855f7;
+  --chart-2: #22c55e;
+  --chart-3: #eab308;
+  --chart-4: #3b82f6;
+  --chart-5: #ef4444;
+}
+
+/* ═══════════════════════════════════════════════
+   Synthetica — Cool blue-gray cyberpunk
+   ═══════════════════════════════════════════════ */
+
+[data-theme="synthetica"] {
+  --background: #f0f2f8;
+  --foreground: #1a1d2e;
+  --card: #ffffff;
+  --card-foreground: #1a1d2e;
+  --popover: #ffffff;
+  --popover-foreground: #1a1d2e;
+  --primary: #334680;
+  --primary-foreground: #f0f2f8;
+  --secondary: #e4e7f0;
+  --secondary-foreground: #1a1d2e;
+  --muted: #e4e7f0;
+  --muted-foreground: #6b7194;
+  --accent: #dde1ee;
+  --accent-foreground: #1a1d2e;
+  --destructive: #dc3545;
+  --destructive-foreground: #f0f2f8;
+  --border: #c8cde0;
+  --input: #c8cde0;
+  --ring: #334680;
+
+  --success: #16a34a;
+  --success-foreground: #ffffff;
+  --warning: #ca8a04;
+  --warning-foreground: #ffffff;
+  --info: #4a6bc5;
+  --info-foreground: #ffffff;
+
+  --chart-1: #7c5cbf;
+  --chart-2: #2ebd6e;
+  --chart-3: #d4a832;
+  --chart-4: #4a8fe7;
+  --chart-5: #e04858;
+}
+
+[data-theme="synthetica"].dark {
+  --background: #0d1020;
+  --foreground: #d0d5e8;
+  --card: #141830;
+  --card-foreground: #d0d5e8;
+  --popover: #1a1f38;
+  --popover-foreground: #d0d5e8;
+  --primary: #6889c8;
+  --primary-foreground: #0d1020;
+  --secondary: #1e2440;
+  --secondary-foreground: #d0d5e8;
+  --muted: #1e2440;
+  --muted-foreground: #7b82a8;
+  --accent: #232950;
+  --accent-foreground: #d0d5e8;
+  --destructive: #dc3545;
+  --destructive-foreground: #d0d5e8;
+  --border: #2a3158;
+  --input: #2a3158;
+  --ring: #6889c8;
+
+  --success: #22c55e;
+  --success-foreground: #0d1020;
+  --warning: #eab308;
+  --warning-foreground: #0d1020;
+  --info: #6889c8;
+  --info-foreground: #ffffff;
+
+  --chart-1: #a78bfa;
+  --chart-2: #34d399;
+  --chart-3: #fbbf24;
+  --chart-4: #60a5fa;
+  --chart-5: #f87171;
+}
+
+/* ═══════════════════════════════════════════════
+   Magma Forge — Warm amber and fire
+   ═══════════════════════════════════════════════ */
+
+[data-theme="magma"] {
+  --background: #faf6f0;
+  --foreground: #2a1f14;
+  --card: #ffffff;
+  --card-foreground: #2a1f14;
+  --popover: #ffffff;
+  --popover-foreground: #2a1f14;
+  --primary: #b44d1e;
+  --primary-foreground: #faf6f0;
+  --secondary: #f0e6d8;
+  --secondary-foreground: #2a1f14;
+  --muted: #f0e6d8;
+  --muted-foreground: #8c7560;
+  --accent: #eddccc;
+  --accent-foreground: #2a1f14;
+  --destructive: #dc2626;
+  --destructive-foreground: #faf6f0;
+  --border: #ddd0c0;
+  --input: #ddd0c0;
+  --ring: #b44d1e;
+
+  --success: #2d8a4e;
+  --success-foreground: #ffffff;
+  --warning: #c87f1a;
+  --warning-foreground: #ffffff;
+  --info: #c07028;
+  --info-foreground: #ffffff;
+
+  --chart-1: #a855f7;
+  --chart-2: #e07830;
+  --chart-3: #eab308;
+  --chart-4: #d4553a;
+  --chart-5: #ef4444;
+}
+
+[data-theme="magma"].dark {
+  --background: #1a1008;
+  --foreground: #e8ddd0;
+  --card: #221810;
+  --card-foreground: #e8ddd0;
+  --popover: #2a1e14;
+  --popover-foreground: #e8ddd0;
+  --primary: #e07830;
+  --primary-foreground: #1a1008;
+  --secondary: #302018;
+  --secondary-foreground: #e8ddd0;
+  --muted: #302018;
+  --muted-foreground: #9c8570;
+  --accent: #3a2820;
+  --accent-foreground: #e8ddd0;
+  --destructive: #dc2626;
+  --destructive-foreground: #e8ddd0;
+  --border: #3e2e22;
+  --input: #3e2e22;
+  --ring: #e07830;
+
+  --success: #22c55e;
+  --success-foreground: #1a1008;
+  --warning: #eab308;
+  --warning-foreground: #1a1008;
+  --info: #e07830;
+  --info-foreground: #ffffff;
+
+  --chart-1: #c084fc;
+  --chart-2: #f59e0b;
+  --chart-3: #fbbf24;
+  --chart-4: #ef6c4a;
+  --chart-5: #f87171;
+}
+
+/* ═══════════════════════════════════════════════
+   Arctic Command — Icy blue clarity
+   ═══════════════════════════════════════════════ */
+
+[data-theme="arctic"] {
+  --background: #f0f6fc;
+  --foreground: #0c1e36;
+  --card: #ffffff;
+  --card-foreground: #0c1e36;
+  --popover: #ffffff;
+  --popover-foreground: #0c1e36;
+  --primary: #1565c0;
+  --primary-foreground: #f0f6fc;
+  --secondary: #dce8f5;
+  --secondary-foreground: #0c1e36;
+  --muted: #dce8f5;
+  --muted-foreground: #5a7a9c;
+  --accent: #d0e0f2;
+  --accent-foreground: #0c1e36;
+  --destructive: #dc2626;
+  --destructive-foreground: #f0f6fc;
+  --border: #bdd0e8;
+  --input: #bdd0e8;
+  --ring: #1565c0;
+
+  --success: #16a34a;
+  --success-foreground: #ffffff;
+  --warning: #ca8a04;
+  --warning-foreground: #ffffff;
+  --info: #1976d2;
+  --info-foreground: #ffffff;
+
+  --chart-1: #7c3aed;
+  --chart-2: #059669;
+  --chart-3: #d97706;
+  --chart-4: #2563eb;
+  --chart-5: #ef4444;
+}
+
+[data-theme="arctic"].dark {
+  --background: #08111e;
+  --foreground: #cddaea;
+  --card: #0e1828;
+  --card-foreground: #cddaea;
+  --popover: #142030;
+  --popover-foreground: #cddaea;
+  --primary: #42a5f5;
+  --primary-foreground: #08111e;
+  --secondary: #152538;
+  --secondary-foreground: #cddaea;
+  --muted: #152538;
+  --muted-foreground: #6890b5;
+  --accent: #1a2d45;
+  --accent-foreground: #cddaea;
+  --destructive: #dc2626;
+  --destructive-foreground: #cddaea;
+  --border: #1e3350;
+  --input: #1e3350;
+  --ring: #42a5f5;
+
+  --success: #22c55e;
+  --success-foreground: #08111e;
+  --warning: #eab308;
+  --warning-foreground: #08111e;
+  --info: #42a5f5;
+  --info-foreground: #ffffff;
+
+  --chart-1: #a78bfa;
+  --chart-2: #34d399;
+  --chart-3: #fbbf24;
+  --chart-4: #60a5fa;
+  --chart-5: #f87171;
+}
+
+/* Content container - pixel-based to ensure consistent centering */
+.content-container {
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+  padding-left: 32px;
+  padding-right: 32px;
+}
+
+/* Base styles */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
-html, body, #root {
-  height: 100%;
-  width: 100%;
+html {
+  font-size: 16px;
 }
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
-  background: var(--primary-bg);
-  color: var(--text-primary);
+  font-family: var(--font-sans);
   font-size: 18px;
-  line-height: 1.6;
-  font-weight: 400;
+  background: var(--background);
+  color: var(--foreground);
+  line-height: 1.5;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* Override PrimeReact's base body styles so our theme wins */
+.p-component {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+}
+
+/* ═══════════════════════════════════════════════
+   PrimeReact Theme Bridge
+   Override PrimeReact CSS variables to use our
+   design tokens so dark/light mode switching works
+   ═══════════════════════════════════════════════ */
+
+:root {
+  /* Map PrimeReact vars → our tokens */
+  --surface-ground: var(--background);
+  --surface-section: var(--background);
+  --surface-card: var(--card);
+  --surface-overlay: var(--popover);
+  --surface-border: var(--border);
+  --surface-hover: var(--accent);
+  --text-color: var(--foreground);
+  --text-color-secondary: var(--muted-foreground);
+  --primary-color: var(--primary);
+  --primary-color-text: var(--primary-foreground);
+  --font-family: var(--font-sans);
+  --content-padding: 1.25rem;
+  --inline-spacing: 0.5rem;
+  --border-radius: 12px;
+  --focus-ring: 0 0 0 2px var(--ring);
+  --maskbg: rgba(0, 0, 0, 0.4);
+  --highlight-bg: color-mix(in srgb, var(--primary) 16%, transparent);
+  --highlight-text-color: var(--primary);
+
+  /* Surface scale mapped to our palette */
+  --surface-0: var(--background);
+  --surface-50: var(--card);
+  --surface-100: var(--secondary);
+  --surface-200: var(--border);
+  --surface-300: var(--input);
+  --surface-400: var(--muted-foreground);
+  --surface-500: var(--muted-foreground);
+  --surface-600: var(--foreground);
+  --surface-700: var(--foreground);
+  --surface-800: var(--foreground);
+  --surface-900: var(--foreground);
+}
+
+/* Global Card overrides */
+.p-card {
+  border-radius: 16px;
+  overflow: hidden;
+  transition: all 0.2s ease;
+  border: 1px solid var(--surface-border);
+  background: var(--surface-card);
+  color: var(--text-color);
+}
+
+.p-card .p-card-body { padding: 1.25rem; }
+.p-card .p-card-content { padding: 0; }
+
+.p-card:hover {
+  border-color: var(--surface-300);
+}
+
+/* Panel overrides — matches Card styling */
+.p-panel {
+  border-radius: 16px;
+  overflow: hidden;
+  transition: all 0.2s ease;
+  border: 1px solid var(--surface-border);
+  background: var(--surface-card);
+  color: var(--text-color);
+}
+.p-panel .p-panel-header {
+  background: transparent;
+  border-bottom: 1px solid var(--surface-border);
+  padding: 1.25rem;
+}
+.p-panel .p-panel-content {
+  padding: 1.25rem;
+}
+.p-panel:hover {
+  border-color: var(--surface-300);
+}
+
+/* Variant modifiers — work on both Card and Panel */
+.card-elevated {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+}
+
+.dark .card-elevated {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.3);
+}
+
+.card-inset {
+  background: color-mix(in srgb, var(--surface-ground) 50%, transparent);
+  border-color: color-mix(in srgb, var(--surface-border) 50%, transparent);
+  box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.05);
+}
+
+.card-accent {
+  border-color: color-mix(in srgb, var(--primary-color) 30%, transparent);
+  background: color-mix(in srgb, var(--primary-color) 5%, transparent);
+}
+
+.card-ghost {
+  border-color: transparent;
+  background: transparent;
+}
+
+.card-stat {
+  background: linear-gradient(135deg, var(--surface-card), var(--surface-ground));
+  border-color: var(--surface-border);
+}
+
+/* PrimeReact Button overrides */
+.p-button {
+  border-radius: 12px;
+  font-family: var(--font-sans);
+  transition: all 0.2s ease;
+}
+
+.p-button:active {
+  transform: scale(0.97);
+}
+
+/* PrimeReact InputText overrides */
+.p-inputtext {
+  border-radius: 12px;
+  font-family: var(--font-sans);
+}
+
+.p-inputtext-unstyled.p-inputtext {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+
+/* PrimeReact Tag (Badge) overrides */
+.p-tag {
+  font-family: var(--font-sans);
+}
+
+.worxed-badge-follow {
+  background-color: var(--chart-1) !important;
+  color: white !important;
+}
+
+.worxed-badge-donation {
+  background-color: var(--chart-3) !important;
+  color: black !important;
+}
+
+.worxed-badge-live {
+  background-color: var(--chart-5) !important;
+  color: white !important;
+}
+
+.worxed-badge-offline {
+  background-color: var(--text-color-secondary) !important;
+  color: white !important;
+}
+
+/* PrimeReact InputSwitch overrides */
+.p-inputswitch {
+  border-radius: 9999px;
+}
+
+.p-inputswitch.p-inputswitch-checked .p-inputswitch-slider {
+  background: var(--primary-color);
+}
+.p-slider {
+  border-radius: 9999px;
+  background: var(--surface-border);
+}
+
+.p-slider .p-slider-range {
+  background: var(--primary-color);
+}
+
+.p-slider .p-slider-handle {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+/* PrimeReact ScrollPanel overrides */
+.p-scrollpanel-bar {
+  background: var(--surface-border) !important;
+  border-radius: 4px !important;
+  opacity: 1 !important;
+}
+
+.p-scrollpanel-bar:hover {
+  background: var(--text-color-secondary) !important;
+}
+
+/* PrimeReact Tooltip overrides */
+.p-tooltip .p-tooltip-text {
+  border-radius: 8px;
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+}
+
+/* Status indicators */
+@keyframes live-pulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 8px #ef4444; }
+  50% { opacity: 0.7; box-shadow: 0 0 16px #ef4444; }
+}
+
+.animate-live {
+  animation: live-pulse 1.5s ease-in-out infinite;
 }
 
 /* Scrollbar styling */
@@ -44,45 +602,183 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--primary-bg);
+  background: var(--color-background);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--border-color);
+  background: var(--color-border);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--fire-red);
+  background: var(--color-muted-foreground);
 }
 
-/* Status indicator animation - Neon Ember */
-@keyframes pulse-glow {
-  0%, 100% {
-    box-shadow: 0 0 8px var(--fire-red);
+/* Focus styles for accessibility */
+:focus-visible {
+  outline: 2px solid var(--color-ring);
+  outline-offset: 2px;
+}
+
+/* Selection */
+::selection {
+  background: var(--color-primary);
+  color: var(--color-primary-foreground);
+}
+
+/* Skeleton shimmer animation */
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Fade in animations */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
   }
-  50% {
-    box-shadow: 0 0 20px var(--fire-red), 0 0 30px rgba(255, 45, 85, 0.5);
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-.status-live {
-  animation: pulse-glow 2s ease-in-out infinite;
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
-/* Neon text glow effects */
-.text-glow {
-  text-shadow: 0 0 12px var(--fire-red), 0 0 20px rgba(255, 45, 85, 0.6);
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
-.text-glow-cyan {
-  text-shadow: 0 0 12px var(--electric-cyan), 0 0 20px rgba(0, 251, 255, 0.6);
+.animate-fade-in {
+  animation: fade-in 0.2s ease-out;
 }
 
-/* Card hover effects */
-.card-hover:hover {
-  border-color: var(--fire-red);
-  box-shadow: 0 0 24px rgba(255, 45, 85, 0.3), 0 8px 32px rgba(255, 45, 85, 0.15);
+.animate-fade-in-up {
+  animation: fade-in-up 0.3s ease-out;
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.3s ease-out;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.2s ease-out;
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Interactive hover lift effect */
+.hover-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hover-lift:hover {
   transform: translateY(-2px);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Glass morphism effect */
+.glass {
+  background: color-mix(in srgb, var(--color-card) 80%, transparent);
+  backdrop-filter: blur(12px);
+  border: 1px solid color-mix(in srgb, var(--color-border) 40%, transparent);
+}
+
+/* Ambient background orbs */
+@keyframes drift-1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -50px) scale(1.1); }
+  66% { transform: translate(-20px, 20px) scale(0.9); }
+}
+
+@keyframes drift-2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(-40px, 30px) scale(0.95); }
+  66% { transform: translate(25px, -35px) scale(1.05); }
+}
+
+.ambient-bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.ambient-bg::before,
+.ambient-bg::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(120px);
+  opacity: 0.07;
+}
+
+.ambient-bg::before {
+  width: 600px;
+  height: 600px;
+  top: -10%;
+  right: -5%;
+  background: var(--color-primary);
+  animation: drift-1 20s ease-in-out infinite;
+}
+
+.ambient-bg::after {
+  width: 500px;
+  height: 500px;
+  bottom: -10%;
+  left: -5%;
+  background: var(--color-accent);
+  animation: drift-2 25s ease-in-out infinite;
+}
+
+/* Page view transition */
+@keyframes view-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-view-enter {
+  animation: view-enter 0.25s ease-out;
+}
+
+/* Skeleton glow pulse */
+@keyframes skeleton-glow {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.7; }
+}
+
+.skeleton-glow {
+  animation: skeleton-glow 2s ease-in-out infinite;
 }

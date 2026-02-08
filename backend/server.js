@@ -629,6 +629,31 @@ app.post('/api/test-alert', (req, res) => {
   res.json({ success: true });
 });
 
+app.post('/api/test-chat', (req, res) => {
+  const { username, message, color } = req.body;
+  if (!message) return res.status(400).json({ error: 'message is required' });
+
+  io.emit('chat-message', {
+    id: Date.now().toString(),
+    username: username || `TestUser${Math.floor(Math.random() * 1000)}`,
+    message,
+    color: color || '#8cffbe',
+    badges: {},
+    timestamp: new Date().toISOString(),
+    userType: 'viewer'
+  });
+
+  res.json({ success: true });
+});
+
+app.post('/api/test-event', (req, res) => {
+  const { eventName, data } = req.body;
+  if (!eventName) return res.status(400).json({ error: 'eventName is required' });
+
+  io.emit(eventName, data || {});
+  res.json({ success: true });
+});
+
 // ===========================================
 // EVENTSUB WEBHOOK (Optional)
 // ===========================================
@@ -881,6 +906,80 @@ app.post('/api/endpoints/:id/test', (req, res) => {
 
   const result = executeHandlerDryRun(row.handler, context);
   res.json({ endpoint: row.name, path: row.path, method: row.method, dryRun: true, result });
+});
+
+// ===========================================
+// SCENE API ROUTES
+// ===========================================
+
+// List all scenes
+app.get('/api/scenes', (req, res) => {
+  res.json(db.scenes.getAll());
+});
+
+// Get active scene (for overlay)
+app.get('/api/scenes/active', (req, res) => {
+  const scene = db.scenes.getActive();
+  if (!scene) return res.status(404).json({ error: 'No active scene' });
+  res.json(scene);
+});
+
+// Get single scene
+app.get('/api/scenes/:id', (req, res) => {
+  const scene = db.scenes.get(req.params.id);
+  if (!scene) return res.status(404).json({ error: 'Scene not found' });
+  res.json(scene);
+});
+
+// Create scene
+app.post('/api/scenes', (req, res) => {
+  const { name, width, height, elements, is_active } = req.body;
+  if (!name) return res.status(400).json({ error: 'name is required' });
+
+  const scene = db.scenes.create({
+    name,
+    width: width || 1920,
+    height: height || 1080,
+    elements: elements || [],
+    is_active: is_active || 0
+  });
+
+  io.emit('scene-created', scene);
+  res.status(201).json(scene);
+});
+
+// Update scene
+app.put('/api/scenes/:id', (req, res) => {
+  const existing = db.scenes.get(req.params.id);
+  if (!existing) return res.status(404).json({ error: 'Scene not found' });
+
+  const scene = db.scenes.update(req.params.id, req.body);
+  io.emit('scene-updated', scene);
+  res.json(scene);
+});
+
+// Activate scene
+app.put('/api/scenes/:id/activate', (req, res) => {
+  const existing = db.scenes.get(req.params.id);
+  if (!existing) return res.status(404).json({ error: 'Scene not found' });
+
+  const scene = db.scenes.activate(req.params.id);
+  io.emit('scene-activated', scene);
+  res.json(scene);
+});
+
+// Delete scene
+app.delete('/api/scenes/:id', (req, res) => {
+  try {
+    const existing = db.scenes.get(req.params.id);
+    if (!existing) return res.status(404).json({ error: 'Scene not found' });
+
+    db.scenes.delete(req.params.id);
+    io.emit('scene-deleted', { id: parseInt(req.params.id) });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
 });
 
 // ===========================================

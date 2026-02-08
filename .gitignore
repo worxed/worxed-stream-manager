@@ -1,6 +1,5 @@
 # Worxed Stream Manager - Git Ignore File
 # =====================================
-archive
 # Environment and Configuration Files
 .env
 .env.*
@@ -164,6 +163,7 @@ temp/
 
 # Database Files
 data/
+data/
 *.db
 *.sqlite
 *.sqlite3
@@ -245,3 +245,6 @@ storybook-static/
 # AI Assistant specific
 .claude
 CLAUDE.md
+
+# Goldmine - preserved archive documentation (local reference only)
+.goldmine/

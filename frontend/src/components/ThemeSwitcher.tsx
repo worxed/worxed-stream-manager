@@ -1,148 +1,154 @@
-import { useState } from 'react';
-import { Menu, Button, Text, Group, Box } from '@mantine/core';
-import { IconPalette, IconCheck, IconSun, IconMoon } from '@tabler/icons-react';
-import { 
-  applyTheme, 
-  getSavedTheme, 
-  getSavedMode,
-  themeNames, 
-  themeDescriptions, 
+import { useState, useRef } from 'react';
+import { Palette, Sun, Moon, Check } from 'lucide-react';
+import { Button } from 'primereact/button';
+import { OverlayPanel } from 'primereact/overlaypanel';
+import {
+  themes,
+  THEME_STORAGE_KEY,
+  MODE_STORAGE_KEY,
   type ThemeName,
-  type ThemeMode 
+  type ThemeMode,
 } from '../themes/themes';
 
-export default function ThemeSwitcher() {
-  const [currentTheme, setCurrentTheme] = useState<ThemeName>(getSavedTheme());
-  const [currentMode, setCurrentMode] = useState<ThemeMode>(getSavedMode());
+function getStoredTheme(): ThemeName {
+  const stored = localStorage.getItem(THEME_STORAGE_KEY);
+  if (stored && themes.some((t) => t.name === stored)) return stored as ThemeName;
+  return 'zinc';
+}
 
-  const handleThemeChange = (theme: ThemeName, mode?: ThemeMode) => {
-    const newMode = mode || currentMode;
-    setCurrentTheme(theme);
-    setCurrentMode(newMode);
-    applyTheme(theme, newMode);
+function getStoredMode(): ThemeMode {
+  const stored = localStorage.getItem(MODE_STORAGE_KEY);
+  if (stored === 'light' || stored === 'dark') return stored;
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
+export function applyTheme(theme: ThemeName, mode: ThemeMode) {
+  const html = document.documentElement;
+
+  // Set data-theme attribute (remove for zinc — uses :root defaults)
+  if (theme === 'zinc') {
+    html.removeAttribute('data-theme');
+  } else {
+    html.setAttribute('data-theme', theme);
+  }
+
+  // Toggle dark class
+  html.classList.toggle('dark', mode === 'dark');
+
+  // Persist
+  localStorage.setItem(THEME_STORAGE_KEY, theme);
+  localStorage.setItem(MODE_STORAGE_KEY, mode);
+}
+
+export function initTheme() {
+  applyTheme(getStoredTheme(), getStoredMode());
+}
+
+export default function ThemePicker() {
+  const [theme, setTheme] = useState<ThemeName>(getStoredTheme);
+  const [mode, setMode] = useState<ThemeMode>(getStoredMode);
+  const op = useRef<OverlayPanel>(null);
+
+  const currentDef = themes.find((t) => t.name === theme)!;
+
+  const selectTheme = (name: ThemeName) => {
+    setTheme(name);
+    applyTheme(name, mode);
   };
 
-  const toggleMode = () => {
-    const newMode: ThemeMode = currentMode === 'dark' ? 'light' : 'dark';
-    handleThemeChange(currentTheme, newMode);
+  const selectMode = (m: ThemeMode) => {
+    setMode(m);
+    applyTheme(theme, m);
   };
-
-  const themes: ThemeName[] = ['forge', 'organic', 'synthetica'];
 
   return (
-    <Group gap="xs">
-      {/* Mode Toggle */}
+    <>
       <Button
-        variant="subtle"
-        size="sm"
-        onClick={toggleMode}
-        leftSection={currentMode === 'dark' ? <IconMoon size={14} /> : <IconSun size={14} />}
-        styles={{
-          root: {
-            fontFamily: '"VT323", monospace',
-            color: 'var(--text-muted)',
-            padding: '4px 12px',
-            '&:hover': {
-              backgroundColor: 'var(--hover-bg)',
-              color: 'var(--text-primary)',
-            },
-          },
-        }}
+        text
+        size="small"
+        onClick={(e) => op.current?.toggle(e)}
+        className="gap-2 rounded-xl"
       >
-        {currentMode.toUpperCase()}
+        <Palette size={16} />
+        <span className="text-sm">{currentDef.label}</span>
+        {mode === 'dark' ? <Moon size={14} /> : <Sun size={14} />}
       </Button>
 
-      {/* Theme Selector */}
-      <Menu shadow="md" width={300}>
-        <Menu.Target>
-          <Button
-            variant="subtle"
-            size="sm"
-            leftSection={<IconPalette size={14} />}
-            styles={{
-              root: {
-                fontFamily: '"VT323", monospace',
-                color: 'var(--text-muted)',
-                '&:hover': {
-                  backgroundColor: 'var(--hover-bg)',
-                  color: 'var(--text-primary)',
-                },
-              },
-            }}
-          >
-            THEME
-          </Button>
-        </Menu.Target>
+      <OverlayPanel ref={op} className="w-72">
+        <div className="flex flex-col gap-3">
+          {/* Theme list */}
+          <div className="flex flex-col gap-1">
+            <span className="text-xs font-medium text-muted-foreground px-2 pb-1">Theme</span>
+            {themes.map((t) => {
+              const isActive = theme === t.name;
+              return (
+                <button
+                  key={t.name}
+                  onClick={() => selectTheme(t.name)}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-colors w-full ${
+                    isActive
+                      ? 'bg-accent text-accent-foreground'
+                      : 'hover:bg-accent/50 text-foreground'
+                  }`}
+                >
+                  {/* Color swatches */}
+                  <div className="flex gap-1 shrink-0">
+                    <div
+                      className="w-4 h-4 rounded-full border border-border"
+                      style={{ background: t.swatches[0] }}
+                    />
+                    <div
+                      className="w-4 h-4 rounded-full border border-border"
+                      style={{ background: t.swatches[1] }}
+                    />
+                  </div>
 
-        <Menu.Dropdown
-          style={{
-            backgroundColor: 'var(--surface-elevated)',
-            border: '1px solid var(--border-color)',
-            backdropFilter: 'blur(12px)',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
-          }}
-        >
-          <Menu.Label
-            style={{
-              fontFamily: '"VT323", monospace',
-              fontSize: '10px',
-              letterSpacing: '2px',
-              color: 'var(--text-muted)',
-              textTransform: 'uppercase',
-            }}
-          >
-            Select Theme
-          </Menu.Label>
-          
-          {themes.map((theme) => (
-            <Menu.Item
-              key={theme}
-              onClick={() => handleThemeChange(theme)}
-              leftSection={
-                currentTheme === theme ? (
-                  <IconCheck size={16} style={{ color: 'var(--primary)' }} />
-                ) : (
-                  <Box w={16} h={16} />
-                )
-              }
-              style={{
-                fontFamily: '"VT323", monospace',
-                backgroundColor: currentTheme === theme ? 'var(--active-bg)' : 'transparent',
-                borderRadius: '6px',
-                margin: '2px 0',
-              }}
-            >
-              <Group gap="sm" wrap="nowrap">
-                <Box
-                  w={14}
-                  h={14}
-                  style={{
-                    borderRadius: '4px',
-                    backgroundColor: 
-                      theme === 'forge' ? '#FF3B30' : 
-                      theme === 'organic' ? '#FF453A' : 
-                      '#FF2D55',
-                    boxShadow: `0 0 8px ${
-                      theme === 'forge' ? 'rgba(255, 59, 48, 0.4)' : 
-                      theme === 'organic' ? 'rgba(255, 69, 58, 0.4)' : 
-                      'rgba(255, 45, 85, 0.4)'
-                    }`,
-                    flexShrink: 0,
-                  }}
-                />
-                <Box style={{ flex: 1 }}>
-                  <Text size="sm" fw={500} style={{ color: 'var(--text-primary)' }}>
-                    {themeNames[theme]}
-                  </Text>
-                  <Text size="xs" style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
-                    {themeDescriptions[theme]}
-                  </Text>
-                </Box>
-              </Group>
-            </Menu.Item>
-          ))}
-        </Menu.Dropdown>
-      </Menu>
-    </Group>
+                  {/* Label + description */}
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium">{t.label}</div>
+                    <div className="text-xs text-muted-foreground">{t.description}</div>
+                  </div>
+
+                  {/* Check icon */}
+                  {isActive && <Check size={16} className="shrink-0 text-primary" />}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Divider */}
+          <div className="border-t border-border" />
+
+          {/* Mode toggle */}
+          <div className="flex flex-col gap-1">
+            <span className="text-xs font-medium text-muted-foreground px-2 pb-1">Mode</span>
+            <div className="flex gap-1 p-1 bg-muted rounded-xl">
+              <button
+                onClick={() => selectMode('light')}
+                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  mode === 'light'
+                    ? 'bg-background text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <Sun size={14} />
+                Light
+              </button>
+              <button
+                onClick={() => selectMode('dark')}
+                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  mode === 'dark'
+                    ? 'bg-background text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <Moon size={14} />
+                Dark
+              </button>
+            </div>
+          </div>
+        </div>
+      </OverlayPanel>
+    </>
   );
 }

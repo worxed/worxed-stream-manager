@@ -1,6 +1,6 @@
 {
   "name": "worxed-stream-manager-frontend",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Frontend dashboard for Worxed Stream Manager",
   "type": "module",
   "scripts": {
@@ -10,16 +10,20 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "@mantine/core": "^7.15.0",
-    "@mantine/hooks": "^7.15.0",
-    "@mantine/notifications": "^7.15.0",
-    "@tabler/icons-react": "^3.24.0",
+    "framer-motion": "^12.33.0",
+    "konva": "10",
+    "lucide-react": "^0.468.0",
+    "primeicons": "^7.0.0",
+    "primereact": "^10.9.7",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "socket.io-client": "^4.7.2"
+    "react-konva": "18.2.14",
+    "socket.io-client": "^4.7.2",
+    "zustand": "5"
   },
   "devDependencies": {
     "@eslint/js": "^9.15.0",
+    "@tailwindcss/vite": "^4.0.0",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.4",
@@ -27,9 +31,7 @@
     "eslint-plugin-react-hooks": "^5.0.0",
     "eslint-plugin-react-refresh": "^0.4.14",
     "globals": "^15.12.0",
-    "postcss": "^8.4.49",
-    "postcss-preset-mantine": "^1.17.0",
-    "postcss-simple-vars": "^7.0.1",
+    "tailwindcss": "^4.0.0",
     "typescript": "~5.6.2",
     "typescript-eslint": "^8.15.0",
     "vite": "^6.0.1"

@@ -1,4 +1,4 @@
-import type { StreamData, AlertSettings, SettingEntry, CustomEndpoint } from '../types';
+import type { StreamData, AlertSettings, SettingEntry, CustomEndpoint, Scene } from '../types';
 
 const API_BASE = '/api';
 
@@ -125,6 +125,45 @@ export async function getSettings(category?: string) {
 // Endpoints
 export async function getEndpoints() {
   return fetchApi<CustomEndpoint[]>('/endpoints');
+}
+
+// Scenes
+export async function getScenes() {
+  return fetchApi<Scene[]>('/scenes');
+}
+
+export async function getScene(id: number) {
+  return fetchApi<Scene>(`/scenes/${id}`);
+}
+
+export async function getActiveScene() {
+  return fetchApi<Scene>('/scenes/active');
+}
+
+export async function createScene(scene: Partial<Scene>) {
+  return fetchApi<Scene>('/scenes', {
+    method: 'POST',
+    body: JSON.stringify(scene),
+  });
+}
+
+export async function updateScene(id: number, fields: Partial<Scene>) {
+  return fetchApi<Scene>(`/scenes/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(fields),
+  });
+}
+
+export async function deleteScene(id: number) {
+  return fetchApi<{ success: boolean }>(`/scenes/${id}`, {
+    method: 'DELETE',
+  });
+}
+
+export async function activateScene(id: number) {
+  return fetchApi<Scene>(`/scenes/${id}/activate`, {
+    method: 'PUT',
+  });
 }
 
 // Helpers

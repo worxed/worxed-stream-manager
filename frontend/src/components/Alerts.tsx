@@ -1,30 +1,24 @@
 import { useState, useEffect } from 'react';
 import {
-  Grid,
-  Card,
-  Text,
-  Group,
-  Stack,
-  Switch,
-  Button,
-  ScrollArea,
-  Badge,
-  Slider,
-  Box,
-} from '@mantine/core';
-import {
-  IconUserPlus,
-  IconStar,
-  IconCoin,
-  IconUsers,
-  IconVolume,
-  IconVolumeOff,
-  IconTrash,
-} from '@tabler/icons-react';
-import { notifications } from '@mantine/notifications';
+  UserPlus,
+  Star,
+  Coins,
+  Users,
+  Volume2,
+  VolumeX,
+  Bell,
+} from 'lucide-react';
+import { Panel } from 'primereact/panel';
+import { Button } from 'primereact/button';
+import { Tag } from 'primereact/tag';
+import { ScrollPanel } from 'primereact/scrollpanel';
+import { InputSwitch } from 'primereact/inputswitch';
+import { Slider } from 'primereact/slider';
+import { showToast } from '../services/toast';
 import { socketService } from '../services/socket';
 import { getAlertSettings, updateAlertSettings, triggerTestAlert } from '../services/api';
 import type { AlertSettings, Alert } from '../types';
+import EmptyState from './common/EmptyState';
 
 const defaultSettings: AlertSettings = {
   follow: { enabled: true, sound: true, duration: 5000 },
@@ -43,11 +37,7 @@ export default function Alerts() {
 
     const unsubAlert = socketService.onAlert((alert) => {
       setRecentAlerts((prev) => [alert, ...prev.slice(0, 49)]);
-      notifications.show({
-        title: `New ${alert.type}!`,
-        message: `${alert.username}${alert.amount ? ` - $${alert.amount}` : ''}`,
-        color: getAlertColor(alert.type),
-      });
+      showToast('success', `New ${alert.type}!`, `${alert.username}${alert.amount ? ` - $${alert.amount}` : ''}`);
     });
 
     const unsubSettings = socketService.onAlertSettings((newSettings) => {
@@ -80,7 +70,7 @@ export default function Alerts() {
     socketService.updateAlertSettings(newSettings);
   };
 
-  const handleDurationChange = async (type: keyof AlertSettings, value: number) => {
+  const handleDurationChange = (type: keyof AlertSettings, value: number) => {
     const newSettings = {
       ...settings,
       [type]: {
@@ -121,294 +111,184 @@ export default function Alerts() {
   const getAlertIcon = (type: string) => {
     switch (type) {
       case 'follow':
-        return <IconUserPlus size={20} />;
+        return <UserPlus size={20} />;
       case 'subscribe':
-        return <IconStar size={20} />;
+        return <Star size={20} />;
       case 'donation':
-        return <IconCoin size={20} />;
+        return <Coins size={20} />;
       case 'raid':
-        return <IconUsers size={20} />;
+        return <Users size={20} />;
       default:
         return null;
     }
   };
 
-  const getAlertColor = (type: string) => {
+  const getBadgeClass = (type: string) => {
     switch (type) {
-      case 'follow':
-        return 'grape';
-      case 'subscribe':
-        return 'green';
-      case 'donation':
-        return 'yellow';
-      case 'raid':
-        return 'blue';
-      default:
-        return 'gray';
+      case 'follow': return 'worxed-badge-follow';
+      case 'donation': return 'worxed-badge-donation';
+      default: return '';
     }
   };
 
+  const getBadgeSeverity = (type: string) => {
+    switch (type) {
+      case 'follow': return null;
+      case 'subscribe': return 'success';
+      case 'donation': return null;
+      case 'raid': return 'info';
+      default: return 'secondary';
+    }
+  };
+
+  const alertColorMap = {
+    follow: { text: 'text-chart-1', border: 'border-chart-1', hover: 'hover:bg-chart-1/10', bg: 'bg-chart-1/10' },
+    subscribe: { text: 'text-chart-2', border: 'border-chart-2', hover: 'hover:bg-chart-2/10', bg: 'bg-chart-2/10' },
+    donation: { text: 'text-chart-3', border: 'border-chart-3', hover: 'hover:bg-chart-3/10', bg: 'bg-chart-3/10' },
+    raid: { text: 'text-chart-4', border: 'border-chart-4', hover: 'hover:bg-chart-4/10', bg: 'bg-chart-4/10' },
+  } as const;
+
   const alertTypes: Array<{ key: keyof AlertSettings; label: string }> = [
-    { key: 'follow', label: 'FOLLOWS' },
-    { key: 'subscribe', label: 'SUBSCRIBES' },
-    { key: 'donation', label: 'DONATIONS' },
-    { key: 'raid', label: 'RAIDS' },
+    { key: 'follow', label: 'Follows' },
+    { key: 'subscribe', label: 'Subscribes' },
+    { key: 'donation', label: 'Donations' },
+    { key: 'raid', label: 'Raids' },
   ];
 
+  const recentAlertsIcons = (
+    <Button
+      icon="pi pi-trash"
+      label="Clear"
+      text
+      size="small"
+      severity="danger"
+      onClick={clearAlerts}
+    />
+  );
+
   return (
-    <Stack gap="md">
+    <div className="flex flex-col gap-8">
       {/* Alert Settings */}
-      <Card
-        padding="lg"
-        radius="md"
-        styles={{
-          root: {
-            backgroundColor: 'var(--card-bg)',
-            border: '1px solid var(--border-color)',
-          },
-        }}
-      >
-        <Text
-          size="lg"
-          mb="md"
-          style={{
-            fontFamily: '"VT323", monospace',
-            color: 'var(--primary-green)',
-            letterSpacing: '1px',
-          }}
-        >
-          ALERT SETTINGS
-        </Text>
-
-        <Grid>
-          {alertTypes.map(({ key, label }) => (
-            <Grid.Col key={key} span={{ base: 12, sm: 6, md: 3 }}>
-              <Box
-                p="md"
-                style={{
-                  background: 'var(--primary-bg)',
-                  border: '1px solid var(--border-color)',
-                  borderRadius: '8px',
-                }}
+      <Panel header="Alert Settings" className="card-elevated">
+        <div className="flex flex-col gap-5">
+          {alertTypes.map(({ key, label }) => {
+            const colors = alertColorMap[key];
+            return (
+              <div
+                key={key}
+                className="flex items-center gap-5 p-5 bg-background border border-border rounded-xl transition-all duration-200 hover:border-input"
               >
-                <Group justify="center" mb="sm">
-                  <Box style={{ color: `var(--mantine-color-${getAlertColor(key)}-5)` }}>
-                    {getAlertIcon(key)}
-                  </Box>
-                </Group>
+                {/* Icon + Name */}
+                <div className="flex items-center gap-3 w-40 shrink-0">
+                  <div className={`p-2 rounded-xl ${colors.bg}`}>
+                    <span className={colors.text}>
+                      {getAlertIcon(key)}
+                    </span>
+                  </div>
+                  <span className="text-sm font-semibold text-foreground">{label}</span>
+                </div>
 
-                <Text
-                  ta="center"
-                  size="sm"
-                  mb="md"
-                  style={{
-                    fontFamily: '"VT323", monospace',
-                    color: 'var(--primary-green)',
-                    letterSpacing: '1px',
-                  }}
-                >
-                  {label}
-                </Text>
+                {/* Enabled */}
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-muted-foreground font-medium">Enabled</span>
+                  <InputSwitch
+                    checked={settings[key].enabled}
+                    onChange={() => handleToggle(key, 'enabled')}
+                  />
+                </div>
 
-                <Stack gap="sm">
-                  <Group justify="space-between">
-                    <Text size="xs" style={{ color: 'var(--text-muted)' }}>
-                      Enabled
-                    </Text>
-                    <Switch
-                      checked={settings[key].enabled}
-                      onChange={() => handleToggle(key, 'enabled')}
-                      color="green"
-                      size="sm"
-                    />
-                  </Group>
+                {/* Sound */}
+                <div className="flex items-center gap-3">
+                  {settings[key].sound ? (
+                    <Volume2 size={14} className="text-foreground" />
+                  ) : (
+                    <VolumeX size={14} className="text-muted-foreground" />
+                  )}
+                  <InputSwitch
+                    checked={settings[key].sound}
+                    onChange={() => handleToggle(key, 'sound')}
+                  />
+                </div>
 
-                  <Group justify="space-between">
-                    <Text size="xs" style={{ color: 'var(--text-muted)' }}>
-                      Sound
-                    </Text>
-                    <Switch
-                      checked={settings[key].sound}
-                      onChange={() => handleToggle(key, 'sound')}
-                      color="green"
-                      size="sm"
-                      thumbIcon={
-                        settings[key].sound ? (
-                          <IconVolume size={10} />
-                        ) : (
-                          <IconVolumeOff size={10} />
-                        )
-                      }
-                    />
-                  </Group>
+                {/* Duration */}
+                <div className="flex items-center gap-3 flex-1 min-w-40">
+                  <span className="text-xs text-muted-foreground font-medium tabular-nums shrink-0 w-8">
+                    {(settings[key].duration / 1000).toFixed(1)}s
+                  </span>
+                  <Slider
+                    value={settings[key].duration}
+                    min={2000}
+                    max={15000}
+                    step={500}
+                    onChange={(e) => handleDurationChange(key, e.value as number)}
+                    onSlideEnd={(e) => handleDurationCommit(key, e.value as number)}
+                    className="flex-1"
+                  />
+                </div>
 
-                  <Box>
-                    <Text size="xs" mb="xs" style={{ color: 'var(--text-muted)' }}>
-                      Duration: {(settings[key].duration / 1000).toFixed(1)}s
-                    </Text>
-                    <Slider
-                      value={settings[key].duration}
-                      min={2000}
-                      max={15000}
-                      step={500}
-                      onChange={(value) => handleDurationChange(key, value)}
-                      onChangeEnd={(value) => handleDurationCommit(key, value)}
-                      color="green"
-                      size="sm"
-                      styles={{
-                        track: { backgroundColor: 'var(--border-color)' },
-                      }}
-                    />
-                  </Box>
-                </Stack>
-              </Box>
-            </Grid.Col>
-          ))}
-        </Grid>
-      </Card>
-
-      {/* Test Alerts */}
-      <Card
-        padding="lg"
-        radius="md"
-        styles={{
-          root: {
-            backgroundColor: 'var(--card-bg)',
-            border: '1px solid var(--border-color)',
-          },
-        }}
-      >
-        <Text
-          size="lg"
-          mb="md"
-          style={{
-            fontFamily: '"VT323", monospace',
-            color: 'var(--primary-green)',
-            letterSpacing: '1px',
-          }}
-        >
-          TEST ALERTS
-        </Text>
-
-        <Group>
-          {alertTypes.map(({ key, label }) => (
-            <Button
-              key={key}
-              variant="outline"
-              color={getAlertColor(key)}
-              leftSection={getAlertIcon(key)}
-              onClick={() => handleTestAlert(key)}
-              loading={loading}
-              styles={{
-                root: {
-                  fontFamily: '"VT323", monospace',
-                  letterSpacing: '1px',
-                },
-              }}
-            >
-              TEST {label.slice(0, -1)}
-            </Button>
-          ))}
-        </Group>
-      </Card>
+                {/* Test button */}
+                <Button
+                  label={loading ? undefined : 'Test'}
+                  icon={loading ? 'pi pi-spin pi-spinner' : undefined}
+                  outlined
+                  size="small"
+                  onClick={() => handleTestAlert(key)}
+                  disabled={loading}
+                  className={`shrink-0 ${colors.border} ${colors.text} ${colors.hover}`}
+                />
+              </div>
+            );
+          })}
+        </div>
+      </Panel>
 
       {/* Recent Alerts */}
-      <Card
-        padding="lg"
-        radius="md"
-        styles={{
-          root: {
-            backgroundColor: 'var(--card-bg)',
-            border: '1px solid var(--border-color)',
-          },
-        }}
-      >
-        <Group justify="space-between" mb="md">
-          <Text
-            size="lg"
-            style={{
-              fontFamily: '"VT323", monospace',
-              color: 'var(--primary-green)',
-              letterSpacing: '1px',
-            }}
-          >
-            RECENT ALERTS
-          </Text>
-          <Button
-            variant="subtle"
-            size="xs"
-            color="red"
-            leftSection={<IconTrash size={14} />}
-            onClick={clearAlerts}
-            styles={{
-              root: {
-                fontFamily: '"VT323", monospace',
-              },
-            }}
-          >
-            CLEAR
-          </Button>
-        </Group>
-
-        <ScrollArea h={300}>
-          <Stack gap="xs">
+      <Panel header="Recent Alerts" icons={recentAlertsIcons} className="card-elevated">
+        <ScrollPanel style={{ width: '100%', height: '340px' }}>
+          <div className="flex flex-col gap-2">
             {recentAlerts.length === 0 ? (
-              <Text size="sm" style={{ color: 'var(--text-muted)' }}>
-                No recent alerts
-              </Text>
+              <EmptyState
+                icon={<Bell size={36} className="text-muted-foreground" />}
+                title="No recent alerts"
+                description="Alerts will appear here when triggered"
+              />
             ) : (
               recentAlerts.map((alert) => (
-                <Group
+                <div
                   key={alert.id}
-                  gap="sm"
-                  p="sm"
-                  style={{
-                    background: 'var(--primary-bg)',
-                    border: '1px solid var(--border-color)',
-                    borderRadius: '4px',
-                  }}
+                  className="flex items-center gap-4 p-3.5 border border-transparent hover:border-border hover:bg-accent/50 transition-all duration-200 rounded-xl"
                 >
-                  <Badge
-                    size="sm"
-                    color={getAlertColor(alert.type)}
-                    variant="light"
-                    leftSection={getAlertIcon(alert.type)}
-                  >
-                    {alert.type.toUpperCase()}
-                  </Badge>
+                  <Tag
+                    value={alert.type}
+                    severity={getBadgeSeverity(alert.type) as any}
+                    className={`gap-1.5 text-xs${getBadgeClass(alert.type) ? ` ${getBadgeClass(alert.type)}` : ''}`}
+                    icon={getAlertIcon(alert.type)}
+                    rounded
+                  />
 
-                  <Text
-                    size="sm"
-                    style={{ color: 'var(--primary-green)', flex: 1 }}
-                  >
+                  <span className="text-sm text-foreground flex-1 font-medium">
                     {alert.username}
-                  </Text>
+                  </span>
 
                   {alert.amount && (
-                    <Badge color="yellow" variant="light">
-                      ${alert.amount}
-                    </Badge>
+                    <Tag value={`$${alert.amount}`} className="text-xs worxed-badge-donation" rounded />
                   )}
 
                   {alert.message && (
-                    <Text
-                      size="xs"
-                      style={{ color: 'var(--text-muted)', maxWidth: '200px' }}
-                      lineClamp={1}
-                    >
+                    <span className="text-xs text-muted-foreground max-w-50 truncate">
                       {alert.message}
-                    </Text>
+                    </span>
                   )}
 
-                  <Text size="xs" style={{ color: 'var(--text-muted)' }}>
+                  <span className="text-xs text-muted-foreground">
                     {new Date(alert.timestamp).toLocaleTimeString()}
-                  </Text>
-                </Group>
+                  </span>
+                </div>
               ))
             )}
-          </Stack>
-        </ScrollArea>
-      </Card>
-    </Stack>
+          </div>
+        </ScrollPanel>
+      </Panel>
+    </div>
   );
 }

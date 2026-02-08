@@ -236,6 +236,82 @@ const endpoints = {
   }
 };
 
+// ===== SCENES =====
+
+const scenes = {
+  getAll() {
+    return getDatabase().prepare('SELECT * FROM scenes ORDER BY name').all().map(row => {
+      try { row.elements = JSON.parse(row.elements); } catch { row.elements = []; }
+      return row;
+    });
+  },
+
+  get(id) {
+    const row = getDatabase().prepare('SELECT * FROM scenes WHERE id = ?').get(id);
+    if (!row) return null;
+    try { row.elements = JSON.parse(row.elements); } catch { row.elements = []; }
+    return row;
+  },
+
+  getActive() {
+    const row = getDatabase().prepare('SELECT * FROM scenes WHERE is_active = 1 LIMIT 1').get();
+    if (!row) return null;
+    try { row.elements = JSON.parse(row.elements); } catch { row.elements = []; }
+    return row;
+  },
+
+  create({ name, width = 1920, height = 1080, elements = [], is_active = 0 }) {
+    const elementsStr = typeof elements === 'string' ? elements : JSON.stringify(elements);
+    if (is_active) {
+      getDatabase().prepare('UPDATE scenes SET is_active = 0').run();
+    }
+    const result = getDatabase().prepare(
+      'INSERT INTO scenes (name, width, height, elements, is_active) VALUES (?, ?, ?, ?, ?)'
+    ).run(name, width, height, elementsStr, is_active ? 1 : 0);
+    return this.get(result.lastInsertRowid);
+  },
+
+  update(id, fields) {
+    const allowed = ['name', 'width', 'height', 'elements', 'is_active'];
+    const updates = [];
+    const values = [];
+
+    for (const [key, val] of Object.entries(fields)) {
+      if (allowed.includes(key)) {
+        if (key === 'elements') {
+          updates.push(`${key} = ?`);
+          values.push(typeof val === 'string' ? val : JSON.stringify(val));
+        } else {
+          updates.push(`${key} = ?`);
+          values.push(val);
+        }
+      }
+    }
+
+    if (updates.length === 0) return null;
+
+    updates.push("updated_at = datetime('now')");
+    values.push(id);
+
+    getDatabase().prepare(`UPDATE scenes SET ${updates.join(', ')} WHERE id = ?`).run(...values);
+    return this.get(id);
+  },
+
+  delete(id) {
+    const scene = this.get(id);
+    if (scene && scene.is_active) {
+      throw new Error('Cannot delete the active scene');
+    }
+    return getDatabase().prepare('DELETE FROM scenes WHERE id = ?').run(id);
+  },
+
+  activate(id) {
+    getDatabase().prepare('UPDATE scenes SET is_active = 0').run();
+    getDatabase().prepare("UPDATE scenes SET is_active = 1, updated_at = datetime('now') WHERE id = ?").run(id);
+    return this.get(id);
+  }
+};
+
 module.exports = {
   init,
   close: closeDatabase,
@@ -246,6 +322,7 @@ module.exports = {
   events,
   analytics,
   endpoints,
+  scenes,
   // Expose raw connection for advanced use
   getDatabase
 };

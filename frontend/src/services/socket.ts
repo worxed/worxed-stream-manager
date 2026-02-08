@@ -5,7 +5,8 @@ import type {
   AlertSettings,
   RecentEvents,
   ActivityItem,
-  SettingsChangedEvent
+  SettingsChangedEvent,
+  Scene
 } from '../types';
 
 type EventCallback<T> = (data: T) => void;
@@ -27,6 +28,9 @@ class SocketService {
     onRaid: EventCallback<ActivityItem>[];
     onOverlayUpdate: EventCallback<unknown>[];
     onSettingsChanged: EventCallback<SettingsChangedEvent>[];
+    onSceneUpdated: EventCallback<Scene>[];
+    onSceneActivated: EventCallback<Scene>[];
+    onSceneDeleted: EventCallback<{ id: number }>[];
   } = {
     onConnect: [],
     onDisconnect: [],
@@ -39,6 +43,9 @@ class SocketService {
     onRaid: [],
     onOverlayUpdate: [],
     onSettingsChanged: [],
+    onSceneUpdated: [],
+    onSceneActivated: [],
+    onSceneDeleted: [],
   };
 
   // Dynamic event callbacks for custom endpoint events
@@ -110,6 +117,18 @@ class SocketService {
 
     this.socket.on('settings-changed', (data: SettingsChangedEvent) => {
       this.callbacks.onSettingsChanged.forEach(cb => cb(data));
+    });
+
+    this.socket.on('scene-updated', (data: Scene) => {
+      this.callbacks.onSceneUpdated.forEach(cb => cb(data));
+    });
+
+    this.socket.on('scene-activated', (data: Scene) => {
+      this.callbacks.onSceneActivated.forEach(cb => cb(data));
+    });
+
+    this.socket.on('scene-deleted', (data: { id: number }) => {
+      this.callbacks.onSceneDeleted.forEach(cb => cb(data));
     });
   }
 
@@ -194,6 +213,27 @@ class SocketService {
     this.callbacks.onSettingsChanged.push(callback);
     return () => {
       this.callbacks.onSettingsChanged = this.callbacks.onSettingsChanged.filter(cb => cb !== callback);
+    };
+  }
+
+  onSceneUpdated(callback: EventCallback<Scene>): () => void {
+    this.callbacks.onSceneUpdated.push(callback);
+    return () => {
+      this.callbacks.onSceneUpdated = this.callbacks.onSceneUpdated.filter(cb => cb !== callback);
+    };
+  }
+
+  onSceneActivated(callback: EventCallback<Scene>): () => void {
+    this.callbacks.onSceneActivated.push(callback);
+    return () => {
+      this.callbacks.onSceneActivated = this.callbacks.onSceneActivated.filter(cb => cb !== callback);
+    };
+  }
+
+  onSceneDeleted(callback: EventCallback<{ id: number }>): () => void {
+    this.callbacks.onSceneDeleted.push(callback);
+    return () => {
+      this.callbacks.onSceneDeleted = this.callbacks.onSceneDeleted.filter(cb => cb !== callback);
     };
   }
 
