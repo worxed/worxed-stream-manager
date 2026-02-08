@@ -1,6 +1,5 @@
 # Worxed Stream Manager - Git Ignore File
 # =====================================
-archive
 # Environment and Configuration Files
 .env
 .env.*
@@ -163,6 +162,7 @@ temp/
 *.temp
 
 # Database Files
+data/
 data/
 *.db
 *.sqlite
