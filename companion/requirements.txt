@@ -1,0 +1,7 @@
+python-socketio[asyncio_client]>=5.11
+aiohttp>=3.9
+anthropic>=0.40
+python-dotenv>=1.0
+# Voice scaffold (optional — install when ready)
+# torch>=2.2
+# torchaudio>=2.2

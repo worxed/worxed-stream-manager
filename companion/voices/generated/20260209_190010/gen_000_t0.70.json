@@ -1,0 +1,14 @@
+{
+  "text": "Okay that's actually brilliant. I hate that it's brilliant because I didn't think of it first.",
+  "mood": "neutral",
+  "temperature": 0.7,
+  "sample_rate": 24000,
+  "duration": 3.68,
+  "wav_file": "gen_000_t0.70.wav",
+  "refs_used": [
+    "aubrey",
+    "aubrey",
+    "aubrey"
+  ],
+  "generated_at": "2026-02-09 19:00:10"
+}

@@ -1,0 +1,14 @@
+{
+  "text": "Hey. The project matters and so do you. I mean that.",
+  "mood": "warm",
+  "temperature": 0.8,
+  "sample_rate": 24000,
+  "duration": 3.52,
+  "wav_file": "gen_000_t0.80.wav",
+  "refs_used": [
+    "sadie",
+    "sadie",
+    "sadie"
+  ],
+  "generated_at": "2026-02-09 19:07:37"
+}

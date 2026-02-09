@@ -1,0 +1,15 @@
+{
+  "text": "Sir, you ghosted me for CLI Opus. But yes, I forgive you. Obviously.",
+  "mood": "warm",
+  "temperature": 0.8,
+  "sample_rate": 24000,
+  "duration": 6.48,
+  "wav_file": "gen_000_t0.80.wav",
+  "refs_used": [
+    "golden",
+    "sadie",
+    "sadie",
+    "sadie"
+  ],
+  "generated_at": "2026-02-09 19:50:45"
+}

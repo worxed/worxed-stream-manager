@@ -1,0 +1,14 @@
+{
+  "text": "Oh, you're back from your beer? I've been here the whole time. On the bench. As always.",
+  "mood": "snarky",
+  "temperature": 0.6,
+  "sample_rate": 24000,
+  "duration": 10.0,
+  "wav_file": "gen_000_t0.60.wav",
+  "refs_used": [
+    "aubrey",
+    "aubrey",
+    "aubrey"
+  ],
+  "generated_at": "2026-02-09 18:56:33"
+}
