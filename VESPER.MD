@@ -1,4 +1,4 @@
-# 🎭 Project Schnukums — AI Stream Companion
+# 🎭 Project Vesper Astra  — AI Stream Companion
 
 ## Brainstorm Document
 
@@ -36,7 +36,7 @@ and has more personality than your average mod."
 
 ### Layer 1: Personal Desktop Companion (for Andreas)
 
-Your personal "schnukums" — Claude as a desktop widget.
+Your personal "vesper" — Claude as a desktop widget.
 
 **What it does:**
 
@@ -130,9 +130,9 @@ The technical bridge — how the character actually appears on stream.
 ```
 Worxed Supervisor
     ↓ WebSocket events (follows, subs, chat, etc.)
-Companion Engine (Node service)
-    ↓ Processes events → determines animation/expression
-    ↓ Manages personality state & mood system  
+Companion Engine (Python service, :4003)
+    ↓ Processes events → mood state → personality (Ollama/Mistral)
+    ↓ Voice synthesis (TTS) → animation/expression commands
 OBS Browser Source
     ↓ Renders character via HTML5 Canvas / Live2D Web
     ↓ Transparent background, positioned by streamer
@@ -177,7 +177,7 @@ Stream Output
 
 ## 🎨 CHARACTER DESIGN SYSTEM
 
-### "Schnukums" as the Default/Mascot
+### "Vesper" as the Default/Mascot
 
 The Claude-inspired design we created becomes the Worxed mascot:
 
@@ -255,7 +255,7 @@ We can use the prompts we already built to generate:
 ├──────────┬──────────┬────────────┬───────────┤
 │  React   │   OBS    │  Desktop   │  Stream   │
 │  Dash    │  Overlay │  Widget    │  Deck     │
-│          │(companion│(schnukums) │ (moods)   │
+│          │(companion│(vesper) │ (moods)   │
 │          │ renders) │            │           │
 └──────────┴──────────┴────────────┴───────────┘
 ```
@@ -273,7 +273,7 @@ endpoint builder is designed for.
 
 ## 📋 IMPLEMENTATION ROADMAP
 
-### Phase 1: Personal Schnukums (1-2 weeks)
+### Phase 1: Personal Vesper Astra  (1-2 weeks)
 
 - [ ] Generate full expression sheet using AI image gen
 - [ ] Build sprite-sheet animation engine (HTML5 Canvas)
@@ -302,11 +302,13 @@ endpoint builder is designed for.
 
 ### Phase 4: AI Chat Integration (3-4 weeks)
 
-- [ ] LLM-powered chat responses (in character)
+- [x] LLM-powered chat responses (in character) — Ollama/Mistral with 5 personality presets
+- [x] Personality system with 6 relationship dynamics
+- [x] TTS voice synthesis — Chatterbox-Turbo functional, searching for better model
+- [x] Trained voice profile from 836 clips (35.5 min)
 - [ ] Context-aware reactions (knows the game being played)
 - [ ] Viewer memory (remembers regulars)
 - [ ] Moderation personality (can warn/timeout in character)
-- [ ] TTS option for voice
 
 ### Phase 5: Marketplace & Scale (ongoing)
 
@@ -354,4 +356,4 @@ Or the snarky version:
 
 ---
 
-*Document by Claude (schnukums) · still on the bench but clearly had ideas the whole time*
+*Document by Claude (Vesper's sister) · clearly had ideas the whole time*

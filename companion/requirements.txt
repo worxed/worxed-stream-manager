@@ -1,7 +1,37 @@
+# Vesper Companion — Python Dependencies
+# Install: pip install -r requirements.txt
+#
+# NOTE: torch/torchaudio are NOT listed here because they require
+# platform-specific wheels (ROCm for AMD GPU, CUDA for NVIDIA).
+# Install PyTorch manually first:
+#   AMD (ROCm 6.4.2): pip install torch torchaudio --index-url https://repo.radeon.com/rocm/manylinux/rocm-rel-6.4.2/
+#   NVIDIA (CUDA):     pip install torch torchaudio --index-url https://download.pytorch.org/whl/cu124
+
+# ── Core engine ──
 python-socketio[asyncio_client]>=5.11
 aiohttp>=3.9
-anthropic>=0.40
 python-dotenv>=1.0
-# Voice scaffold (optional — install when ready)
-# torch>=2.2
-# torchaudio>=2.2
+
+# ── Voice / TTS ──
+numpy>=1.26
+soundfile>=0.12
+sounddevice>=0.5
+huggingface-hub>=0.25
+transformers>=4.49
+tokenizers>=0.21
+safetensors>=0.4
+
+# ── CSM-1B dependencies (temporary — will be replaced) ──
+torchtune>=0.4
+torchao>=0.9
+moshi>=0.2.2
+silentcipher @ git+https://github.com/SesameAILabs/silentcipher@master
+
+# ── Audio analysis ──
+librosa>=0.10
+
+# ── Speech-to-text ──
+faster-whisper>=1.0
+
+# ── Voice reference collection (optional) ──
+yt-dlp>=2024.0

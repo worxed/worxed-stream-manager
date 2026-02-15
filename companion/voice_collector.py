@@ -216,7 +216,7 @@ def list_references():
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Schnukums Voice Reference Collector")
+    parser = argparse.ArgumentParser(description="Vesper Astra Voice Reference Collector")
     parser.add_argument("--url", type=str, help="YouTube URL to download")
     parser.add_argument("--file", type=str, help="Local audio/video file path")
     parser.add_argument("--speaker", type=str, choices=["aubrey", "sadie", "other"],

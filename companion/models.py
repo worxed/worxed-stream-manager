@@ -1,4 +1,4 @@
-"""Data models for the Schnukums companion engine."""
+"""Data models for the Vesper companion engine."""
 
 from dataclasses import dataclass, field
 from enum import Enum
@@ -66,6 +66,8 @@ class CompanionState:
     last_event: StreamEvent | None = None
     is_speaking: bool = False
     current_response: str = ""
+    voice_audio_ready: bool = False
+    voice_duration: float = 0.0
     started_at: float = field(default_factory=time)
 
     @property
@@ -78,5 +80,7 @@ class CompanionState:
             "last_event": self.last_event.to_dict() if self.last_event else None,
             "is_speaking": self.is_speaking,
             "current_response": self.current_response,
+            "voice_audio_ready": self.voice_audio_ready,
+            "voice_duration": round(self.voice_duration, 1),
             "uptime": round(self.uptime, 1),
         }

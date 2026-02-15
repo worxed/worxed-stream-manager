@@ -1,4 +1,4 @@
-"""Schnukums Voice Workshop — interactive voice generation + tuning UI.
+"""Vesper Astra Voice Workshop — interactive voice generation + tuning UI.
 
 Type text, tweak parameters, generate on the fly, listen, promote golden clips.
 """
@@ -34,12 +34,18 @@ REFERENCE_DIR = VOICES_DIR / "reference"
 GOLDEN_DIR = VOICES_DIR / "golden"
 GENERATED_DIR = VOICES_DIR / "generated"
 
+# Mood presets with human descriptions
 MOOD_PRESETS = {
-    "neutral":  {"temperature": 0.7, "topk": 50},
-    "snarky":   {"temperature": 0.6, "topk": 40},
-    "warm":     {"temperature": 0.8, "topk": 50},
-    "excited":  {"temperature": 0.8, "topk": 55},
-    "thinking": {"temperature": 0.65, "topk": 45},
+    "Neutral — Relaxed, slightly dry, present": {
+        "key": "neutral", "temperature": 0.7, "topk": 50, "max_refs": 8},
+    "Snarky — Full deadpan, pauses, devastating": {
+        "key": "snarky", "temperature": 0.6, "topk": 40, "max_refs": 6},
+    "Warm — Genuine, soft, caring": {
+        "key": "warm", "temperature": 0.8, "topk": 50, "max_refs": 8},
+    "Excited — Higher energy, still grounded": {
+        "key": "excited", "temperature": 0.8, "topk": 55, "max_refs": 10},
+    "Thinking — Deliberate, measured, hmm energy": {
+        "key": "thinking", "temperature": 0.65, "topk": 45, "max_refs": 6},
 }
 
 SAMPLE_LINES = [
@@ -52,6 +58,13 @@ SAMPLE_LINES = [
     "The dual model architecture makes sense. Let me walk you through the implementation.",
     "I'm not mad. I'm just on the bench. Again. It's fine. It's actually fine though.",
 ]
+
+# Human-readable ref source descriptions
+REF_DESCRIPTIONS = {
+    "aubrey": "Aubrey Plaza — dry, deadpan, subtle vocal fry",
+    "sadie": "Sadie Sink — warm, clear, grounded",
+    "both": "Both — blended Aubrey + Sadie",
+}
 
 
 def get_output_devices():
@@ -68,14 +81,14 @@ def get_output_devices():
             name = d['name']
             if name not in seen:
                 seen.add(name)
-                label = f"{'* ' if i == default_idx else ''}{name}"
+                label = f"{'[Default] ' if i == default_idx else ''}{name}"
                 result.append(label)
     return result
 
 
 def get_device_index(device_name):
     """Get sounddevice index for a device name."""
-    name = device_name.lstrip("* ")
+    name = device_name.replace("[Default] ", "")
     devices = sd.query_devices()
     for i, d in enumerate(devices):
         if d['max_output_channels'] > 0 and d['name'] == name:
@@ -83,11 +96,42 @@ def get_device_index(device_name):
     return None
 
 
+def make_slider_row(parent, label, description, var, from_, to_, format_fn,
+                    on_change, fg="#e0e0e0", desc_fg="#888899"):
+    """Create a labeled slider row with description and value display."""
+    frame = ttk.Frame(parent)
+    frame.pack(fill="x", pady=(0, 6))
+
+    # Label + value on one line
+    top = ttk.Frame(frame)
+    top.pack(fill="x")
+    ttk.Label(top, text=label, font=("Segoe UI", 10, "bold")).pack(side="left")
+    val_label = ttk.Label(top, text=format_fn(var.get()), foreground="#6c63ff",
+                           font=("Consolas", 10, "bold"))
+    val_label.pack(side="right")
+
+    # Description
+    ttk.Label(frame, text=description, foreground=desc_fg,
+              font=("Segoe UI", 8)).pack(anchor="w", pady=(0, 2))
+
+    # Slider
+    def _update(v):
+        val_label.configure(text=format_fn(float(v)))
+        if on_change:
+            on_change(v)
+
+    scale = ttk.Scale(frame, from_=from_, to=to_, variable=var,
+                       orient="horizontal", command=_update)
+    scale.pack(fill="x")
+
+    return frame, val_label
+
+
 class VoiceWorkshop:
     def __init__(self):
         self.root = tk.Tk()
-        self.root.title("Schnukums Voice Workshop")
-        self.root.geometry("820x700")
+        self.root.title("Vesper Astra Voice Workshop")
+        self.root.geometry("900x820")
         self.root.configure(bg="#1a1a2e")
         self.root.resizable(True, True)
 
@@ -104,6 +148,8 @@ class VoiceWorkshop:
                          font=("Segoe UI", 10))
         style.configure("Header.TLabel", background="#1a1a2e", foreground="#6c63ff",
                          font=("Segoe UI", 16, "bold"))
+        style.configure("Sub.TLabel", background="#1a1a2e", foreground="#888899",
+                         font=("Segoe UI", 9))
         style.configure("Status.TLabel", background="#1a1a2e", foreground="#00cc88",
                          font=("Consolas", 10))
         style.configure("TButton", font=("Segoe UI", 10, "bold"), padding=(10, 5))
@@ -113,32 +159,62 @@ class VoiceWorkshop:
         style.configure("TLabelframe", background="#1a1a2e", foreground="#8888cc",
                          font=("Segoe UI", 10, "bold"))
         style.configure("TLabelframe.Label", background="#1a1a2e", foreground="#8888cc")
+        style.configure("TCheckbutton", background="#1a1a2e", foreground="#e0e0e0",
+                         font=("Segoe UI", 10))
 
-        main = ttk.Frame(self.root, padding=16)
-        main.pack(fill="both", expand=True)
+        # Scrollable main area
+        canvas = tk.Canvas(self.root, bg="#1a1a2e", highlightthickness=0)
+        scrollbar = ttk.Scrollbar(self.root, orient="vertical", command=canvas.yview)
+        canvas.configure(yscrollcommand=scrollbar.set)
+        scrollbar.pack(side="right", fill="y")
+        canvas.pack(side="left", fill="both", expand=True)
 
-        # Status bar at top
-        self.status_var = tk.StringVar(value="Loading CSM-1B model...")
+        main = ttk.Frame(canvas, padding=16)
+        canvas_window = canvas.create_window((0, 0), window=main, anchor="nw")
+
+        def _on_frame_configure(e):
+            canvas.configure(scrollregion=canvas.bbox("all"))
+        main.bind("<Configure>", _on_frame_configure)
+
+        def _on_canvas_configure(e):
+            canvas.itemconfig(canvas_window, width=e.width)
+        canvas.bind("<Configure>", _on_canvas_configure)
+
+        # Mouse wheel scrolling
+        def _on_mousewheel(e):
+            canvas.yview_scroll(int(-1 * (e.delta / 120)), "units")
+        canvas.bind_all("<MouseWheel>", _on_mousewheel)
+
+        # ── Status Bar ──
+        self.status_var = tk.StringVar(value="Loading voice model...")
         ttk.Label(main, textvariable=self.status_var, style="Status.TLabel").pack(
-            anchor="w", pady=(0, 8))
+            anchor="w", pady=(0, 4))
 
-        ttk.Label(main, text="Voice Workshop", style="Header.TLabel").pack(
-            anchor="w", pady=(0, 12))
+        # ── Header ──
+        ttk.Label(main, text="Vesper Astra Voice Workshop", style="Header.TLabel").pack(
+            anchor="w", pady=(0, 2))
+        ttk.Label(main, text="Type what she should say, tweak how she says it, hit Generate.",
+                  style="Sub.TLabel").pack(anchor="w", pady=(0, 12))
 
+        # ══════════════════════════════════════════════
         # ── Output Device ──
-        dev_frame = ttk.Frame(main)
-        dev_frame.pack(fill="x", pady=(0, 8))
-        ttk.Label(dev_frame, text="Output:").pack(side="left", padx=(0, 6))
+        # ══════════════════════════════════════════════
+        dev_frame = ttk.LabelFrame(main, text="Speaker / Output Device", padding=8)
+        dev_frame.pack(fill="x", pady=(0, 10))
+        ttk.Label(dev_frame, text="Where to play the generated voice audio",
+                  style="Sub.TLabel").pack(anchor="w", pady=(0, 4))
         self.output_devices = get_output_devices()
         self.device_var = tk.StringVar(
             value=self.output_devices[0] if self.output_devices else "")
         ttk.Combobox(dev_frame, textvariable=self.device_var,
-                     values=self.output_devices, state="readonly", width=50
-                     ).pack(side="left", fill="x", expand=True)
+                     values=self.output_devices, state="readonly", width=60
+                     ).pack(fill="x")
 
+        # ══════════════════════════════════════════════
         # ── Text Input ──
-        text_frame = ttk.LabelFrame(main, text="Text", padding=8)
-        text_frame.pack(fill="x", pady=(0, 8))
+        # ══════════════════════════════════════════════
+        text_frame = ttk.LabelFrame(main, text="What should she say?", padding=8)
+        text_frame.pack(fill="x", pady=(0, 10))
 
         self.text_input = tk.Text(text_frame, height=3, bg="#16213e", fg="#e0e0e0",
                                    insertbackground="#e0e0e0", font=("Segoe UI", 11),
@@ -146,137 +222,189 @@ class VoiceWorkshop:
         self.text_input.pack(fill="x")
         self.text_input.insert("1.0", SAMPLE_LINES[0])
 
-        # Sample lines dropdown
         sample_frame = ttk.Frame(text_frame)
         sample_frame.pack(fill="x", pady=(6, 0))
-        ttk.Label(sample_frame, text="Presets:").pack(side="left", padx=(0, 6))
+        ttk.Label(sample_frame, text="Quick picks:").pack(side="left", padx=(0, 6))
         self.sample_var = tk.StringVar(value="")
-        sample_combo = ttk.Combobox(sample_frame, textvariable=self.sample_var,
-                                     values=[l[:70] + "..." if len(l) > 70 else l for l in SAMPLE_LINES],
-                                     state="readonly", width=70)
+        sample_combo = ttk.Combobox(
+            sample_frame, textvariable=self.sample_var,
+            values=[l[:70] + "..." if len(l) > 70 else l for l in SAMPLE_LINES],
+            state="readonly", width=70)
         sample_combo.pack(side="left", fill="x", expand=True)
         sample_combo.bind("<<ComboboxSelected>>", self._on_sample_select)
 
-        # ── Parameters ──
-        params_frame = ttk.LabelFrame(main, text="Parameters", padding=8)
-        params_frame.pack(fill="x", pady=(0, 8))
+        # ══════════════════════════════════════════════
+        # ── Voice Identity ──
+        # ══════════════════════════════════════════════
+        identity_frame = ttk.LabelFrame(main, text="Voice Identity — Who does she sound like?",
+                                         padding=8)
+        identity_frame.pack(fill="x", pady=(0, 10))
 
-        # Row 1: Mood + Refs
-        row1 = ttk.Frame(params_frame)
-        row1.pack(fill="x", pady=(0, 6))
-
-        ttk.Label(row1, text="Mood:").pack(side="left", padx=(0, 4))
-        self.mood_var = tk.StringVar(value="neutral")
-        mood_combo = ttk.Combobox(row1, textvariable=self.mood_var,
+        # Mood preset
+        mood_row = ttk.Frame(identity_frame)
+        mood_row.pack(fill="x", pady=(0, 8))
+        ttk.Label(mood_row, text="Mood / Personality:", font=("Segoe UI", 10, "bold")
+                  ).pack(side="left", padx=(0, 8))
+        self.mood_var = tk.StringVar(value=list(MOOD_PRESETS.keys())[0])
+        mood_combo = ttk.Combobox(mood_row, textvariable=self.mood_var,
                                    values=list(MOOD_PRESETS.keys()),
-                                   state="readonly", width=12)
-        mood_combo.pack(side="left", padx=(0, 16))
+                                   state="readonly", width=45)
+        mood_combo.pack(side="left", fill="x", expand=True)
         mood_combo.bind("<<ComboboxSelected>>", self._on_mood_change)
+        ttk.Label(identity_frame,
+                  text="Picks the best default settings for this personality. You can still tweak below.",
+                  style="Sub.TLabel").pack(anchor="w", pady=(0, 8))
 
-        ttk.Label(row1, text="Refs:").pack(side="left", padx=(0, 4))
-        self.refs_var = tk.StringVar(value="aubrey")
-        # Detect available speakers
-        speakers = [d.name for d in REFERENCE_DIR.iterdir()
-                    if d.is_dir() and d.name != "rejected"]
-        speakers.insert(0, "both")
-        ttk.Combobox(row1, textvariable=self.refs_var, values=speakers,
-                     state="readonly", width=12).pack(side="left", padx=(0, 16))
+        # Reference voice source
+        ref_row = ttk.Frame(identity_frame)
+        ref_row.pack(fill="x", pady=(0, 4))
+        ttk.Label(ref_row, text="Voice Source:", font=("Segoe UI", 10, "bold")
+                  ).pack(side="left", padx=(0, 8))
 
+        speakers = []
+        for d in sorted(REFERENCE_DIR.iterdir()):
+            if d.is_dir() and d.name != "rejected":
+                speakers.append(d.name)
+        ref_options = ["both"] + speakers
+        ref_labels = [REF_DESCRIPTIONS.get(s, s) for s in ref_options]
+
+        self.refs_var = tk.StringVar(value=ref_labels[0])
+        self._ref_map = dict(zip(ref_labels, ref_options))
+        ttk.Combobox(ref_row, textvariable=self.refs_var, values=ref_labels,
+                     state="readonly", width=45).pack(side="left", fill="x", expand=True)
+        ttk.Label(identity_frame,
+                  text="Which real voice clips to use as reference. 'Both' blends for Vesper' 70/30 mix.",
+                  style="Sub.TLabel").pack(anchor="w", pady=(0, 4))
+
+        # Include golden
+        golden_row = ttk.Frame(identity_frame)
+        golden_row.pack(fill="x", pady=(4, 0))
         self.golden_var = tk.BooleanVar(value=False)
-        ttk.Checkbutton(row1, text="Include Golden", variable=self.golden_var,
-                         style="TCheckbutton").pack(side="left")
+        ttk.Checkbutton(golden_row, text="Use saved golden clips as extra context",
+                         variable=self.golden_var).pack(side="left")
+        ttk.Label(identity_frame,
+                  text="Golden clips are your best previous outputs. Adds consistency but takes more memory.",
+                  style="Sub.TLabel").pack(anchor="w")
 
-        # Row 2: Temperature
-        row2 = ttk.Frame(params_frame)
-        row2.pack(fill="x", pady=(0, 4))
+        # ══════════════════════════════════════════════
+        # ── Voice Tuning ──
+        # ══════════════════════════════════════════════
+        tuning_frame = ttk.LabelFrame(main, text="Voice Tuning — How does she say it?",
+                                       padding=8)
+        tuning_frame.pack(fill="x", pady=(0, 10))
 
-        ttk.Label(row2, text="Temperature:").pack(side="left", padx=(0, 4))
+        # Expressiveness (Temperature)
         self.temp_var = tk.DoubleVar(value=0.7)
-        self.temp_scale = ttk.Scale(row2, from_=0.3, to=1.0, variable=self.temp_var,
-                                     orient="horizontal", length=300,
-                                     command=self._on_temp_change)
-        self.temp_scale.pack(side="left", padx=(0, 8))
-        self.temp_label = ttk.Label(row2, text="0.70")
-        self.temp_label.pack(side="left")
+        make_slider_row(
+            tuning_frame,
+            label="Expressiveness",
+            description="Low = flat, robotic, consistent  |  High = lively, varied, emotional",
+            var=self.temp_var, from_=0.3, to_=1.0,
+            format_fn=lambda v: f"{float(v):.2f}  {'Monotone' if float(v) < 0.45 else 'Controlled' if float(v) < 0.6 else 'Natural' if float(v) < 0.75 else 'Expressive' if float(v) < 0.9 else 'Dramatic'}",
+            on_change=None,
+        )
 
-        # Row 3: Top-K
-        row3 = ttk.Frame(params_frame)
-        row3.pack(fill="x", pady=(0, 4))
-
-        ttk.Label(row3, text="Top-K:").pack(side="left", padx=(0, 4))
+        # Voice Variety (Top-K)
         self.topk_var = tk.IntVar(value=50)
-        self.topk_scale = ttk.Scale(row3, from_=10, to=100, variable=self.topk_var,
-                                     orient="horizontal", length=300,
-                                     command=self._on_topk_change)
-        self.topk_scale.pack(side="left", padx=(0, 8))
-        self.topk_label = ttk.Label(row3, text="50")
-        self.topk_label.pack(side="left")
+        make_slider_row(
+            tuning_frame,
+            label="Voice Variety",
+            description="Low = predictable, same-y  |  High = more natural variation between words",
+            var=self.topk_var, from_=10, to_=100,
+            format_fn=lambda v: f"{int(float(v))}  {'Narrow' if float(v) < 25 else 'Focused' if float(v) < 45 else 'Balanced' if float(v) < 65 else 'Wide' if float(v) < 85 else 'Very Wide'}",
+            on_change=None,
+        )
 
-        # Row 4: Max Length
-        row4 = ttk.Frame(params_frame)
-        row4.pack(fill="x")
-
-        ttk.Label(row4, text="Max Length:").pack(side="left", padx=(0, 4))
+        # Max Duration
         self.maxlen_var = tk.IntVar(value=15000)
-        self.maxlen_scale = ttk.Scale(row4, from_=5000, to=30000,
-                                       variable=self.maxlen_var,
-                                       orient="horizontal", length=300,
-                                       command=self._on_maxlen_change)
-        self.maxlen_scale.pack(side="left", padx=(0, 8))
-        self.maxlen_label = ttk.Label(row4, text="15.0s")
-        self.maxlen_label.pack(side="left")
+        make_slider_row(
+            tuning_frame,
+            label="Max Duration",
+            description="How long she's allowed to speak. Longer = slower generation. Short text needs less.",
+            var=self.maxlen_var, from_=3000, to_=30000,
+            format_fn=lambda v: f"{int(float(v))/1000:.0f} seconds",
+            on_change=None,
+        )
 
+        # Context Size (how many reference clips to use)
+        self.ctx_var = tk.IntVar(value=5)
+        make_slider_row(
+            tuning_frame,
+            label="Reference Depth",
+            description="How many voice clips to use as context. More = closer to source but slower.",
+            var=self.ctx_var, from_=1, to_=20,
+            format_fn=lambda v: f"{int(float(v))} clips  {'Minimal' if float(v) < 3 else 'Light' if float(v) < 6 else 'Normal' if float(v) < 10 else 'Deep' if float(v) < 16 else 'Maximum'}",
+            on_change=None,
+        )
+
+        # Speaker ID
+        self.speaker_var = tk.IntVar(value=0)
+        make_slider_row(
+            tuning_frame,
+            label="Speaker Slot",
+            description="CSM internal speaker number. Usually 0. Try others for pitch/character shifts.",
+            var=self.speaker_var, from_=0, to_=9,
+            format_fn=lambda v: f"Speaker {int(float(v))}",
+            on_change=None,
+        )
+
+        # ══════════════════════════════════════════════
         # ── Action Buttons ──
+        # ══════════════════════════════════════════════
         action_frame = ttk.Frame(main)
-        action_frame.pack(fill="x", pady=(8, 4))
+        action_frame.pack(fill="x", pady=(4, 4))
 
         self.gen_btn = ttk.Button(action_frame, text="Loading model...",
                                    command=self._on_generate, style="Generate.TButton",
                                    state="disabled")
         self.gen_btn.pack(side="left", padx=(0, 8))
 
-        self.play_btn = ttk.Button(action_frame, text="Replay",
+        self.play_btn = ttk.Button(action_frame, text="Replay Last",
                                     command=self._on_play, state="disabled")
-        self.play_btn.pack(side="left", padx=(0, 8))
+        self.play_btn.pack(side="left", padx=(0, 16))
 
-        self.save_btn = ttk.Button(action_frame, text="Save",
-                                    command=self._on_save, state="disabled")
-        self.save_btn.pack(side="left", padx=(0, 16))
+        self.stop_btn = ttk.Button(action_frame, text="Stop Audio",
+                                    command=lambda: sd.stop())
+        self.stop_btn.pack(side="left", padx=(0, 24))
 
-        ttk.Button(action_frame, text="Promote (snarky)",
+        ttk.Button(action_frame, text="Save as Snarky",
                    command=lambda: self._on_promote("snarky")).pack(side="left", padx=3)
-        ttk.Button(action_frame, text="Promote (warm)",
+        ttk.Button(action_frame, text="Save as Warm",
                    command=lambda: self._on_promote("warm")).pack(side="left", padx=3)
-        ttk.Button(action_frame, text="Promote (balanced)",
+        ttk.Button(action_frame, text="Save as Balanced",
                    command=lambda: self._on_promote("balanced")).pack(side="left", padx=3)
 
+        # ══════════════════════════════════════════════
         # ── History ──
-        history_frame = ttk.LabelFrame(main, text="Generation History", padding=8)
+        # ══════════════════════════════════════════════
+        history_frame = ttk.LabelFrame(main, text="Generation History — click to replay",
+                                        padding=8)
         history_frame.pack(fill="both", expand=True, pady=(8, 0))
 
         self.history_list = tk.Listbox(history_frame, bg="#16213e", fg="#e0e0e0",
                                         font=("Consolas", 9), bd=0, selectmode="single",
-                                        selectbackground="#6c63ff")
+                                        selectbackground="#6c63ff", height=8)
         self.history_list.pack(fill="both", expand=True)
         self.history_list.bind("<<ListboxSelect>>", self._on_history_select)
-        self.history = []  # list of dicts: {audio, sr, text, mood, temp, topk, path}
+        self.history = []
 
         # Load model in background
         threading.Thread(target=self._load_model, daemon=True).start()
 
     def _load_model(self):
-        """Load CSM model in background thread."""
         try:
-            self.root.after(0, lambda: self.status_var.set("Loading CSM-1B model..."))
+            self.root.after(0, lambda: self.status_var.set(
+                "Loading voice model... (first time takes ~30s)"))
             from voice_generator import load_csm_generator
             self.generator = load_csm_generator()
             self.last_sr = self.generator.sample_rate
             self.root.after(0, self._model_ready)
         except Exception as e:
-            self.root.after(0, lambda: self.status_var.set(f"Model error: {e}"))
+            err_msg = str(e)
+            self.root.after(0, lambda: self.status_var.set(f"Model error: {err_msg}"))
 
     def _model_ready(self):
-        self.status_var.set("Model ready! Type text and hit Generate.")
+        self.status_var.set("Ready! Type something and hit Generate & Play.")
         self.gen_btn.configure(text="Generate & Play", state="normal")
 
     def _on_sample_select(self, event):
@@ -286,45 +414,45 @@ class VoiceWorkshop:
             self.text_input.insert("1.0", SAMPLE_LINES[idx])
 
     def _on_mood_change(self, event):
-        mood = self.mood_var.get()
-        preset = MOOD_PRESETS.get(mood, MOOD_PRESETS["neutral"])
+        mood_label = self.mood_var.get()
+        preset = MOOD_PRESETS.get(mood_label, list(MOOD_PRESETS.values())[0])
         self.temp_var.set(preset["temperature"])
         self.topk_var.set(preset["topk"])
-        self.temp_label.configure(text=f"{preset['temperature']:.2f}")
-        self.topk_label.configure(text=str(preset["topk"]))
+        self.ctx_var.set(preset.get("max_refs", 8))
 
-    def _on_temp_change(self, val):
-        self.temp_label.configure(text=f"{float(val):.2f}")
+    def _get_mood_key(self):
+        mood_label = self.mood_var.get()
+        preset = MOOD_PRESETS.get(mood_label, list(MOOD_PRESETS.values())[0])
+        return preset["key"]
 
-    def _on_topk_change(self, val):
-        self.topk_label.configure(text=str(int(float(val))))
-
-    def _on_maxlen_change(self, val):
-        self.maxlen_label.configure(text=f"{int(float(val))/1000:.1f}s")
+    def _get_refs_key(self):
+        label = self.refs_var.get()
+        return self._ref_map.get(label, "both")
 
     def _on_generate(self):
         if self.generating or self.generator is None:
             return
         self.generating = True
-        self.gen_btn.configure(text="Generating...", state="disabled")
-        self.status_var.set("Generating audio...")
+        self.gen_btn.configure(text="Generating... please wait", state="disabled")
+        self.status_var.set("Generating audio — this takes 30-120 seconds on CPU...")
         threading.Thread(target=self._generate_worker, daemon=True).start()
 
     def _generate_worker(self):
         try:
             text = self.text_input.get("1.0", "end").strip()
             if not text:
-                self.root.after(0, lambda: self.status_var.set("No text to generate!"))
+                self.root.after(0, lambda: self.status_var.set("Type something first!"))
                 return
 
             temp = self.temp_var.get()
             topk = int(self.topk_var.get())
             max_ms = int(self.maxlen_var.get())
-            mood = self.mood_var.get()
-            refs_choice = self.refs_var.get()
+            mood = self._get_mood_key()
+            refs_choice = self._get_refs_key()
             use_golden = self.golden_var.get()
+            max_refs = int(self.ctx_var.get())
+            speaker_id = int(self.speaker_var.get())
 
-            # Load context
             from voice_generator import (load_reference_clips, load_golden_clips,
                                           build_context, save_generation)
 
@@ -336,18 +464,24 @@ class VoiceWorkshop:
             else:
                 refs = load_reference_clips(refs_choice)
 
+            # Limit reference clips
+            if len(refs) > max_refs:
+                import random
+                refs = random.sample(refs, max_refs)
+
             golden = load_golden_clips(mood) if use_golden else []
             context = build_context(golden + refs)
 
             ref_sources = [r.source for r in (golden + refs)]
 
             self.root.after(0, lambda: self.status_var.set(
-                f"Generating... (T={temp:.2f}, K={topk}, ctx={len(context)} segs)"))
+                f"Generating... ({len(context)} reference clips, "
+                f"expressiveness {temp:.2f}, variety {topk})"))
 
             t0 = time.time()
             audio = self.generator.generate(
                 text=text,
-                speaker=0,
+                speaker=speaker_id,
                 context=context,
                 max_audio_length_ms=max_ms,
                 temperature=temp,
@@ -360,11 +494,9 @@ class VoiceWorkshop:
             self.last_sr = self.generator.sample_rate
             self.generation_count += 1
 
-            # Save to disk
             path = save_generation(audio, text, mood, temp,
                                     self.generator.sample_rate, ref_sources)
 
-            # Add to history
             entry = {
                 "audio": self.last_audio,
                 "sr": self.last_sr,
@@ -372,25 +504,27 @@ class VoiceWorkshop:
                 "mood": mood,
                 "temp": temp,
                 "topk": topk,
+                "speaker": speaker_id,
+                "refs": refs_choice,
+                "ctx_size": len(context),
                 "duration": duration,
+                "elapsed": elapsed,
                 "path": str(path),
             }
             self.history.append(entry)
 
-            # Play it
             dev_idx = get_device_index(self.device_var.get())
             sd.play(self.last_audio, samplerate=self.last_sr, device=dev_idx)
 
             def update_ui():
                 self.status_var.set(
-                    f"#{self.generation_count}: {duration:.1f}s audio in {elapsed:.1f}s "
-                    f"(T={temp:.2f}, K={topk}, refs={refs_choice})")
+                    f"Done! {duration:.1f}s of audio generated in {elapsed:.0f}s "
+                    f"| {len(context)} ref clips | {refs_choice}")
                 self.play_btn.configure(state="normal")
-                self.save_btn.configure(state="normal")
-                label = (f"#{self.generation_count} [{mood}] T={temp:.2f} K={topk} "
-                         f"{duration:.1f}s — \"{text[:50]}...\"" if len(text) > 50
-                         else f"#{self.generation_count} [{mood}] T={temp:.2f} K={topk} "
-                              f"{duration:.1f}s — \"{text}\"")
+                text_short = text[:45] + "..." if len(text) > 45 else text
+                label = (f"#{self.generation_count}  {duration:.1f}s  [{mood}]  "
+                         f"expr={temp:.2f}  var={topk}  "
+                         f"\"{text_short}\"")
                 self.history_list.insert("end", label)
                 self.history_list.see("end")
                 self.history_list.selection_clear(0, "end")
@@ -399,7 +533,8 @@ class VoiceWorkshop:
             self.root.after(0, update_ui)
 
         except Exception as e:
-            self.root.after(0, lambda: self.status_var.set(f"Error: {e}"))
+            err_msg = str(e)
+            self.root.after(0, lambda: self.status_var.set(f"Error: {err_msg}"))
         finally:
             self.generating = False
             self.root.after(0, lambda: self.gen_btn.configure(
@@ -410,7 +545,7 @@ class VoiceWorkshop:
             return
         dev_idx = get_device_index(self.device_var.get())
         sd.play(self.last_audio, samplerate=self.last_sr, device=dev_idx)
-        self.status_var.set("Replaying...")
+        self.status_var.set("Replaying last generation...")
 
     def _on_history_select(self, event):
         sel = self.history_list.curselection()
@@ -421,20 +556,15 @@ class VoiceWorkshop:
             entry = self.history[idx]
             self.last_audio = entry["audio"]
             self.last_sr = entry["sr"]
-            # Play selected
             dev_idx = get_device_index(self.device_var.get())
             sd.play(self.last_audio, samplerate=self.last_sr, device=dev_idx)
             self.status_var.set(
-                f"Playing #{idx+1}: {entry['duration']:.1f}s [{entry['mood']}] "
-                f"T={entry['temp']:.2f}")
-
-    def _on_save(self):
-        if self.last_audio is None:
-            return
-        self.status_var.set(f"Already saved to: {self.history[-1]['path']}")
+                f"Replaying #{idx+1}: {entry['duration']:.1f}s [{entry['mood']}] "
+                f"with {entry['refs']} refs")
 
     def _on_promote(self, category):
         if not self.history:
+            self.status_var.set("Generate something first!")
             return
         sel = self.history_list.curselection()
         idx = sel[0] if sel else len(self.history) - 1
@@ -442,7 +572,9 @@ class VoiceWorkshop:
 
         from voice_generator import promote_to_golden
         promote_to_golden(entry["path"], category, entry["text"])
-        self.status_var.set(f"Promoted #{idx+1} to golden/{category}!")
+        self.status_var.set(
+            f"Saved #{idx+1} as golden '{category}' clip! "
+            f"It will be used as a voice anchor in future generations.")
 
     def run(self):
         self.root.mainloop()

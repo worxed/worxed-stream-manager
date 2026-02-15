@@ -2,12 +2,13 @@
 
 import logging
 import random
+from collections import deque
 from time import time
 
 from models import CompanionState, Expression, Mood, StreamEvent
-from config import MOOD_DECAY_RATE
+from config import CHAT_RATE_WINDOW_SECONDS, MOOD_DECAY_RATE
 
-log = logging.getLogger("schnukums.events")
+log = logging.getLogger("vesper.events")
 
 
 # Expression mappings for each event type
@@ -32,6 +33,17 @@ class EventProcessor:
     def __init__(self, state: CompanionState) -> None:
         self.state = state
         self._last_decay = time()
+        self._chat_timestamps: deque[float] = deque()  # sliding window for rate tracking
+
+    @property
+    def chat_rate(self) -> float:
+        """Messages per minute over the sliding window."""
+        now = time()
+        # Purge timestamps older than the window
+        while self._chat_timestamps and (now - self._chat_timestamps[0]) > CHAT_RATE_WINDOW_SECONDS:
+            self._chat_timestamps.popleft()
+        count = len(self._chat_timestamps)
+        return (count / CHAT_RATE_WINDOW_SECONDS) * 60.0 if count > 0 else 0.0
 
     def process(self, event: StreamEvent) -> CompanionState:
         """Process a stream event and update companion state."""
@@ -68,6 +80,8 @@ class EventProcessor:
     # --- Event handlers ---
 
     def _handle_chat_message(self, event: StreamEvent) -> None:
+        self._chat_timestamps.append(time())
+
         mood = self.state.mood
         mood.engagement = min(100.0, mood.engagement + 3.0)
         mood.energy = min(100.0, mood.energy + 1.0)

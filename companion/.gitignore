@@ -2,6 +2,10 @@ __pycache__/
 *.pyc
 .env
 venv/
+venv-*/
 .venv/
 *.egg-info/
 dist/
+voices/training/
+voices/generated/
+voices/live/

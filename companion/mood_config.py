@@ -1,4 +1,4 @@
-"""Mood-to-voice parameter mappings for Schnukums.
+"""Mood-to-voice parameter mappings for Vesper.
 
 Maps companion mood states to CSM generation parameters.
 Voice identity: 70% Aubrey Plaza (dry, deadpan, subtle fry)
@@ -9,7 +9,7 @@ VOICE_MOODS = {
     "neutral": {
         "temperature": 0.7,
         "topk": 50,
-        "description": "Default schnukums. Relaxed, slightly dry, present.",
+        "description": "Default vesper. Relaxed, slightly dry, present.",
         "pace_modifier": 1.0,
         "context_bias": "balanced",
     },

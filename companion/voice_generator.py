@@ -82,10 +82,20 @@ def load_csm_generator():
     model = Model(config)
     state_dict = load_file(weights_path)
     model.load_state_dict(state_dict)
-    model.to(device="cpu", dtype=torch.float32)
+
+    if torch.cuda.is_available():
+        device = "cuda"
+        dtype = torch.bfloat16
+        print(f"Using GPU: {torch.cuda.get_device_name(0)}")
+    else:
+        device = "cpu"
+        dtype = torch.float32
+        print("No GPU available, using CPU (will be slow)")
+
+    model.to(device=device, dtype=dtype)
 
     generator = Generator(model)
-    print(f"Model ready (sample rate: {generator.sample_rate} Hz)")
+    print(f"Model ready on {device} (sample rate: {generator.sample_rate} Hz)")
     return generator
 
 
@@ -382,7 +392,7 @@ def cmd_compare(args):
     class CompareUI:
         def __init__(self):
             self.root = tk.Tk()
-            self.root.title("Schnukums Voice Compare")
+            self.root.title("Vesper Astra Voice Compare")
             self.root.geometry("750x550")
             self.root.configure(bg="#1a1a2e")
 
@@ -505,7 +515,7 @@ def cmd_compare(args):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Schnukums Voice Prompt Generator")
+    parser = argparse.ArgumentParser(description="Vesper Astra Voice Prompt Generator")
     parser.add_argument("--generate", action="store_true", help="Generate test lines")
     parser.add_argument("--text", type=str, help="Specific text to generate")
     parser.add_argument("--mood", type=str, choices=["neutral", "snarky", "warm", "excited", "thinking"],

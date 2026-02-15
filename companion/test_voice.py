@@ -18,10 +18,10 @@ import soundfile as sf
 from huggingface_hub import hf_hub_download
 
 # --- CLI args ---
-parser = argparse.ArgumentParser(description="Schnukums voice test")
+parser = argparse.ArgumentParser(description="Vesper voice test")
 parser.add_argument("--list-devices", action="store_true", help="List audio output devices and exit")
 parser.add_argument("--device", type=int, default=None, help="Output device ID (from --list-devices)")
-parser.add_argument("--text", type=str, default="Hey chat, it's your girl Schnukums. I see you lurking.", help="Text to speak")
+parser.add_argument("--text", type=str, default="Hey chat, it's your girl Vesper. I see you lurking.", help="Text to speak")
 parser.add_argument("--speaker", type=int, default=0, help="Speaker ID (0-9)")
 parser.add_argument("--no-play", action="store_true", help="Save WAV only, don't play audio")
 args = parser.parse_args()
@@ -123,7 +123,7 @@ duration = len(audio_np) / generator.sample_rate
 print(f"Generated in {elapsed:.1f}s ({duration:.1f}s of audio)")
 
 # Save WAV using soundfile (no torchcodec needed)
-out_path = os.path.join(os.path.dirname(__file__), "schnukums_test.wav")
+out_path = os.path.join(os.path.dirname(__file__), "vesper_test.wav")
 sf.write(out_path, audio_np, generator.sample_rate)
 print(f"Saved to: {out_path}")
 
@@ -134,4 +134,4 @@ if not args.no_play:
     sd.wait()
     print("Done!")
 else:
-    print("Done! Open the WAV file to hear Schnukums.")
+    print("Done! Open the WAV file to hear Vesper.")
