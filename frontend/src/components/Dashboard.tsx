@@ -8,12 +8,7 @@ import {
   MessageSquare,
   Activity,
 } from 'lucide-react';
-import { Card } from 'primereact/card';
-import { Panel } from 'primereact/panel';
-import { Button } from 'primereact/button';
-import { Tag } from 'primereact/tag';
-import { ScrollPanel } from 'primereact/scrollpanel';
-import { Skeleton } from 'primereact/skeleton';
+import { WCard, WPanel, WButton, WTag, WScrollPanel, WSkeleton } from './w';
 import { socketService } from '../services/socket';
 import { getStreamInfo, getAnalytics } from '../services/api';
 import type { StreamData, ActivityItem, ChatMessage } from '../types';
@@ -123,7 +118,7 @@ export default function Dashboard() {
   );
 
   const streamStatusIcons = (
-    <Button
+    <WButton
       icon={loading ? 'pi pi-spin pi-spinner' : 'pi pi-refresh'}
       severity="secondary"
       outlined
@@ -162,13 +157,13 @@ export default function Dashboard() {
   return (
     <div className="flex flex-col gap-8 w-full">
       {/* Stream Status Header */}
-      <Panel header={streamStatusHeader} icons={streamStatusIcons} className="card-elevated">
+      <WPanel header={streamStatusHeader} icons={streamStatusIcons} variant="elevated">
         {initialLoad ? (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
             {Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="p-4">
-                <Skeleton width="60%" height="1rem" className="mb-3" />
-                <Skeleton width="40%" height="2rem" />
+                <WSkeleton width="60%" height="1rem" className="mb-3" />
+                <WSkeleton width="40%" height="2rem" />
               </div>
             ))}
           </div>
@@ -176,51 +171,51 @@ export default function Dashboard() {
           <>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-5">
               {/* Status */}
-              <Card className="card-stat">
+              <WCard variant="stat">
                 <div className="flex items-center gap-2 mb-3">
                   <Radio size={16} className="text-muted-foreground" />
                   <span className="text-xs text-muted-foreground font-medium">Status</span>
                 </div>
                 <div className="text-2xl font-bold text-foreground">
-                  <Tag
+                  <WTag
                     value={streamData.isLive ? 'Live' : 'Offline'}
-                    className={streamData.isLive ? 'worxed-badge-live' : 'worxed-badge-offline'}
+                    badge={streamData.isLive ? 'live' : 'offline'}
                     rounded
                   />
                 </div>
-              </Card>
+              </WCard>
 
               {/* Viewers */}
-              <Card className="card-stat">
+              <WCard variant="stat">
                 <div className="flex items-center gap-2 mb-3">
                   <Eye size={16} className="text-muted-foreground" />
                   <span className="text-xs text-muted-foreground font-medium">Viewers</span>
                 </div>
                 <div className="text-2xl font-bold text-foreground">{streamData.viewers.toLocaleString()}</div>
-              </Card>
+              </WCard>
 
               {/* Followers */}
-              <Card className="card-stat">
+              <WCard variant="stat">
                 <div className="flex items-center gap-2 mb-3">
                   <Users size={16} className="text-muted-foreground" />
                   <span className="text-xs text-muted-foreground font-medium">Followers</span>
                 </div>
                 <div className="text-2xl font-bold text-foreground">{streamData.followers.toLocaleString()}</div>
-              </Card>
+              </WCard>
 
               {/* Uptime */}
-              <Card className="card-stat">
+              <WCard variant="stat">
                 <div className="flex items-center gap-2 mb-3">
                   <Clock size={16} className="text-muted-foreground" />
                   <span className="text-xs text-muted-foreground font-medium">Uptime</span>
                 </div>
                 <div className="text-2xl font-bold text-foreground tabular-nums">{streamData.uptime}</div>
-              </Card>
+              </WCard>
             </div>
 
             {/* Game & Title */}
             {streamData.title && (
-              <Card className="card-inset mt-4">
+              <WCard variant="inset" className="mt-4">
                 <div className="flex items-start gap-4">
                   <Gamepad2 size={20} className="text-muted-foreground mt-0.5 shrink-0" />
                   <div className="min-w-0">
@@ -230,27 +225,27 @@ export default function Dashboard() {
                     <p className="text-sm text-muted-foreground truncate mt-0.5">{streamData.title}</p>
                   </div>
                 </div>
-              </Card>
+              </WCard>
             )}
           </>
         )}
-      </Panel>
+      </WPanel>
 
       {/* Activity & Chat Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
         {/* Recent Activity */}
-        <Panel header={activityHeader} className="card-elevated flex flex-col">
+        <WPanel header={activityHeader} variant="elevated" className="flex flex-col">
           {initialLoad ? (
             <div className="flex flex-col gap-3">
               {Array.from({ length: 3 }).map((_, i) => (
                 <div key={i} className="flex items-center gap-4 p-3">
-                  <Skeleton width="4rem" height="1.5rem" borderRadius="9999px" />
-                  <Skeleton width="60%" height="1rem" />
+                  <WSkeleton width="4rem" height="1.5rem" pill />
+                  <WSkeleton width="60%" height="1rem" />
                 </div>
               ))}
             </div>
           ) : (
-            <ScrollPanel style={{ width: '100%', height: '280px' }}>
+            <WScrollPanel style={{ width: '100%', height: '280px' }}>
               {activity.length === 0 ? (
                 <EmptyState
                   icon={<Activity size={36} className="text-muted-foreground" />}
@@ -264,10 +259,10 @@ export default function Dashboard() {
                       key={item.id}
                       className="flex items-center gap-4 p-3.5 border border-transparent hover:border-border hover:bg-accent/50 transition-all duration-200 rounded-xl"
                     >
-                      <Tag
+                      <WTag
                         value={item.type}
                         severity={getActivityBadgeSeverity(item.type) as any}
-                        className={`text-xs shrink-0${getActivityBadgeClass(item.type) ? ` ${getActivityBadgeClass(item.type)}` : ''}`}
+                        className={`shrink-0${getActivityBadgeClass(item.type) ? ` ${getActivityBadgeClass(item.type)}` : ''}`}
                         rounded
                       />
                       <span className="text-sm font-medium text-foreground truncate">
@@ -280,23 +275,23 @@ export default function Dashboard() {
                   ))}
                 </div>
               )}
-            </ScrollPanel>
+            </WScrollPanel>
           )}
-        </Panel>
+        </WPanel>
 
         {/* Recent Chat */}
-        <Panel header={chatHeader} className="card-elevated flex flex-col">
+        <WPanel header={chatHeader} variant="elevated" className="flex flex-col">
           {initialLoad ? (
             <div className="flex flex-col gap-3">
               {Array.from({ length: 3 }).map((_, i) => (
                 <div key={i} className="flex items-center gap-4 p-3">
-                  <Skeleton width="5rem" height="1rem" />
-                  <Skeleton width="70%" height="1rem" />
+                  <WSkeleton width="5rem" height="1rem" />
+                  <WSkeleton width="70%" height="1rem" />
                 </div>
               ))}
             </div>
           ) : (
-            <ScrollPanel style={{ width: '100%', height: '280px' }}>
+            <WScrollPanel style={{ width: '100%', height: '280px' }}>
               {recentChat.length === 0 ? (
                 <EmptyState
                   icon={<MessageSquare size={36} className="text-muted-foreground" />}
@@ -323,9 +318,9 @@ export default function Dashboard() {
                   ))}
                 </div>
               )}
-            </ScrollPanel>
+            </WScrollPanel>
           )}
-        </Panel>
+        </WPanel>
       </div>
 
       {/* Custom Events */}

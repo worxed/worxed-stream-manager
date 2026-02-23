@@ -1,8 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { Dropdown } from 'primereact/dropdown';
-import { Button } from 'primereact/button';
-import { InputText } from 'primereact/inputtext';
-import { InputNumber } from 'primereact/inputnumber';
+import { WDropdown, WButton, WInput, WInputNumber } from '../w';
 import { Plus, Play, ExternalLink, Save, Undo2, Redo2 } from 'lucide-react';
 import { useEditorStore, useCurrentScene, useFirstSelectedElement } from '../../stores/editorStore';
 import KonvaCanvas from './KonvaCanvas';
@@ -97,7 +94,7 @@ export default function OverlayEditor() {
     <div className="flex flex-col" style={{ height: 'calc(100vh - 140px)' }}>
       {/* Toolbar */}
       <div className="flex items-center gap-3 mb-3 flex-wrap">
-        <Dropdown
+        <WDropdown
           value={currentSceneId}
           options={sceneOptions}
           onChange={(e) => switchScene(e.value)}
@@ -109,7 +106,7 @@ export default function OverlayEditor() {
 
         {showNewScene ? (
           <div className="flex items-center gap-2">
-            <InputText
+            <WInput
               value={newSceneName}
               onChange={(e) => setNewSceneName(e.target.value)}
               placeholder="Scene name"
@@ -117,46 +114,46 @@ export default function OverlayEditor() {
               onKeyDown={(e) => e.key === 'Enter' && createScene()}
               autoFocus
             />
-            <Button icon="pi pi-check" text size="small" onClick={() => createScene()} />
-            <Button icon="pi pi-times" text size="small" onClick={() => { setShowNewScene(false); setNewSceneName(''); }} />
+            <WButton icon="pi pi-check" text size="small" onClick={() => createScene()} />
+            <WButton icon="pi pi-times" text size="small" onClick={() => { setShowNewScene(false); setNewSceneName(''); }} />
           </div>
         ) : (
-          <Button onClick={() => setShowNewScene(true)} text size="small" className="flex items-center gap-1.5 text-sm">
+          <WButton onClick={() => setShowNewScene(true)} text size="small" className="flex items-center text-sm">
             <Plus size={14} />
             <span>New Scene</span>
-          </Button>
+          </WButton>
         )}
 
         {/* Resolution */}
         {scene && (
           <div className="flex items-center gap-1.5">
-            <Dropdown
+            <WDropdown
               value={currentRes}
               options={RESOLUTION_PRESETS}
               onChange={(e) => handleResolutionChange(e.value)}
               optionLabel="label"
               optionValue="value"
-              className="w-48 text-xs"
+              className="w-48"
             />
             {isCustomRes && (
               <>
-                <InputNumber
+                <WInputNumber
                   value={scene.width}
                   onValueChange={(e) => updateSceneResolution(e.value ?? 1920, scene.height)}
                   min={320}
                   max={7680}
-                  className="w-20 text-xs"
-                  inputClassName="text-xs !py-1"
+                  className="w-20"
+                  inputClassName="!py-1"
                   suffix="w"
                 />
                 <span className="text-xs text-muted-foreground">&times;</span>
-                <InputNumber
+                <WInputNumber
                   value={scene.height}
                   onValueChange={(e) => updateSceneResolution(scene.width, e.value ?? 1080)}
                   min={180}
                   max={4320}
-                  className="w-20 text-xs"
-                  inputClassName="text-xs !py-1"
+                  className="w-20"
+                  inputClassName="!py-1"
                   suffix="h"
                 />
               </>
@@ -168,7 +165,7 @@ export default function OverlayEditor() {
 
         {/* Undo/Redo */}
         <div className="flex items-center gap-1">
-          <Button
+          <WButton
             onClick={undo}
             text
             size="small"
@@ -177,8 +174,8 @@ export default function OverlayEditor() {
             title="Undo (Ctrl+Z)"
           >
             <Undo2 size={14} />
-          </Button>
-          <Button
+          </WButton>
+          <WButton
             onClick={redo}
             text
             size="small"
@@ -187,7 +184,7 @@ export default function OverlayEditor() {
             title="Redo (Ctrl+Shift+Z)"
           >
             <Redo2 size={14} />
-          </Button>
+          </WButton>
         </div>
 
         {saving && (
@@ -197,22 +194,22 @@ export default function OverlayEditor() {
           </span>
         )}
 
-        <Button
+        <WButton
           onClick={forceSave}
           text
           size="small"
-          className="flex items-center gap-1.5 text-xs"
+          className="flex items-center text-xs"
           disabled={!scene}
         >
           <Save size={14} />
           <span>Save</span>
-        </Button>
+        </WButton>
 
         {scene && !scene.is_active && (
-          <Button onClick={activateCurrentScene} text size="small" className="flex items-center gap-1.5 text-xs">
+          <WButton onClick={activateCurrentScene} text size="small" className="flex items-center text-xs">
             <Play size={14} />
             <span>Set Active</span>
-          </Button>
+          </WButton>
         )}
 
         {scene?.is_active && (
@@ -222,41 +219,41 @@ export default function OverlayEditor() {
           </span>
         )}
 
-        <Button
+        <WButton
           onClick={openOverlayPreview}
           outlined={previewOpen}
           severity={previewOpen ? 'success' : undefined}
           text={!previewOpen}
           size="small"
-          className="flex items-center gap-1.5 text-xs"
+          className="flex items-center text-xs"
         >
           <ExternalLink size={14} />
           <span>Preview</span>
           {previewOpen && (
             <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
           )}
-        </Button>
+        </WButton>
 
         {scene && !scene.is_active && scenes.length > 1 && (
-          <Button onClick={deleteCurrentScene} severity="danger" text size="small" className="flex items-center gap-1.5 text-xs" icon="pi pi-trash" />
+          <WButton onClick={deleteCurrentScene} severity="danger" text size="small" className="flex items-center text-xs" icon="pi pi-trash" />
         )}
       </div>
 
       {/* Editor Body */}
       {scene ? (
-        <div className="flex flex-col flex-1 border border-border rounded-lg overflow-hidden bg-card">
+        <div className="flex flex-col flex-1 editor-body">
           <div className="flex-1 overflow-hidden relative">
             {/* Canvas takes full space */}
             <KonvaCanvas canvasWidth={scene.width} canvasHeight={scene.height} />
 
             {/* Floating left panel: Toolbox */}
-            <div className="absolute left-0 top-0 bottom-0 w-52 bg-card/95 backdrop-blur-sm border-r border-border overflow-y-auto z-10">
+            <div className="absolute left-0 top-0 bottom-0 w-52 editor-panel editor-panel-left overflow-y-auto">
               <ElementToolbox />
             </div>
 
             {/* Floating right panel: Properties */}
             {hasSelection && selectedElement && (
-              <div className="absolute right-0 top-0 bottom-0 w-72 bg-card/95 backdrop-blur-sm border-l border-border overflow-y-auto z-10">
+              <div className="absolute right-0 top-0 bottom-0 w-72 editor-panel editor-panel-right overflow-y-auto">
                 <PropertiesPanel />
               </div>
             )}
@@ -269,10 +266,10 @@ export default function OverlayEditor() {
         <div className="flex-1 flex items-center justify-center text-muted-foreground">
           <div className="text-center">
             <p className="text-lg mb-2">No scenes yet</p>
-            <Button onClick={() => setShowNewScene(true)} className="flex items-center gap-2">
+            <WButton onClick={() => setShowNewScene(true)} className="flex items-center gap-2">
               <Plus size={16} />
               <span>Create your first scene</span>
-            </Button>
+            </WButton>
           </div>
         </div>
       )}

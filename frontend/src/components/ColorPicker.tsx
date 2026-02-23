@@ -1,8 +1,7 @@
 import * as React from 'react';
 import { useState, useRef, useEffect } from 'react';
 import { Copy, Check } from 'lucide-react';
-import { Button } from 'primereact/button';
-import { InputText } from 'primereact/inputtext';
+import { WButton, WInput } from './w';
 
 interface ColorPickerProps {
   value: string;
@@ -92,7 +91,8 @@ const ColorPicker = React.forwardRef<HTMLDivElement, ColorPickerProps>(
           />
 
           {/* Hex input */}
-          <InputText
+          <WInput
+            unstyled
             value={inputValue}
             onChange={handleInputChange}
             onBlur={handleInputBlur}
@@ -103,7 +103,7 @@ const ColorPicker = React.forwardRef<HTMLDivElement, ColorPickerProps>(
           />
 
           {/* Copy button */}
-          <Button
+          <WButton
             type="button"
             text
             size="small"
@@ -117,7 +117,7 @@ const ColorPicker = React.forwardRef<HTMLDivElement, ColorPickerProps>(
             ) : (
               <Copy size={14} />
             )}
-          </Button>
+          </WButton>
         </div>
 
         {/* Dropdown */}

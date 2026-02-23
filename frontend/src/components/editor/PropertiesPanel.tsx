@@ -1,12 +1,6 @@
 import { useRef } from 'react';
 import { Trash2 } from 'lucide-react';
-import { InputText } from 'primereact/inputtext';
-import { InputNumber } from 'primereact/inputnumber';
-import { InputSwitch } from 'primereact/inputswitch';
-import { Slider } from 'primereact/slider';
-import { Dropdown } from 'primereact/dropdown';
-import { InputTextarea } from 'primereact/inputtextarea';
-import { Button } from 'primereact/button';
+import { WInput, WInputNumber, WSwitch, WSlider, WDropdown, WTextarea, WButton } from '../w';
 import { ColorPicker } from '../ColorPicker';
 import { useEditorStore, useFirstSelectedElement } from '../../stores/editorStore';
 import type { SceneElement, AlertBoxConfig, ChatConfig, TextConfig, ImageConfig, CustomEventConfig, DataBindingConfig, AlertType } from '../../types';
@@ -100,7 +94,7 @@ export default function PropertiesPanel() {
                 <div className="flex flex-col gap-1.5 mt-1">
                   {ALERT_TYPE_OPTIONS.map((opt) => (
                     <label key={opt.value} className="flex items-center gap-2 text-xs cursor-pointer">
-                      <InputSwitch
+                      <WSwitch
                         checked={(config.alertTypes || []).includes(opt.value)}
                         onChange={(e) => {
                           withHistory(() => {
@@ -111,7 +105,6 @@ export default function PropertiesPanel() {
                             updateConfig({ alertTypes: newTypes });
                           });
                         }}
-                        className="!w-8 !h-4"
                       />
                       <span>{opt.label}</span>
                     </label>
@@ -123,7 +116,7 @@ export default function PropertiesPanel() {
                   <Label>Duration</Label>
                   <span className="text-xs font-mono text-muted-foreground">{(config.duration || 5000) / 1000}s</span>
                 </div>
-                <Slider
+                <WSlider
                   value={config.duration || 5000}
                   min={1000}
                   max={15000}
@@ -135,13 +128,13 @@ export default function PropertiesPanel() {
               </div>
               <div>
                 <Label>Animation</Label>
-                <Dropdown
+                <WDropdown
                   value={config.animation || 'fadeInUp'}
                   options={ANIMATION_OPTIONS}
                   onChange={(e) => withHistory(() => updateConfig({ animation: e.value }))}
                   optionLabel="label"
                   optionValue="value"
-                  className="w-full text-xs mt-1"
+                  className="w-full mt-1"
                 />
               </div>
             </div>
@@ -157,21 +150,19 @@ export default function PropertiesPanel() {
             <div className="flex flex-col gap-3">
               <div>
                 <Label>Max Messages</Label>
-                <InputNumber
+                <WInputNumber
                   value={config.maxMessages || 20}
                   min={5}
                   max={50}
                   onFocus={pushHistory}
                   onValueChange={(e) => updateConfig({ maxMessages: e.value })}
-                  className="w-full text-xs mt-1"
-                  inputClassName="text-xs px-2 py-1"
+                  className="w-full mt-1"
                 />
               </div>
               <label className="flex items-center gap-2 text-xs cursor-pointer">
-                <InputSwitch
+                <WSwitch
                   checked={config.showBadges !== false}
                   onChange={(e) => withHistory(() => updateConfig({ showBadges: e.value }))}
-                  className="!w-8 !h-4"
                 />
                 <span>Show Badges</span>
               </label>
@@ -182,7 +173,7 @@ export default function PropertiesPanel() {
                     {config.fadeAfter ? `${config.fadeAfter}s` : 'Never'}
                   </span>
                 </div>
-                <Slider
+                <WSlider
                   value={config.fadeAfter || 0}
                   min={0}
                   max={120}
@@ -205,18 +196,17 @@ export default function PropertiesPanel() {
             <div className="flex flex-col gap-3">
               <div>
                 <Label>Content</Label>
-                <InputTextarea
+                <WTextarea
                   value={config.content || ''}
                   onFocus={pushHistory}
                   onChange={(e) => updateConfig({ content: e.target.value })}
                   rows={3}
-                  className="w-full text-xs mt-1"
-                  autoResize
+                  className="w-full mt-1"
                 />
               </div>
               <div>
                 <Label>Font Weight</Label>
-                <Dropdown
+                <WDropdown
                   value={config.fontWeight || 'normal'}
                   options={[
                     { value: 'normal', label: 'Normal' },
@@ -230,7 +220,7 @@ export default function PropertiesPanel() {
                   onChange={(e) => withHistory(() => updateConfig({ fontWeight: e.value }))}
                   optionLabel="label"
                   optionValue="value"
-                  className="w-full text-xs mt-1"
+                  className="w-full mt-1"
                 />
               </div>
               <div>
@@ -238,7 +228,7 @@ export default function PropertiesPanel() {
                   <Label>Line Height</Label>
                   <span className="text-xs font-mono text-muted-foreground">{config.lineHeight || 1.5}</span>
                 </div>
-                <Slider
+                <WSlider
                   value={(config.lineHeight || 1.5) * 10}
                   min={10}
                   max={30}
@@ -269,23 +259,23 @@ export default function PropertiesPanel() {
             <div className="flex flex-col gap-3">
               <div>
                 <Label>Image URL</Label>
-                <InputText
+                <WInput
                   value={config.src || ''}
                   onFocus={pushHistory}
                   onChange={(e) => updateConfig({ src: e.target.value })}
                   placeholder="https://..."
-                  className="w-full text-xs mt-1"
+                  className="w-full mt-1"
                 />
               </div>
               <div>
                 <Label>Object Fit</Label>
-                <Dropdown
+                <WDropdown
                   value={config.objectFit || 'contain'}
                   options={OBJECT_FIT_OPTIONS}
                   onChange={(e) => withHistory(() => updateConfig({ objectFit: e.value }))}
                   optionLabel="label"
                   optionValue="value"
-                  className="w-full text-xs mt-1"
+                  className="w-full mt-1"
                 />
               </div>
             </div>
@@ -310,25 +300,24 @@ export default function PropertiesPanel() {
             <div className="flex flex-col gap-3">
               <div>
                 <Label>Event Name</Label>
-                <InputText
+                <WInput
                   value={config.eventName || ''}
                   onFocus={pushHistory}
                   onChange={(e) => updateConfig({ eventName: e.target.value })}
                   placeholder="hype-alert"
-                  className="w-full text-xs mt-1"
+                  className="w-full mt-1"
                 />
                 <p className="text-muted-foreground mt-1" style={{ fontSize: '10px' }}>Socket.IO event name from custom endpoints</p>
               </div>
               <div>
                 <Label>Display Template</Label>
-                <InputTextarea
+                <WTextarea
                   value={config.template || ''}
                   onFocus={pushHistory}
                   onChange={(e) => updateConfig({ template: e.target.value })}
                   placeholder="{{username}} says: {{message}}"
                   rows={2}
-                  className="w-full text-xs mt-1"
-                  autoResize
+                  className="w-full mt-1"
                 />
                 <p className="text-muted-foreground mt-1" style={{ fontSize: '10px' }}>Use {'{{field}}'} to insert event data</p>
               </div>
@@ -337,7 +326,7 @@ export default function PropertiesPanel() {
                   <Label>Duration</Label>
                   <span className="text-xs font-mono text-muted-foreground">{(config.duration || 5000) / 1000}s</span>
                 </div>
-                <Slider
+                <WSlider
                   value={config.duration || 5000}
                   min={1000}
                   max={30000}
@@ -349,25 +338,24 @@ export default function PropertiesPanel() {
               </div>
               <div>
                 <Label>Animation</Label>
-                <Dropdown
+                <WDropdown
                   value={config.animation || 'fadeInUp'}
                   options={ANIMATION_OPTIONS}
                   onChange={(e) => withHistory(() => updateConfig({ animation: e.value }))}
                   optionLabel="label"
                   optionValue="value"
-                  className="w-full text-xs mt-1"
+                  className="w-full mt-1"
                 />
               </div>
               <div>
                 <Label>Max Queue Size</Label>
-                <InputNumber
+                <WInputNumber
                   value={config.maxQueueSize || 10}
                   min={1}
                   max={50}
                   onFocus={pushHistory}
                   onValueChange={(e) => updateConfig({ maxQueueSize: e.value })}
-                  className="w-full text-xs mt-1"
-                  inputClassName="text-xs px-2 py-1"
+                  className="w-full mt-1"
                 />
               </div>
             </div>
@@ -391,11 +379,11 @@ export default function PropertiesPanel() {
           {/* Name */}
           <div>
             <Label>Name</Label>
-            <InputText
+            <WInput
               value={element.name}
               onFocus={pushHistory}
               onChange={(e) => onUpdate({ name: e.target.value })}
-              className="w-full text-xs mt-1"
+              className="w-full mt-1"
             />
           </div>
 
@@ -404,22 +392,20 @@ export default function PropertiesPanel() {
           <div className="grid grid-cols-2 gap-2">
             <div>
               <Label>X</Label>
-              <InputNumber
+              <WInputNumber
                 value={element.x}
                 onFocus={pushHistory}
                 onValueChange={(e) => onUpdate({ x: e.value ?? 0 })}
-                className="w-full text-xs mt-1"
-                inputClassName="text-xs px-2 py-1"
+                className="w-full mt-1"
               />
             </div>
             <div>
               <Label>Y</Label>
-              <InputNumber
+              <WInputNumber
                 value={element.y}
                 onFocus={pushHistory}
                 onValueChange={(e) => onUpdate({ y: e.value ?? 0 })}
-                className="w-full text-xs mt-1"
-                inputClassName="text-xs px-2 py-1"
+                className="w-full mt-1"
               />
             </div>
           </div>
@@ -429,24 +415,22 @@ export default function PropertiesPanel() {
           <div className="grid grid-cols-2 gap-2">
             <div>
               <Label>Width</Label>
-              <InputNumber
+              <WInputNumber
                 value={element.width}
                 min={40}
                 onFocus={pushHistory}
                 onValueChange={(e) => onUpdate({ width: e.value ?? 40 })}
-                className="w-full text-xs mt-1"
-                inputClassName="text-xs px-2 py-1"
+                className="w-full mt-1"
               />
             </div>
             <div>
               <Label>Height</Label>
-              <InputNumber
+              <WInputNumber
                 value={element.height}
                 min={40}
                 onFocus={pushHistory}
                 onValueChange={(e) => onUpdate({ height: e.value ?? 40 })}
-                className="w-full text-xs mt-1"
-                inputClassName="text-xs px-2 py-1"
+                className="w-full mt-1"
               />
             </div>
           </div>
@@ -457,7 +441,7 @@ export default function PropertiesPanel() {
               <Label>Rotation</Label>
               <span className="text-xs font-mono text-muted-foreground">{element.rotation}°</span>
             </div>
-            <Slider
+            <WSlider
               value={element.rotation}
               min={0}
               max={360}
@@ -475,7 +459,7 @@ export default function PropertiesPanel() {
               <Label>Opacity</Label>
               <span className="text-xs font-mono text-muted-foreground">{Math.round((element.style.opacity ?? 1) * 100)}%</span>
             </div>
-            <Slider
+            <WSlider
               value={(element.style.opacity ?? 1) * 100}
               min={0}
               max={100}
@@ -502,7 +486,7 @@ export default function PropertiesPanel() {
               <Label>Border Radius</Label>
               <span className="text-xs font-mono text-muted-foreground">{element.style.borderRadius || 0}px</span>
             </div>
-            <Slider
+            <WSlider
               value={element.style.borderRadius || 0}
               min={0}
               max={50}
@@ -514,52 +498,50 @@ export default function PropertiesPanel() {
 
           <div>
             <Label>Font Family</Label>
-            <Dropdown
+            <WDropdown
               value={element.style.fontFamily || 'Inter, system-ui, sans-serif'}
               options={FONT_FAMILY_OPTIONS}
               onChange={(e) => withHistory(() => updateStyle({ fontFamily: e.value }))}
               optionLabel="label"
               optionValue="value"
-              className="w-full text-xs mt-1"
+              className="w-full mt-1"
             />
           </div>
 
           <div>
             <Label>Font Size</Label>
-            <InputNumber
+            <WInputNumber
               value={element.style.fontSize || 16}
               min={8}
               max={96}
               onFocus={pushHistory}
               onValueChange={(e) => updateStyle({ fontSize: e.value ?? 16 })}
-              className="w-full text-xs mt-1"
-              inputClassName="text-xs px-2 py-1"
+              className="w-full mt-1"
               suffix=" px"
             />
           </div>
 
           <div>
             <Label>Text Align</Label>
-            <Dropdown
+            <WDropdown
               value={element.style.textAlign || 'left'}
               options={TEXT_ALIGN_OPTIONS}
               onChange={(e) => withHistory(() => updateStyle({ textAlign: e.value }))}
               optionLabel="label"
               optionValue="value"
-              className="w-full text-xs mt-1"
+              className="w-full mt-1"
             />
           </div>
 
           <div>
             <Label>Padding</Label>
-            <InputNumber
+            <WInputNumber
               value={element.style.padding || 0}
               min={0}
               max={100}
               onFocus={pushHistory}
               onValueChange={(e) => updateStyle({ padding: e.value ?? 0 })}
-              className="w-full text-xs mt-1"
-              inputClassName="text-xs px-2 py-1"
+              className="w-full mt-1"
               suffix=" px"
             />
           </div>
@@ -567,18 +549,16 @@ export default function PropertiesPanel() {
           {/* Toggles */}
           <SectionHeader>Visibility</SectionHeader>
           <label className="flex items-center gap-2 text-xs cursor-pointer">
-            <InputSwitch
+            <WSwitch
               checked={element.visible}
               onChange={(e) => withHistory(() => onUpdate({ visible: e.value }))}
-              className="!w-8 !h-4"
             />
             <span>Visible</span>
           </label>
           <label className="flex items-center gap-2 text-xs cursor-pointer">
-            <InputSwitch
+            <WSwitch
               checked={element.locked}
               onChange={(e) => withHistory(() => onUpdate({ locked: e.value }))}
-              className="!w-8 !h-4"
             />
             <span>Locked</span>
           </label>
@@ -588,7 +568,7 @@ export default function PropertiesPanel() {
 
           {/* Delete */}
           <div className="pt-3 mt-2 border-t border-border">
-            <Button
+            <WButton
               onClick={deleteSelectedElements}
               severity="danger"
               text
@@ -597,7 +577,7 @@ export default function PropertiesPanel() {
             >
               <Trash2 size={14} />
               <span>Delete Element</span>
-            </Button>
+            </WButton>
           </div>
         </div>
       </div>
@@ -645,10 +625,9 @@ function DataBindingSection({
       <SectionHeader>Data Binding</SectionHeader>
       <div className="flex flex-col gap-3">
         <label className="flex items-center gap-2 text-xs cursor-pointer">
-          <InputSwitch
+          <WSwitch
             checked={enabled}
             onChange={(e) => withHistory(() => updateBinding({ enabled: e.value }))}
-            className="!w-8 !h-4"
           />
           <span>Enable Data Binding</span>
         </label>
@@ -657,34 +636,34 @@ function DataBindingSection({
           <>
             <div>
               <Label>Event Name</Label>
-              <InputText
+              <WInput
                 value={binding?.eventName || ''}
                 onFocus={pushHistory}
                 onChange={(e) => updateBinding({ eventName: e.target.value })}
                 placeholder="goal-update"
-                className="w-full text-xs mt-1"
+                className="w-full mt-1"
               />
             </div>
             <div>
               <Label>Data Field Path</Label>
-              <InputText
+              <WInput
                 value={binding?.fieldPath || ''}
                 onFocus={pushHistory}
                 onChange={(e) => updateBinding({ fieldPath: e.target.value })}
                 placeholder="progress"
-                className="w-full text-xs mt-1"
+                className="w-full mt-1"
               />
               <p className="text-muted-foreground mt-1" style={{ fontSize: '10px' }}>Dot-notation path, e.g. user.name</p>
             </div>
             {mode === 'text' && (
               <div>
                 <Label>Template</Label>
-                <InputText
+                <WInput
                   value={binding?.template || ''}
                   onFocus={pushHistory}
                   onChange={(e) => updateBinding({ template: e.target.value })}
                   placeholder="Goal: {{progress}}%"
-                  className="w-full text-xs mt-1"
+                  className="w-full mt-1"
                 />
                 <p className="text-muted-foreground mt-1" style={{ fontSize: '10px' }}>Leave empty to use raw field value</p>
               </div>
@@ -692,24 +671,24 @@ function DataBindingSection({
             {mode === 'image' && (
               <div>
                 <Label>Image URL Field</Label>
-                <InputText
+                <WInput
                   value={binding?.fieldForSrc || ''}
                   onFocus={pushHistory}
                   onChange={(e) => updateBinding({ fieldForSrc: e.target.value })}
                   placeholder="imageUrl"
-                  className="w-full text-xs mt-1"
+                  className="w-full mt-1"
                 />
                 <p className="text-muted-foreground mt-1" style={{ fontSize: '10px' }}>Field containing image URL (overrides Data Field Path)</p>
               </div>
             )}
             <div>
               <Label>Default Value</Label>
-              <InputText
+              <WInput
                 value={binding?.defaultValue || ''}
                 onFocus={pushHistory}
                 onChange={(e) => updateBinding({ defaultValue: e.target.value })}
                 placeholder={mode === 'image' ? 'https://fallback.png' : 'Waiting...'}
-                className="w-full text-xs mt-1"
+                className="w-full mt-1"
               />
             </div>
             <div>
@@ -719,7 +698,7 @@ function DataBindingSection({
                   {binding?.timeout ? `${binding.timeout}s` : 'Never'}
                 </span>
               </div>
-              <Slider
+              <WSlider
                 value={binding?.timeout || 0}
                 min={0}
                 max={300}

@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { Palette, Sun, Moon, Check } from 'lucide-react';
-import { Button } from 'primereact/button';
-import { OverlayPanel } from 'primereact/overlaypanel';
+import { WButton, WOverlayPanel } from './w';
+import type { OverlayPanel } from 'primereact/overlaypanel';
 import {
   themes,
   THEME_STORAGE_KEY,
@@ -63,7 +63,7 @@ export default function ThemePicker() {
 
   return (
     <>
-      <Button
+      <WButton
         text
         size="small"
         onClick={(e) => op.current?.toggle(e)}
@@ -72,9 +72,9 @@ export default function ThemePicker() {
         <Palette size={16} />
         <span className="text-sm">{currentDef.label}</span>
         {mode === 'dark' ? <Moon size={14} /> : <Sun size={14} />}
-      </Button>
+      </WButton>
 
-      <OverlayPanel ref={op} className="w-72">
+      <WOverlayPanel ref={op} className="w-72">
         <div className="flex flex-col gap-3">
           {/* Theme list */}
           <div className="flex flex-col gap-1">
@@ -148,7 +148,7 @@ export default function ThemePicker() {
             </div>
           </div>
         </div>
-      </OverlayPanel>
+      </WOverlayPanel>
     </>
   );
 }

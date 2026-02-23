@@ -107,6 +107,15 @@
 - [x] Add esbuild to pnpm.onlyBuiltDependencies
 - [x] Fix backend package.json scripts: npm → pnpm
 
+### W-Component Library + PrimeReact Theme Ownership
+
+- [x] Create `frontend/src/components/w/` wrapper layer (15 components + cx() util + barrel export)
+- [x] Migrate all 10 consumer files from direct `primereact/*` imports → `w/` wrappers
+- [x] Absorb repeated boilerplate: `!w-8 !h-4` (switches), `text-xs` (inputs), `gap-1.5` (buttons), card variants, badge presets
+- [x] Remove lara-dark-blue theme CSS — replaced with full component styles in index.css
+- [x] Complete PrimeReact styling: Button (variants, severities, sizes, animations), InputText, Dropdown (panel, items), InputSwitch, Slider, Tag, Toast, OverlayPanel, Tooltip, Skeleton
+- [ ] **FIX: Scene creation broken after theme removal** — konva/scenes not functioning, needs debug
+
 ### Accessibility
 
 - [x] Replace terminal font (VT323) with Inter for readability
@@ -291,6 +300,7 @@
 - [ ] Port conflict when backend crashes (no detection/handling)
 - [ ] WebSocket disconnect doesn't always trigger reconnect
 - [ ] React strict mode console warnings
+- [ ] Scene creation broken after PrimeReact theme removal (Feb 24) — needs debug
 
 ---
 
@@ -342,4 +352,4 @@
 - Medium - Quality of life improvements
 - Low - Nice to have features
 
-**Last Updated:** February 23, 2026
+**Last Updated:** February 24, 2026

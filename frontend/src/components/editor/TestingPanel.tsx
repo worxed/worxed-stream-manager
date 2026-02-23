@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { Button } from 'primereact/button';
-import { InputText } from 'primereact/inputtext';
+import { WButton, WInput } from '../w';
 import { ChevronDown, ChevronUp, Bell, MessageSquare, Zap } from 'lucide-react';
 
 const API_BASE = 'http://localhost:4001';
@@ -55,7 +54,7 @@ export default function TestingPanel() {
   };
 
   return (
-    <div className="border-t border-border bg-card">
+    <div className="editor-testing">
       <button
         onClick={() => setCollapsed(!collapsed)}
         className="flex items-center justify-between w-full px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
@@ -70,52 +69,52 @@ export default function TestingPanel() {
           <div className="flex items-center gap-2 flex-wrap">
             <Bell size={14} className="text-muted-foreground shrink-0" />
             {ALERT_TYPES.map(type => (
-              <Button
+              <WButton
                 key={type}
                 onClick={() => fireAlert(type)}
                 outlined
                 size="small"
-                className="text-xs !py-1 !px-2"
+                className="!py-1 !px-2"
               >
                 {ALERT_LABELS[type]}
-              </Button>
+              </WButton>
             ))}
           </div>
 
           {/* Chat row */}
           <div className="flex items-center gap-2">
             <MessageSquare size={14} className="text-muted-foreground shrink-0" />
-            <InputText
+            <WInput
               value={chatMsg}
               onChange={(e) => setChatMsg(e.target.value)}
               placeholder="Chat message"
-              className="text-xs flex-1"
+              className="flex-1"
               onKeyDown={(e) => e.key === 'Enter' && sendChat()}
             />
-            <Button onClick={sendChat} outlined size="small" className="text-xs !py-1 !px-2">
+            <WButton onClick={sendChat} outlined size="small" className="!py-1 !px-2">
               Send
-            </Button>
+            </WButton>
           </div>
 
           {/* Custom event row */}
           <div className="flex items-center gap-2">
             <Zap size={14} className="text-muted-foreground shrink-0" />
-            <InputText
+            <WInput
               value={eventName}
               onChange={(e) => setEventName(e.target.value)}
               placeholder="Event name"
-              className="text-xs w-32"
+              className="w-32"
             />
-            <InputText
+            <WInput
               value={eventData}
               onChange={(e) => setEventData(e.target.value)}
               placeholder='{"key": "value"}'
-              className="text-xs flex-1"
+              className="flex-1"
               onKeyDown={(e) => e.key === 'Enter' && fireEvent()}
             />
-            <Button onClick={fireEvent} outlined size="small" className="text-xs !py-1 !px-2">
+            <WButton onClick={fireEvent} outlined size="small" className="!py-1 !px-2">
               Fire
-            </Button>
+            </WButton>
           </div>
         </div>
       )}
