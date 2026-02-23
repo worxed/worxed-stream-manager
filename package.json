@@ -1,0 +1,40 @@
+{
+  "name": "worxed-stream-manager",
+  "version": "1.0.0",
+  "description": "Professional Twitch stream overlay and management system",
+  "private": true,
+  "scripts": {
+    "start": "node supervisor.js",
+    "dev": "node supervisor.js",
+    "dev:admin": "cd backend/admin && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "build": "npm run build:admin && npm run build:frontend",
+    "build:admin": "cd backend/admin && npm run build",
+    "build:frontend": "cd frontend && npm run build",
+    "install:all": "pnpm install",
+    "setup": "cd backend && npm run setup"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.6.2",
+    "ws": "^8.16.0"
+  },
+  "keywords": [
+    "twitch",
+    "streaming",
+    "overlay",
+    "alerts",
+    "obs",
+    "terminal",
+    "cyberpunk"
+  ],
+  "author": "worxed",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "better-sqlite3"
+    ]
+  }
+}
