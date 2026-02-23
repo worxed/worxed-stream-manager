@@ -248,3 +248,11 @@ CLAUDE.md
 
 # Goldmine - preserved archive documentation (local reference only)
 .goldmine/
+
+# Vesper brainstorming (local only)
+VESPER.MD
+
+# Python virtual environments
+venv/
+venv-*/
+.venv/

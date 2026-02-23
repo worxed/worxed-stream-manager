@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+
+# Virtual environments
+.env
+.env.*
+venv/
+venv-*/
+.venv/
+
+# Voice data (training clips, generated audio, references)
+voices/
+*.wav
+*.mp3
+*.flac
+*.ogg
+
+# Orpheus model checkpoints and datasets
+orpheus/finetune/checkpoints/
+orpheus/finetune/*.log
+
+# Large model files
+*.pt
+*.pth
+*.safetensors
+*.bin
+*.onnx
+*.gguf
+
+# Local design docs (not for repo)
+VESPERASTRAVOICE.MD
+VESPERASTRAIMAGEBIBLE.MD
+
+# Claude context (local only)
+CLAUDE.md
+.claude/
+
+# Logs
+*.log
+
+# Legacy test files
+schnukums_test.wav
+
+# Demo media from upstream repos
+orpheus/demo.mp4
