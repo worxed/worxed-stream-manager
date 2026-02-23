@@ -825,4 +825,15 @@ graph LR
 
 ---
 
-**Last Updated:** February 8, 2026
+## Companion (Parked)
+
+The `companion/` directory contains **Vesper Astra**, an AI stream companion project. It is currently parked and not actively developed. The code is preserved in the repo for future resumption.
+
+- **What it does:** Connects to the backend via Socket.IO, processes stream events through a mood state machine, generates personality-driven responses via Ollama/Mistral, and speaks with a custom TTS voice
+- **TTS:** Orpheus TTS (Llama-3B + SNAC 24kHz codec) with LoRA fine-tuning pipeline
+- **Status:** Training pipeline built but needs a retrain with properly SNAC-encoded audio tokens. Voice data and model checkpoints are gitignored (local only).
+- **To resume:** See `companion/CLAUDE.md` (local, not tracked) for full context and next steps
+
+---
+
+**Last Updated:** February 23, 2026

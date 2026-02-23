@@ -4,10 +4,10 @@ A comprehensive, self-hosted streaming overlay and alert system for Twitch. Buil
 
 **Complete independence from third-party services** like StreamElements or Streamlabs - you own your data and control your stream experience.
 
-![Node.js](https://img.shields.io/badge/Node.js-18+-green)
-![React](https://img.shields.io/badge/React-18-61dafb)
-![Vue](https://img.shields.io/badge/Vue-3-42b883)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.6-blue)
+![Node.js](https://img.shields.io/badge/Node.js-20+-green)
+![React](https://img.shields.io/badge/React-19-61dafb)
+![Vue](https://img.shields.io/badge/Vue-3.5-42b883)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue)
 ![SQLite](https://img.shields.io/badge/SQLite-WAL-003B57)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 
@@ -31,7 +31,7 @@ A comprehensive, self-hosted streaming overlay and alert system for Twitch. Buil
                                    │ WebSocket + REST
                     ┌──────────────▼──────────────────────┐
                     │   STREAM MANAGER (port 5173)        │
-                    │  React + Tailwind v4 + PrimeReact   │
+                    │  React 19 + TypeScript + PrimeReact  │
                     │  Dashboard, Alerts, Scene Editor    │
                     │  OBS Overlay (/overlay)             │
                     └─────────────────────────────────────┘
@@ -47,7 +47,7 @@ A comprehensive, self-hosted streaming overlay and alert system for Twitch. Buil
 
 ### Prerequisites
 
-- **Node.js 18+**
+- **Node.js 20+**
 - **pnpm** (`npm install -g pnpm`)
 - **Twitch Developer Account** ([dev.twitch.tv](https://dev.twitch.tv/console))
 
@@ -188,7 +188,7 @@ Four professional themes with light/dark modes (8 combinations):
 | **Magma** | Warm amber/fire | `#b45309` / `#f59e0b` |
 | **Arctic** | Icy blue | `#0c4a6e` / `#38bdf8` |
 
-Themes use CSS-variable theming via Tailwind v4 `@theme` + `[data-theme]` selectors. Changes propagate in real-time to all connected clients and overlays via Socket.IO.
+Themes use CSS-variable theming via `[data-theme]` selectors with hand-written utility CSS. Changes propagate in real-time to all connected clients and overlays via Socket.IO.
 
 ### Real-Time Communication
 
@@ -281,7 +281,7 @@ worxed-stream-manager/
 ├── frontend/
 │   ├── src/
 │   │   ├── App.tsx         # Root: /overlay routing + AppMain
-│   │   ├── index.css       # Tailwind v4 @theme + CSS variables + animations
+│   │   ├── index.css       # CSS variables + utility classes + animations
 │   │   ├── components/
 │   │   │   ├── Dashboard.tsx          # Stats, chat, activity, EventFeed
 │   │   │   ├── Alerts.tsx             # Alert configuration
@@ -314,11 +314,11 @@ worxed-stream-manager/
 │   └── vite.config.ts
 ├── .env                    # Environment variables
 ├── pnpm-workspace.yaml     # pnpm workspace config
+├── companion/              # AI stream companion (parked — see ARCHITECTURE.md)
 ├── ARCHITECTURE.md         # Technical architecture
 ├── COLORS.md               # Theme color specifications
 ├── TASKS.md                # Project roadmap
-├── CONTRIBUTING.md         # Contribution guidelines
-└── CLAUDE.md               # Claude Code context
+└── CONTRIBUTING.md         # Contribution guidelines
 ```
 
 ## Development Commands
@@ -348,7 +348,6 @@ pnpm install
 | [COLORS.md](COLORS.md) | Complete theme color specifications |
 | [TASKS.md](TASKS.md) | Project roadmap & task tracking |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Contribution guidelines & templates |
-| [CLAUDE.md](CLAUDE.md) | Claude Code session context |
 
 ## Contributing
 
@@ -457,12 +456,12 @@ killall node
 | Layer | Technology |
 |-------|------------|
 | **Process Manager** | Node.js + ws |
-| **Database** | SQLite (better-sqlite3, WAL mode) |
-| **Backend** | Express 4.21 + Socket.IO 4.7 + tmi.js 1.8 |
-| **Admin UI** | Vue 3 + Naive UI |
-| **Frontend** | React 18 + TypeScript 5.6 + Tailwind CSS v4 + PrimeReact 10 |
-| **Scene Editor** | react-konva + Konva + Zustand |
-| **Build** | Vite 6 + pnpm workspaces |
+| **Database** | SQLite 3.51 (better-sqlite3 12.6, WAL mode) |
+| **Backend** | Express 4.21 + Socket.IO 4.8 + tmi.js 1.8 |
+| **Admin UI** | Vue 3.5 + Naive UI 2.40 + Vite 7.3 |
+| **Frontend** | React 19 + TypeScript 5.8 + PrimeReact 10 (unstyled) |
+| **Scene Editor** | react-konva 19 + Zustand 5 |
+| **Build** | Vite 7.3 + pnpm workspaces |
 
 ---
 

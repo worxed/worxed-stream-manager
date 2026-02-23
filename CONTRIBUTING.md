@@ -110,7 +110,7 @@ Check [TASKS.md](TASKS.md) for the full roadmap. Current priorities:
 
 ### Frontend (React + TypeScript)
 - Functional components with hooks
-- PrimeReact components + Tailwind CSS v4 for styling
+- PrimeReact components (unstyled) + hand-written utility CSS for styling
 - Zustand for state management (see `stores/editorStore.ts`)
 - react-konva for the scene editor canvas
 - Follow existing patterns in `frontend/src/components/`
@@ -148,8 +148,9 @@ docs: update API endpoints in ARCHITECTURE.md
 
 ## Pull Request Process
 
-1. **Branch from `main`** (or current development branch)
+1. **Branch from `dev`** (main development branch)
    ```bash
+   git checkout dev
    git checkout -b feat/your-feature-name
    ```
 
