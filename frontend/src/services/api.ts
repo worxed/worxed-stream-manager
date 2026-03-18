@@ -166,6 +166,31 @@ export async function activateScene(id: number) {
   });
 }
 
+// Assets
+export async function getAssets() {
+  return fetchApi<Array<{ filename: string; url: string; size: number; created: number }>>('/assets');
+}
+
+export async function uploadAsset(file: File): Promise<ApiResponse<{ url: string; filename: string; size: number }>> {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await fetch('/api/assets/upload', { method: 'POST', body: formData });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({ error: `HTTP ${response.status}` }));
+      throw new Error(err.error || `Upload failed: ${response.status}`);
+    }
+    const data = await response.json();
+    return { data, error: null };
+  } catch (error) {
+    return { data: null, error: (error as Error).message };
+  }
+}
+
+export async function deleteAsset(filename: string) {
+  return fetchApi<{ success: boolean }>(`/assets/${encodeURIComponent(filename)}`, { method: 'DELETE' });
+}
+
 // Helpers
 function formatUptime(startedAt: Date): string {
   const now = new Date();

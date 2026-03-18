@@ -6,13 +6,13 @@
   "scripts": {
     "start": "node supervisor.js",
     "dev": "node supervisor.js",
-    "dev:admin": "cd backend/admin && npm run dev",
-    "dev:frontend": "cd frontend && npm run dev",
-    "build": "npm run build:admin && npm run build:frontend",
-    "build:admin": "cd backend/admin && npm run build",
-    "build:frontend": "cd frontend && npm run build",
+    "dev:admin": "cd backend/admin && pnpm run dev",
+    "dev:frontend": "cd frontend && pnpm run dev",
+    "build": "pnpm run build:admin && pnpm run build:frontend",
+    "build:admin": "cd backend/admin && pnpm run build",
+    "build:frontend": "cd frontend && pnpm run build",
     "install:all": "pnpm install",
-    "setup": "cd backend && npm run setup"
+    "setup": "cd backend && pnpm run setup"
   },
   "dependencies": {
     "better-sqlite3": "^12.6.2",
@@ -30,11 +30,12 @@
   "author": "worxed",
   "license": "MIT",
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=20.0.0"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
-      "better-sqlite3"
+      "better-sqlite3",
+      "esbuild"
     ]
   }
 }

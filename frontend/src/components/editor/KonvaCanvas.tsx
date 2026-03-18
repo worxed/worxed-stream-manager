@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState, useCallback } from 'react';
-import { Stage, Layer, Rect } from 'react-konva';
+import { Stage, Layer, Rect, Line, Text } from 'react-konva';
 import { Transformer } from 'react-konva';
 import type Konva from 'konva';
 import type { KonvaEventObject } from 'konva/lib/Node';
@@ -7,6 +7,66 @@ import { useEditorStore, useCurrentScene } from '../../stores/editorStore';
 import KonvaElement from './KonvaElement';
 
 const PADDING = 40;
+const OOB = 5000; // out-of-bounds extension for dim overlay
+const DIM_FILL = 'rgba(0,0,0,0.3)';
+const SNAP_THRESHOLD = 10; // scene pixels
+
+interface SnapResult {
+  x: number;
+  y: number;
+  lines: number[][]; // flat point arrays for Konva Line [x1,y1,x2,y2]
+}
+
+function computeSnap(
+  dragged: { x: number; y: number; width: number; height: number },
+  others: Array<{ x: number; y: number; width: number; height: number }>,
+  canvasW: number,
+  canvasH: number,
+): SnapResult {
+  const xTargets = [
+    0, canvasW / 2, canvasW,
+    ...others.flatMap(el => [el.x, el.x + el.width / 2, el.x + el.width]),
+  ];
+  const yTargets = [
+    0, canvasH / 2, canvasH,
+    ...others.flatMap(el => [el.y, el.y + el.height / 2, el.y + el.height]),
+  ];
+
+  // [edge value, x offset to get back to element.x]
+  const xEdges: [number, number][] = [
+    [dragged.x, 0],
+    [dragged.x + dragged.width / 2, -dragged.width / 2],
+    [dragged.x + dragged.width, -dragged.width],
+  ];
+  const yEdges: [number, number][] = [
+    [dragged.y, 0],
+    [dragged.y + dragged.height / 2, -dragged.height / 2],
+    [dragged.y + dragged.height, -dragged.height],
+  ];
+
+  let snapX = dragged.x, snapY = dragged.y;
+  let bestX = SNAP_THRESHOLD, bestY = SNAP_THRESHOLD;
+  let lineX: number | null = null, lineY: number | null = null;
+
+  for (const tx of xTargets) {
+    for (const [edge, offset] of xEdges) {
+      const d = Math.abs(edge - tx);
+      if (d < bestX) { bestX = d; snapX = tx + offset; lineX = tx; }
+    }
+  }
+  for (const ty of yTargets) {
+    for (const [edge, offset] of yEdges) {
+      const d = Math.abs(edge - ty);
+      if (d < bestY) { bestY = d; snapY = ty + offset; lineY = ty; }
+    }
+  }
+
+  const lines: number[][] = [];
+  if (lineX !== null) lines.push([lineX, 0, lineX, canvasH]);
+  if (lineY !== null) lines.push([0, lineY, canvasW, lineY]);
+
+  return { x: snapX, y: snapY, lines };
+}
 
 interface KonvaCanvasProps {
   canvasWidth?: number;
@@ -19,6 +79,7 @@ export default function KonvaCanvas({ canvasWidth = 1920, canvasHeight = 1080 }:
   const transformerRef = useRef<Konva.Transformer>(null);
 
   const [containerSize, setContainerSize] = useState({ w: 800, h: 600 });
+  const [snapLines, setSnapLines] = useState<number[][]>([]);
 
   const scene = useCurrentScene();
   const selectedIds = useEditorStore(s => s.selectedIds);
@@ -76,7 +137,7 @@ export default function KonvaCanvas({ canvasWidth = 1920, canvasHeight = 1080 }:
   }, [selectedIds, scene?.elements]);
 
   // Click on background → clear selection
-  const handleStageClick = useCallback((e: KonvaEventObject<MouseEvent>) => {
+  const handleStageClick = useCallback((e: KonvaEventObject<MouseEvent | TouchEvent>) => {
     // If the click target is the stage itself or the background rect, clear selection
     const target = e.target;
     if (target === stageRef.current || target.name() === 'background') {
@@ -85,7 +146,7 @@ export default function KonvaCanvas({ canvasWidth = 1920, canvasHeight = 1080 }:
   }, [clearSelection]);
 
   // Element selection
-  const handleElementSelect = useCallback((id: string, e: KonvaEventObject<MouseEvent>) => {
+  const handleElementSelect = useCallback((id: string, e: KonvaEventObject<MouseEvent | TouchEvent>) => {
     const isShift = e.evt.shiftKey;
     select(id, isShift);
   }, [select]);
@@ -95,8 +156,29 @@ export default function KonvaCanvas({ canvasWidth = 1920, canvasHeight = 1080 }:
     pushHistory();
   }, [pushHistory]);
 
+  // Drag move → snap to edges/centers of scene and other elements
+  const handleDragMove = useCallback((id: string, node: Konva.Group) => {
+    if (selectedIds.size > 1) return; // multi-select: skip snapping
+    if (!scene) return;
+    const el = scene.elements.find(e => e.id === id);
+    if (!el) return;
+    const others = scene.elements
+      .filter(e => e.id !== id && e.visible)
+      .map(e => ({ x: e.x, y: e.y, width: e.width, height: e.height }));
+    const { x, y, lines } = computeSnap(
+      { x: node.x(), y: node.y(), width: el.width, height: el.height },
+      others,
+      canvasWidth,
+      canvasHeight,
+    );
+    node.x(x);
+    node.y(y);
+    setSnapLines(lines);
+  }, [scene, selectedIds, canvasWidth, canvasHeight]);
+
   // Drag end → update element position
   const handleDragEnd = useCallback((id: string, x: number, y: number) => {
+    setSnapLines([]);
     // If multi-selecting, batch update all dragged nodes
     if (selectedIds.size > 1 && selectedIds.has(id)) {
       const stage = stageRef.current;
@@ -214,7 +296,13 @@ export default function KonvaCanvas({ canvasWidth = 1920, canvasHeight = 1080 }:
         onTap={handleStageClick}
       >
         <Layer>
-          {/* Background rect (click target for deselect) */}
+          {/* Dim overlay outside canvas bounds (letterbox) */}
+          <Rect x={-OOB} y={-OOB} width={canvasWidth + OOB * 2} height={OOB} fill={DIM_FILL} listening={false} />
+          <Rect x={-OOB} y={canvasHeight} width={canvasWidth + OOB * 2} height={OOB} fill={DIM_FILL} listening={false} />
+          <Rect x={-OOB} y={0} width={OOB} height={canvasHeight} fill={DIM_FILL} listening={false} />
+          <Rect x={canvasWidth} y={0} width={OOB} height={canvasHeight} fill={DIM_FILL} listening={false} />
+
+          {/* Canvas area (click target for deselect) */}
           <Rect
             name="background"
             x={0}
@@ -222,9 +310,38 @@ export default function KonvaCanvas({ canvasWidth = 1920, canvasHeight = 1080 }:
             width={canvasWidth}
             height={canvasHeight}
             fill="rgba(0,0,0,0.02)"
-            stroke="var(--color-border, #333)"
+            stroke="rgba(255,255,255,0.15)"
             strokeWidth={1}
             listening={true}
+          />
+
+          {/* Center crosshair guides */}
+          <Line
+            points={[canvasWidth / 2, 0, canvasWidth / 2, canvasHeight]}
+            stroke="rgba(255,255,255,0.06)"
+            strokeWidth={1}
+            dash={[8, 8]}
+            listening={false}
+          />
+          <Line
+            points={[0, canvasHeight / 2, canvasWidth, canvasHeight / 2]}
+            stroke="rgba(255,255,255,0.06)"
+            strokeWidth={1}
+            dash={[8, 8]}
+            listening={false}
+          />
+
+          {/* Resolution label below canvas */}
+          <Text
+            text={`${canvasWidth} \u00d7 ${canvasHeight}`}
+            x={canvasWidth - 200}
+            y={canvasHeight + 12}
+            width={200}
+            fontSize={20}
+            fill="rgba(255,255,255,0.3)"
+            align="right"
+            fontFamily="Inter, system-ui, sans-serif"
+            listening={false}
           />
 
           {/* Elements */}
@@ -235,8 +352,21 @@ export default function KonvaCanvas({ canvasWidth = 1920, canvasHeight = 1080 }:
               isSelected={selectedIds.has(element.id)}
               onSelect={handleElementSelect}
               onDragStart={handleDragStart}
+              onDragMove={handleDragMove}
               onDragEnd={handleDragEnd}
               onTransformEnd={handleTransformEnd}
+            />
+          ))}
+
+          {/* Snap guide lines */}
+          {snapLines.map((pts, i) => (
+            <Line
+              key={i}
+              points={pts}
+              stroke="#00d9ff"
+              strokeWidth={1 / zoom}
+              dash={[6 / zoom, 4 / zoom]}
+              listening={false}
             />
           ))}
 

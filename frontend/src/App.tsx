@@ -9,8 +9,7 @@ import {
   Wifi,
   WifiOff,
 } from 'lucide-react';
-import { Tag } from 'primereact/tag';
-import { Toast } from 'primereact/toast';
+import { WTag, WToast, WButton } from './components/w';
 import { socketService } from './services/socket';
 import { getSettings } from './services/api';
 import { toastRef, showToast } from './services/toast';
@@ -21,7 +20,6 @@ import BackendDashboard from './components/BackendDashboard';
 import ThemePicker, { initTheme, applyTheme } from './components/ThemeSwitcher';
 import { THEME_STORAGE_KEY, MODE_STORAGE_KEY, type ThemeName, type ThemeMode } from './themes/themes';
 import Overlay from './components/Overlay';
-import { Button } from 'primereact/button';
 
 // Initialize theme + mode immediately (before React renders)
 initTheme();
@@ -65,31 +63,25 @@ function SlideNav({ activeView, setActiveView }: { activeView: View; setActiveVi
   }, [activeView]);
 
   return (
-    <div className="relative flex " style={{ padding: 15 }}>
-      {/* Background shape — sits behind everything, doesn't clip */}
-
+    <div className="relative flex items-center">
       {tabs.map((tab) => {
         const isActive = activeView === tab.view;
         return (
-          <motion.button
+          <button
             key={tab.view}
             ref={(el) => { if (el) tabRefs.current.set(tab.view, el); }}
             onClick={() => setActiveView(tab.view)}
-            whileHover={isActive ? {} : { y: -2, rotate: -1.5 }}
-            whileTap={{ scale: 0.97 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-            className={`relative z-10 flex items-center gap-2.5 font-medium rounded-full whitespace-nowrap${isActive ? ' text-primary-foreground' : ' text-muted-foreground hover:text-foreground hover:bg-muted'}`}
-            style={{ padding: '0.625rem 1.5rem' }}
+            className="nav-tab"
+            data-active={isActive || undefined}
           >
             {tab.icon}
             <span>{tab.label}</span>
-          </motion.button>
+          </button>
         );
       })}
       {/* Sliding pill cursor */}
       <motion.div
-        className="absolute z-[5] rounded-full bg-foreground"
-        style={{ top: 15, bottom: 15 }}
+        className="nav-pill"
         animate={{
           left: cursor.left,
           width: cursor.width,
@@ -178,7 +170,7 @@ function AppMain() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col relative">
-      <Toast ref={toastRef} position="top-right" />
+      <WToast ref={toastRef} />
 
       {/* Ambient background orbs */}
       <div className="ambient-bg" />
@@ -190,18 +182,18 @@ function AppMain() {
             <h1 className="text-xl font-bold text-foreground tracking-tight">
               worxed-stream-manager
             </h1>
-            <Tag value="v1.0" severity="secondary" className="text-[10px]" rounded style={{ padding: 5 }} />
+            <WTag value="v1.0" severity="secondary" rounded style={{ padding: 5, fontSize: '10px' }} />
           </div>
 
           <div className="flex items-center gap-3">
-            <Button
+            <WButton
               label="Admin Panel"
+              size="large"
               icon={<ExternalLink size={14} />}
               onClick={()=>window.open('http://localhost:4000', '_blank')}
-              className = "gap-1.5"
             />
             <ThemePicker />
-            <Tag
+            <WTag
               value={connected ? 'Online' : 'Offline'}
               severity={connected ? 'success' : 'danger'}
               icon={connected ? <Wifi size={14} /> : <WifiOff size={14} />}
@@ -219,12 +211,18 @@ function AppMain() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-auto py-8 relative z-1">
-        <div className="content-container">
-          <div key={activeView} className="animate-view-enter">
+      <main className="flex-1 overflow-auto relative z-1" style={{ paddingTop: activeView === 'customizer' ? '0.5rem' : '2rem', paddingBottom: activeView === 'customizer' ? '0.5rem' : '2rem' }}>
+        {activeView === 'customizer' ? (
+          <div key="customizer" className="animate-view-enter px-4 h-full">
             {renderView()}
           </div>
-        </div>
+        ) : (
+          <div className="content-container">
+            <div key={activeView} className="animate-view-enter">
+              {renderView()}
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );

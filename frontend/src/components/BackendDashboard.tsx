@@ -9,11 +9,7 @@ import {
   Play,
   Square,
 } from 'lucide-react';
-import { Card } from 'primereact/card';
-import { Panel } from 'primereact/panel';
-import { Button } from 'primereact/button';
-import { ScrollPanel } from 'primereact/scrollpanel';
-import { InputText } from 'primereact/inputtext';
+import { WCard, WPanel, WButton, WScrollPanel, WInput } from './w';
 import { socketService } from '../services/socket';
 
 interface LogEntry {
@@ -169,45 +165,45 @@ export default function BackendDashboard() {
     <div className="flex flex-col gap-8">
       {/* Top Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-5">
-        <Card className="card-stat">
+        <WCard variant="stat">
           <div className="flex items-center gap-2 mb-3">
             <Cpu size={16} className="text-muted-foreground" />
             <span className="text-xs text-muted-foreground font-medium">CPU Load</span>
           </div>
           <div className="text-2xl font-bold text-foreground">{cpuLoad}</div>
-        </Card>
+        </WCard>
 
-        <Card className="card-stat">
+        <WCard variant="stat">
           <div className="flex items-center gap-2 mb-3">
             <Wifi size={16} className="text-muted-foreground" />
             <span className="text-xs text-muted-foreground font-medium">Active Clients</span>
           </div>
           <div className="text-2xl font-bold text-foreground">{connections.length}</div>
-        </Card>
+        </WCard>
 
-        <Card className="card-stat">
+        <WCard variant="stat">
           <div className="flex items-center gap-2 mb-3">
             <Activity size={16} className="text-muted-foreground" />
             <span className="text-xs text-muted-foreground font-medium">Processes</span>
           </div>
           <div className="text-2xl font-bold text-foreground">{processes.length}</div>
-        </Card>
+        </WCard>
 
-        <Card className="card-stat">
+        <WCard variant="stat">
           <div className="flex items-center gap-2 mb-3">
             <Clock size={16} className="text-muted-foreground" />
             <span className="text-xs text-muted-foreground font-medium">Server Latency</span>
           </div>
           <div className="text-2xl font-bold text-foreground">{serverLatency}</div>
-        </Card>
+        </WCard>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
         {/* Process Manager */}
         <div className="md:col-span-4">
-          <Panel header={processesHeader} className="card-elevated h-110 flex flex-col">
+          <WPanel header={processesHeader} variant="elevated" className="h-110 flex flex-col">
             <div className="flex-1 overflow-hidden">
-              <ScrollPanel style={{ width: '100%', height: '100%' }}>
+              <WScrollPanel style={{ width: '100%', height: '100%' }}>
                 <div className="flex flex-col gap-3">
                   {processes.map((proc) => (
                     <div
@@ -221,7 +217,7 @@ export default function BackendDashboard() {
                           />
                           <span className="text-sm font-semibold text-foreground">{proc.name}</span>
                         </div>
-                        <Button
+                        <WButton
                           text
                           size="small"
                           onClick={() => toggleProcess(proc.id)}
@@ -229,25 +225,25 @@ export default function BackendDashboard() {
                           className="p-1.5 h-auto rounded-lg"
                         >
                           {proc.status === 'running' ? <Square size={14} /> : <Play size={14} />}
-                        </Button>
+                        </WButton>
                       </div>
-                      <p className="text-[11px] text-muted-foreground font-mono">
+                      <p className="text-muted-foreground font-mono" style={{ fontSize: '11px' }}>
                         PORT: {proc.port} &middot; UP: {proc.uptime}
                       </p>
                     </div>
                   ))}
                 </div>
-              </ScrollPanel>
+              </WScrollPanel>
             </div>
-          </Panel>
+          </WPanel>
         </div>
 
         {/* Terminal + Connections */}
         <div className="md:col-span-8 flex flex-col gap-6">
           {/* Terminal */}
-          <Panel headerTemplate={terminalHeaderTemplate} className="card-elevated h-80 flex flex-col bg-background">
+          <WPanel headerTemplate={terminalHeaderTemplate} variant="elevated" className="h-80 flex flex-col bg-background">
             <div className="flex-1 overflow-hidden">
-              <ScrollPanel style={{ width: '100%', height: '100%', padding: '1rem' }}>
+              <WScrollPanel style={{ width: '100%', height: '100%', padding: '1rem' }}>
                 <div className="flex flex-col gap-1.5">
                   {logs.map((log, i) => (
                     <div key={i} className="flex gap-4">
@@ -261,13 +257,14 @@ export default function BackendDashboard() {
                   ))}
                   <div ref={logEndRef} />
                 </div>
-              </ScrollPanel>
+              </WScrollPanel>
             </div>
 
             <form onSubmit={handleCommand}>
               <div className="flex items-center gap-3 px-4 py-3 border-t border-border">
                 <span className="text-sm font-bold text-foreground font-mono">$</span>
-                <InputText
+                <WInput
+                  unstyled
                   value={command}
                   onChange={(e) => setCommand(e.target.value)}
                   placeholder="Type 'status', 'restart', or 'clear'..."
@@ -275,10 +272,10 @@ export default function BackendDashboard() {
                 />
               </div>
             </form>
-          </Panel>
+          </WPanel>
 
           {/* Connections */}
-          <Panel header={connectionsHeader} className="card-elevated">
+          <WPanel header={connectionsHeader} variant="elevated">
             <div className="flex flex-wrap gap-4">
               {connections.map((conn) => (
                 <div
@@ -293,7 +290,7 @@ export default function BackendDashboard() {
                 </div>
               ))}
             </div>
-          </Panel>
+          </WPanel>
         </div>
       </div>
     </div>

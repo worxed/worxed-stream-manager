@@ -1,21 +1,27 @@
-import { Bell, MessageSquare, Type, ImageIcon, Zap, Eye, EyeOff, Lock, Unlock, GripVertical } from 'lucide-react';
+import { Bell, MessageSquare, Type, ImageIcon, Zap, Target, BarChart2, List, Eye, EyeOff, Lock, Unlock, GripVertical } from 'lucide-react';
 import { useEditorStore, useCurrentScene } from '../../stores/editorStore';
 import type { ElementType } from '../../types';
 
 const ELEMENT_ICONS: Record<ElementType, React.ReactNode> = {
-  'alert-box': <Bell size={14} />,
-  'chat': <MessageSquare size={14} />,
-  'text': <Type size={14} />,
-  'image': <ImageIcon size={14} />,
-  'custom-event': <Zap size={14} />,
+  'alert-box':     <Bell size={14} />,
+  'chat':          <MessageSquare size={14} />,
+  'text':          <Type size={14} />,
+  'image':         <ImageIcon size={14} />,
+  'custom-event':  <Zap size={14} />,
+  'goal':          <Target size={14} />,
+  'stat':          <BarChart2 size={14} />,
+  'recent-events': <List size={14} />,
 };
 
 const ADD_ITEMS: { type: ElementType; label: string; icon: React.ReactNode }[] = [
-  { type: 'alert-box', label: 'Alert Box', icon: <Bell size={16} /> },
-  { type: 'chat', label: 'Chat', icon: <MessageSquare size={16} /> },
-  { type: 'text', label: 'Text', icon: <Type size={16} /> },
-  { type: 'image', label: 'Image', icon: <ImageIcon size={16} /> },
-  { type: 'custom-event', label: 'Custom Event', icon: <Zap size={16} /> },
+  { type: 'alert-box',     label: 'Alert Box',      icon: <Bell size={16} /> },
+  { type: 'chat',          label: 'Chat',            icon: <MessageSquare size={16} /> },
+  { type: 'text',          label: 'Text',            icon: <Type size={16} /> },
+  { type: 'image',         label: 'Image',           icon: <ImageIcon size={16} /> },
+  { type: 'custom-event',  label: 'Custom Event',    icon: <Zap size={16} /> },
+  { type: 'goal',          label: 'Goal',            icon: <Target size={16} /> },
+  { type: 'stat',          label: 'Stat',            icon: <BarChart2 size={16} /> },
+  { type: 'recent-events', label: 'Recent Events',   icon: <List size={16} /> },
 ];
 
 export default function ElementToolbox() {
@@ -41,7 +47,7 @@ export default function ElementToolbox() {
             <button
               key={item.type}
               onClick={() => addElement(item.type)}
-              className="flex items-center gap-1.5 px-2 py-1.5 text-xs rounded-lg border border-border bg-background hover:bg-accent hover:border-primary/30 transition-colors text-foreground"
+              className="editor-add-btn"
             >
               <span className="text-muted-foreground">{item.icon}</span>
               <span>{item.label}</span>
@@ -61,10 +67,8 @@ export default function ElementToolbox() {
               <div
                 key={el.id}
                 onClick={(e) => select(el.id, e.shiftKey)}
-                className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg cursor-pointer transition-colors group text-xs ${
-                  selectedIds.has(el.id)
-                    ? 'bg-primary/10 border border-primary/30'
-                    : 'hover:bg-accent border border-transparent'
+                className={`editor-layer group ${
+                  selectedIds.has(el.id) ? 'editor-layer-selected' : ''
                 }`}
               >
                 <GripVertical size={12} className="text-muted-foreground opacity-0 group-hover:opacity-100 shrink-0 cursor-grab" />

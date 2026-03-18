@@ -1,8 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Zap } from 'lucide-react';
-import { Panel } from 'primereact/panel';
-import { Tag } from 'primereact/tag';
-import { ScrollPanel } from 'primereact/scrollpanel';
+import { WPanel, WTag, WScrollPanel } from './w';
 import { socketService } from '../services/socket';
 import { getEndpoints } from '../services/api';
 import type { CustomEvent } from '../types';
@@ -62,12 +60,12 @@ export default function EventFeed() {
   );
 
   const icons = (
-    <Tag value={String(events.length)} severity="secondary" rounded />
+    <WTag value={String(events.length)} severity="secondary" rounded />
   );
 
   return (
-    <Panel header={header} icons={icons} className="card-elevated">
-      <ScrollPanel style={{ width: '100%', height: '240px' }}>
+    <WPanel header={header} icons={icons} variant="elevated">
+      <WScrollPanel style={{ width: '100%', height: '240px' }}>
         <div className="flex flex-col gap-1.5">
           {events.map((evt) => (
             <div
@@ -75,7 +73,7 @@ export default function EventFeed() {
               className="p-3.5 border border-transparent hover:border-border rounded-xl flex items-center justify-between gap-3 hover:bg-accent/50 transition-all duration-200"
             >
               <div className="flex items-center gap-3 flex-1 min-w-0">
-                <Tag value={evt.eventName} severity="secondary" className="text-xs shrink-0" rounded />
+                <WTag value={evt.eventName} severity="secondary" className="shrink-0" rounded />
                 <span className="text-sm text-muted-foreground truncate">
                   {Object.entries(evt.data)
                     .map(([k, v]) => `${k}: ${typeof v === 'string' ? v : JSON.stringify(v)}`)
@@ -88,7 +86,7 @@ export default function EventFeed() {
             </div>
           ))}
         </div>
-      </ScrollPanel>
-    </Panel>
+      </WScrollPanel>
+    </WPanel>
   );
 }

@@ -92,6 +92,54 @@ const DEFAULT_ELEMENTS: Record<ElementType, Omit<SceneElement, 'id' | 'zIndex'>>
     },
     config: { eventName: '', template: '{{message}}', duration: 5000, animation: 'fadeInUp', maxQueueSize: 10 },
   },
+  'goal': {
+    type: 'goal',
+    name: 'Goal',
+    x: 660, y: 900, width: 600, height: 100, rotation: 0,
+    visible: true, locked: false,
+    style: {
+      backgroundColor: 'rgba(0,0,0,0.7)',
+      borderRadius: 10,
+      opacity: 1,
+      fontFamily: 'Inter, system-ui, sans-serif',
+      fontSize: 18,
+      color: '#ffffff',
+      padding: 16,
+    },
+    config: { goalType: 'follower', goal: 500, label: '', showNumbers: true, showPercentage: true, barColor: '#3b82f6', barStyle: 'linear' },
+  },
+  'stat': {
+    type: 'stat',
+    name: 'Stat',
+    x: 30, y: 30, width: 180, height: 100, rotation: 0,
+    visible: true, locked: false,
+    style: {
+      backgroundColor: 'rgba(0,0,0,0.6)',
+      borderRadius: 8,
+      opacity: 1,
+      fontFamily: 'Inter, system-ui, sans-serif',
+      fontSize: 40,
+      color: '#ffffff',
+      padding: 12,
+    },
+    config: { statType: 'viewers', label: '', prefix: '', suffix: '' },
+  },
+  'recent-events': {
+    type: 'recent-events',
+    name: 'Recent Events',
+    x: 30, y: 400, width: 320, height: 300, rotation: 0,
+    visible: true, locked: false,
+    style: {
+      backgroundColor: 'rgba(0,0,0,0.55)',
+      borderRadius: 8,
+      opacity: 1,
+      fontFamily: 'Inter, system-ui, sans-serif',
+      fontSize: 15,
+      color: '#ffffff',
+      padding: 10,
+    },
+    config: { eventTypes: ['follow', 'subscribe', 'donation', 'raid'], maxCount: 8, showIcons: true, fadeAfter: 0 },
+  },
 };
 
 // --- Types ---
@@ -279,7 +327,7 @@ export const useEditorStore = create<EditorStore>()(
         autoSaveTimer = null;
       }
       set({ saving: true });
-      await apiUpdateScene(scene.id, { elements: scene.elements, name: scene.name });
+      await apiUpdateScene(scene.id, { elements: scene.elements, name: scene.name, width: scene.width, height: scene.height });
       set({ saving: false });
     },
 

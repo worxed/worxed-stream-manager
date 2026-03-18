@@ -2,14 +2,15 @@ import { useEffect, useRef, useState } from 'react';
 import { Group, Rect, Text, Image as KonvaImage } from 'react-konva';
 import type { KonvaEventObject } from 'konva/lib/Node';
 import type Konva from 'konva';
-import type { SceneElement, TextConfig, ImageConfig, CustomEventConfig } from '../../types';
+import type { SceneElement, TextConfig, ImageConfig, CustomEventConfig, GoalConfig, StatConfig } from '../../types';
 
 interface Props {
   element: SceneElement;
   isSelected: boolean;
-  onSelect: (id: string, e: KonvaEventObject<MouseEvent>) => void;
+  onSelect: (id: string, e: KonvaEventObject<MouseEvent | TouchEvent>) => void;
   onDragStart: () => void;
   onDragEnd: (id: string, x: number, y: number) => void;
+  onDragMove?: (id: string, node: Konva.Group) => void;
   onTransformEnd: (id: string, attrs: { x: number; y: number; width: number; height: number; rotation: number }) => void;
 }
 
@@ -41,11 +42,11 @@ function parseColor(color: string | undefined, fallback: string): string {
   return color || fallback;
 }
 
-export default function KonvaElement({ element, onSelect, onDragStart, onDragEnd, onTransformEnd }: Props) {
+export default function KonvaElement({ element, onSelect, onDragStart, onDragEnd, onDragMove, onTransformEnd }: Props) {
   const groupRef = useRef<Konva.Group>(null);
   const { id, x, y, width, height, rotation, visible, locked, style, config, type, name } = element;
 
-  const handleClick = (e: KonvaEventObject<MouseEvent>) => {
+  const handleClick = (e: KonvaEventObject<MouseEvent | TouchEvent>) => {
     e.cancelBubble = true;
     onSelect(id, e);
   };
@@ -249,6 +250,55 @@ export default function KonvaElement({ element, onSelect, onDragStart, onDragEnd
         );
       }
 
+      case 'goal': {
+        const goalCfg = config as GoalConfig;
+        const barW = Math.round(width * 0.5);
+        const barColor = goalCfg.barColor || '#3b82f6';
+        return (
+          <>
+            <Rect width={width} height={height} fill={bgFill} cornerRadius={borderRadius} listening={false} />
+            <Text
+              text={goalCfg.label || (goalCfg.goalType === 'follower' ? 'Follower Goal' : goalCfg.goalType === 'subscriber' ? 'Sub Goal' : goalCfg.goalType === 'donation' ? 'Donation Goal' : 'Goal')}
+              x={padding} y={padding}
+              width={width - padding * 2}
+              fontSize={Math.min(fontSize, 18)} fontFamily={fontFamily} fill={textColor}
+              fontStyle="bold" listening={false}
+            />
+            {/* Track */}
+            <Rect x={padding} y={height - padding - 10} width={width - padding * 2} height={10} fill="rgba(255,255,255,0.15)" cornerRadius={5} listening={false} />
+            {/* Fill */}
+            <Rect x={padding} y={height - padding - 10} width={barW} height={10} fill={barColor} cornerRadius={5} listening={false} />
+          </>
+        );
+      }
+
+      case 'stat': {
+        const statCfg = config as StatConfig;
+        const statLabels: Record<string, string> = { viewers: 'VIEWERS', followers: 'FOLLOWERS', uptime: 'UPTIME', 'session-follows': 'NEW FOLLOWS', 'session-subs': 'NEW SUBS', 'session-donations': 'DONATIONS' };
+        const statLabel = statCfg.label || statLabels[statCfg.statType] || 'STAT';
+        return (
+          <>
+            <Rect width={width} height={height} fill={bgFill} cornerRadius={borderRadius} listening={false} />
+            <Text text="—" x={0} y={height * 0.15} width={width} fontSize={Math.min(fontSize, height * 0.45)} fontFamily={fontFamily} fill={textColor} fontStyle="bold" align="center" listening={false} />
+            <Text text={statLabel} x={0} y={height * 0.68} width={width} fontSize={Math.min(12, height * 0.18)} fontFamily={fontFamily} fill="rgba(255,255,255,0.55)" align="center" listening={false} />
+          </>
+        );
+      }
+
+      case 'recent-events': {
+        const lines = ['♥  New follower', '★  New subscriber', '💎  Donation', '⚔  Raid'];
+        const lineH = Math.min(fontSize, 16) + 6;
+        return (
+          <>
+            <Rect width={width} height={height} fill={bgFill} cornerRadius={borderRadius} listening={false} />
+            {lines.map((line, i) => (
+              <Text key={i} text={line} x={padding} y={padding + i * lineH} width={width - padding * 2}
+                fontSize={Math.min(fontSize, 14)} fontFamily={fontFamily} fill={textColor} listening={false} />
+            ))}
+          </>
+        );
+      }
+
       default:
         return (
           <Rect
@@ -276,6 +326,7 @@ export default function KonvaElement({ element, onSelect, onDragStart, onDragEnd
       onClick={handleClick}
       onTap={handleClick}
       onDragStart={handleDragStart}
+      onDragMove={() => { if (groupRef.current) onDragMove?.(id, groupRef.current); }}
       onDragEnd={handleDragEnd}
       onTransformEnd={handleTransformEnd}
     >

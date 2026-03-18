@@ -8,12 +8,7 @@ import {
   VolumeX,
   Bell,
 } from 'lucide-react';
-import { Panel } from 'primereact/panel';
-import { Button } from 'primereact/button';
-import { Tag } from 'primereact/tag';
-import { ScrollPanel } from 'primereact/scrollpanel';
-import { InputSwitch } from 'primereact/inputswitch';
-import { Slider } from 'primereact/slider';
+import { WPanel, WButton, WTag, WScrollPanel, WSwitch, WSlider } from './w';
 import { showToast } from '../services/toast';
 import { socketService } from '../services/socket';
 import { getAlertSettings, updateAlertSettings, triggerTestAlert } from '../services/api';
@@ -156,7 +151,7 @@ export default function Alerts() {
   ];
 
   const recentAlertsIcons = (
-    <Button
+    <WButton
       icon="pi pi-trash"
       label="Clear"
       text
@@ -169,7 +164,7 @@ export default function Alerts() {
   return (
     <div className="flex flex-col gap-8">
       {/* Alert Settings */}
-      <Panel header="Alert Settings" className="card-elevated">
+      <WPanel header="Alert Settings" variant="elevated">
         <div className="flex flex-col gap-5">
           {alertTypes.map(({ key, label }) => {
             const colors = alertColorMap[key];
@@ -191,7 +186,7 @@ export default function Alerts() {
                 {/* Enabled */}
                 <div className="flex items-center gap-3">
                   <span className="text-xs text-muted-foreground font-medium">Enabled</span>
-                  <InputSwitch
+                  <WSwitch
                     checked={settings[key].enabled}
                     onChange={() => handleToggle(key, 'enabled')}
                   />
@@ -204,7 +199,7 @@ export default function Alerts() {
                   ) : (
                     <VolumeX size={14} className="text-muted-foreground" />
                   )}
-                  <InputSwitch
+                  <WSwitch
                     checked={settings[key].sound}
                     onChange={() => handleToggle(key, 'sound')}
                   />
@@ -215,7 +210,7 @@ export default function Alerts() {
                   <span className="text-xs text-muted-foreground font-medium tabular-nums shrink-0 w-8">
                     {(settings[key].duration / 1000).toFixed(1)}s
                   </span>
-                  <Slider
+                  <WSlider
                     value={settings[key].duration}
                     min={2000}
                     max={15000}
@@ -227,7 +222,7 @@ export default function Alerts() {
                 </div>
 
                 {/* Test button */}
-                <Button
+                <WButton
                   label={loading ? undefined : 'Test'}
                   icon={loading ? 'pi pi-spin pi-spinner' : undefined}
                   outlined
@@ -240,11 +235,11 @@ export default function Alerts() {
             );
           })}
         </div>
-      </Panel>
+      </WPanel>
 
       {/* Recent Alerts */}
-      <Panel header="Recent Alerts" icons={recentAlertsIcons} className="card-elevated">
-        <ScrollPanel style={{ width: '100%', height: '340px' }}>
+      <WPanel header="Recent Alerts" icons={recentAlertsIcons} variant="elevated">
+        <WScrollPanel style={{ width: '100%', height: '340px' }}>
           <div className="flex flex-col gap-2">
             {recentAlerts.length === 0 ? (
               <EmptyState
@@ -258,10 +253,10 @@ export default function Alerts() {
                   key={alert.id}
                   className="flex items-center gap-4 p-3.5 border border-transparent hover:border-border hover:bg-accent/50 transition-all duration-200 rounded-xl"
                 >
-                  <Tag
+                  <WTag
                     value={alert.type}
                     severity={getBadgeSeverity(alert.type) as any}
-                    className={`gap-1.5 text-xs${getBadgeClass(alert.type) ? ` ${getBadgeClass(alert.type)}` : ''}`}
+                    className={`gap-1.5${getBadgeClass(alert.type) ? ` ${getBadgeClass(alert.type)}` : ''}`}
                     icon={getAlertIcon(alert.type)}
                     rounded
                   />
@@ -271,7 +266,7 @@ export default function Alerts() {
                   </span>
 
                   {alert.amount && (
-                    <Tag value={`$${alert.amount}`} className="text-xs worxed-badge-donation" rounded />
+                    <WTag value={`$${alert.amount}`} badge="donation" rounded />
                   )}
 
                   {alert.message && (
@@ -287,8 +282,8 @@ export default function Alerts() {
               ))
             )}
           </div>
-        </ScrollPanel>
-      </Panel>
+        </WScrollPanel>
+      </WPanel>
     </div>
   );
 }

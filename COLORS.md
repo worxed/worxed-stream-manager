@@ -1,27 +1,29 @@
 # Worxed Stream Manager - Color System
 
-## Multi-Theme System (Implemented)
+## Multi-Theme System
 
-**Status:** Three professional themes with dark/light mode support are fully implemented in `frontend/src/themes/themes.ts`. Themes can be switched via the frontend ThemeSwitcher or remotely via admin settings (`overlay.theme`, `overlay.mode`). Changes propagate in real-time to all connected clients and OBS overlays.
+**Status:** Four professional themes with dark/light mode support (8 combinations) implemented via CSS variables in `frontend/src/index.css`. Themes use `[data-theme]` selectors with hand-written utility CSS classes. Changes propagate in real-time to all connected clients and OBS overlays via Socket.IO.
 
-### CSS Variables (set dynamically by applyTheme)
+### CSS Variables
 
 ```css
 :root {
-  /* Canvas */
-  --primary-bg, --surface, --surface-elevated, --card-bg, --card-elevated
-  /* Brand */
-  --primary, --secondary, --accent, --fire-red
-  /* Semantic */
-  --success, --warning, --danger
-  /* Structure */
-  --border-color, --divider
-  /* Typography */
-  --text-primary, --text-secondary, --text-muted
-  /* Interaction */
-  --hover-bg, --active-bg
-  /* Legacy mappings */
-  --electric-cyan, --cool-slate, --primary-green, --secondary-purple
+  /* Semantic color tokens */
+  --background, --foreground
+  --card, --card-foreground
+  --primary, --primary-foreground
+  --secondary, --secondary-foreground
+  --muted, --muted-foreground
+  --accent, --accent-foreground
+  --border, --input, --ring
+  --destructive, --destructive-foreground
+  --success, --success-foreground
+  --warning, --warning-foreground
+  --info, --info-foreground
+  --chart-1 through --chart-5
+  /* Ambient & glow */
+  --ambient-1, --ambient-2
+  --glow-primary
 }
 ```
 
@@ -29,101 +31,41 @@
 
 ## Theme Definitions
 
-### Theme 1: **Magma Forge** (Console Aesthetic)
+### Theme 1: **Zinc** (Default)
 
-High-contrast industrial theme with warm red tones and deep blacks.
+Clean, neutral theme. Uses bare `:root` / `.dark` defaults — no `data-theme` attribute needed.
 
-#### Dark Mode
-| Element | Color | Hex Code | Usage |
-|---------|-------|----------|-------|
-| Background | Pitch Black | `#000000` | Main background |
-| Surface | Charcoal | `#1A1A1A` | Cards, panels |
-| Surface Elevated | Deep Gray | `#242424` | Elevated panels, modals |
-| Primary | Lava Red | `#FF4436` | Primary actions, CTA buttons |
-| Secondary | Ember | `#FF6B5A` | Secondary actions |
-| Accent | Molten Orange | `#FF8C42` | Highlights, active states |
-| Border | Forge Edge | `#333333` | Panel borders, dividers |
-| Text Primary | Pure White | `#FFFFFF` | Main text, headings |
-| Text Secondary | Ash Gray | `#A0A0A0` | Secondary text, descriptions |
-| Text Muted | Smoke | `#666666` | Disabled text, hints |
+| Mode | Background | Foreground | Primary | Border |
+|------|-----------|------------|---------|--------|
+| Light | `#ffffff` | `#09090b` | `#18181b` | `#e4e4e7` |
+| Dark | `#09090b` | `#fafafa` | `#fafafa` | `#2e2e33` |
 
-#### Light Mode
-| Element | Color | Hex Code | Usage |
-|---------|-------|----------|-------|
-| Background | Off White | `#F5F5F5` | Main background |
-| Surface | Pure White | `#FFFFFF` | Cards, panels |
-| Surface Elevated | Bright White | `#FAFAFA` | Elevated panels |
-| Primary | Crimson | `#C82333` | Primary actions |
-| Secondary | Fire Brick | `#DC3545` | Secondary actions |
-| Accent | Burnt Orange | `#E8590C` | Highlights |
-| Border | Light Gray | `#DEDEDE` | Panel borders |
-| Text Primary | Carbon | `#1A1A1A` | Main text |
-| Text Secondary | Slate | `#4A4A4A` | Secondary text |
-| Text Muted | Cool Gray | `#8A8A8A` | Disabled text |
+### Theme 2: **Synthetica** (Cool Blue-Gray)
 
-### Theme 2: **Techno-Organic** (Amber Aesthetic)
+Monochromatic theme with subtle blue tint. OLED-friendly in dark mode.
 
-Warm amber tones with organic brown undertones for reduced eye strain.
+| Mode | Background | Foreground | Primary | Border |
+|------|-----------|------------|---------|--------|
+| Light | `#f0f2f8` | `#1a1d2e` | `#334680` | `#c8cad8` |
+| Dark | `#0d1020` | `#d0d5e8` | `#6889c8` | `#2a3158` |
 
-#### Dark Mode
-| Element | Color | Hex Code | Usage |
-|---------|-------|----------|-------|
-| Background | Obsidian | `#0D0D0D` | Main background |
-| Surface | Umber | `#1C1814` | Cards, panels |
-| Surface Elevated | Coffee | `#282420` | Elevated panels |
-| Primary | Amber Glow | `#FFB627` | Primary actions |
-| Secondary | Gold Leaf | `#F4A261` | Secondary actions |
-| Accent | Copper | `#E07A5F` | Highlights |
-| Border | Bronze | `#3D3126` | Panel borders |
-| Text Primary | Cream | `#F5E6D3` | Main text |
-| Text Secondary | Sand | `#C9B59A` | Secondary text |
-| Text Muted | Taupe | `#8A7968` | Disabled text |
+### Theme 3: **Magma** (Warm Amber/Fire)
 
-#### Light Mode
-| Element | Color | Hex Code | Usage |
-|---------|-------|----------|-------|
-| Background | Parchment | `#FAF8F3` | Main background |
-| Surface | Ivory | `#FFFEF9` | Cards, panels |
-| Surface Elevated | Cream | `#FFF9F0` | Elevated panels |
-| Primary | Golden Hour | `#D4860F` | Primary actions |
-| Secondary | Terracotta | `#C86C50` | Secondary actions |
-| Accent | Rust | `#B85440` | Highlights |
-| Border | Linen | `#E8DCC8` | Panel borders |
-| Text Primary | Espresso | `#2B2520` | Main text |
-| Text Secondary | Mocha | `#5D4E42` | Secondary text |
-| Text Muted | Latte | `#9A8B7A` | Disabled text |
+High-energy theme with warm tones. Good for active streaming sessions.
 
-### Theme 3: **Synthetica** (Monolith Aesthetic)
+| Mode | Background | Foreground | Primary | Border |
+|------|-----------|------------|---------|--------|
+| Light | `#faf6f0` | `#2a1a0e` | `#b44d1e` | `#e0d0c0` |
+| Dark | `#1a1008` | `#e8ddd0` | `#e07830` | `#3e2e22` |
 
-Pure monochromatic theme optimized for OLED displays with subtle blue tint.
+### Theme 4: **Arctic** (Icy Blue)
 
-#### Dark Mode
-| Element | Color | Hex Code | Usage |
-|---------|-------|----------|-------|
-| Background | True Black | `#000000` | Main background (OLED) |
-| Surface | Graphite | `#0F0F10` | Cards, panels |
-| Surface Elevated | Steel | `#1A1A1C` | Elevated panels |
-| Primary | Arctic Blue | `#B8C5D6` | Primary actions |
-| Secondary | Frost | `#8FA3BC` | Secondary actions |
-| Accent | Ice | `#6B8CAE` | Highlights |
-| Border | Titanium | `#2A2A2C` | Panel borders |
-| Text Primary | Platinum | `#E8E8E8` | Main text |
-| Text Secondary | Silver | `#A0A0A3` | Secondary text |
-| Text Muted | Pewter | `#5A5A5C` | Disabled text |
+Cool, crisp theme. Pairs well with light mode for daytime use.
 
-#### Light Mode
-| Element | Color | Hex Code | Usage |
-|---------|-------|----------|-------|
-| Background | Snow | `#FAFAFA` | Main background |
-| Surface | Pearl | `#FFFFFF` | Cards, panels |
-| Surface Elevated | Cloud | `#F5F5F7` | Elevated panels |
-| Primary | Slate Blue | `#4A5F7F` | Primary actions |
-| Secondary | Steel Blue | `#5A7599` | Secondary actions |
-| Accent | Ocean | `#3D7EA6` | Highlights |
-| Border | Mist | `#D1D1D6` | Panel borders |
-| Text Primary | Charcoal | `#1D1D1F` | Main text |
-| Text Secondary | Graphite | `#48484A` | Secondary text |
-| Text Muted | Storm | `#8E8E93` | Disabled text |
+| Mode | Background | Foreground | Primary | Border |
+|------|-----------|------------|---------|--------|
+| Light | `#f0f6fc` | `#0e2a4a` | `#1565c0` | `#c0d8f0` |
+| Dark | `#08111e` | `#cddaea` | `#42a5f5` | `#1e3350` |
 
 ---
 
@@ -137,77 +79,65 @@ Pure monochromatic theme optimized for OLED displays with subtle blue tint.
 
 ### Theme Personalities
 
-#### Magma Forge (Console)
-- **Feel**: Industrial, powerful, high-energy
-- **Use Case**: Live streaming, high-stakes gaming, active monitoring
-- **Psychological**: Urgency, action, excitement
-
-#### Techno-Organic (Amber)
-- **Feel**: Warm, comfortable, professional
-- **Use Case**: Long editing sessions, late-night streaming, content creation
-- **Psychological**: Focus, warmth, reduced eye strain
-
-#### Synthetica (Monolith)
-- **Feel**: Clean, minimal, professional
-- **Use Case**: Corporate streams, educational content, studio broadcasts
-- **Psychological**: Clarity, sophistication, neutrality
-
-### Layout Architecture
-- **Gap-Based Design**: 12-16px gaps between panels for breathing room
-- **Floating Panels**: Subtle shadows and elevated surfaces
-- **Transparent Sidebar**: 85-90% opacity for modern aesthetic
-- **Responsive Spacing**: Adapts to screen size and density
+| Theme | Feel | Best For |
+|-------|------|----------|
+| **Zinc** | Clean, minimal, neutral | Default, any context |
+| **Synthetica** | Cool, professional, focused | Long sessions, studio work |
+| **Magma** | Warm, energetic, powerful | Live streaming, gaming |
+| **Arctic** | Crisp, icy, refreshing | Daytime streaming, educational |
 
 ---
 
 ## Implementation
 
 ### Theme Switching
-Themes are stored in `frontend/src/themes/themes.ts` with the following structure:
 
-```typescript
-interface ThemeColors {
-  name: string;
-  colors: {
-    background: string;
-    surface: string;
-    surfaceElevated: string;
-    primary: string;
-    secondary: string;
-    accent: string;
-    border: string;
-    textPrimary: string;
-    textSecondary: string;
-    textMuted: string;
-  };
-}
-```
+Themes are defined in `frontend/src/themes/themes.ts`. The `applyTheme()` function in `ThemeSwitcher.tsx`:
 
-### Dynamic CSS Variables
-Theme colors are applied via CSS custom properties:
+1. Sets/removes `data-theme` attribute on `<html>` (zinc removes it, others set it)
+2. Toggles `.dark` class on `<html>` for dark mode
+3. Persists to localStorage for fast load
+4. DB settings (`overlay.theme`, `overlay.mode`) are source of truth
 
-```typescript
-function applyTheme(themeName: string) {
-  const theme = themes[themeName];
-  document.documentElement.style.setProperty('--primary-bg', theme.colors.background);
-  document.documentElement.style.setProperty('--card-bg', theme.colors.surface);
-  // ... other variables
-  localStorage.setItem('selectedTheme', themeName);
-}
+### CSS Architecture
+
+Three layers of styling:
+
+1. **CSS Variables** — Semantic color tokens in `:root`, `.dark`, and `[data-theme]` selectors (`index.css`)
+2. **Utility CSS Classes** — ~250 hand-written classes matching Tailwind naming (`.flex`, `.text-sm`, `.bg-card`, etc.)
+3. **PrimeReact CSS Bridge** — Maps PrimeReact component classes to CSS variables for consistent theming
+
+```css
+/* Zinc light = :root defaults */
+:root { --background: #ffffff; --primary: #18181b; }
+
+/* Dark mode */
+.dark { --background: #09090b; --primary: #fafafa; }
+
+/* Theme overrides */
+[data-theme="synthetica"] { --primary: #334680; }
+[data-theme="synthetica"].dark { --primary: #6889c8; }
+
+/* Utility classes reference vars */
+.bg-primary { background-color: var(--primary); }
+.text-foreground { color: var(--foreground); }
+
+/* Opacity variants use color-mix */
+.bg-card\/80 { background: color-mix(in srgb, var(--card) 80%, transparent); }
 ```
 
 ### Persistence & Sync
 - Theme preference stored in localStorage (fast fallback)
-- DB settings (`overlay.theme`, `overlay.mode`) are source of truth when reachable
-- Automatically applied on app load (localStorage first, then DB override)
+- DB settings (`overlay.theme`, `overlay.mode`) are source of truth
+- Automatically applied on app load (`initTheme()` runs before React renders)
 - Real-time sync via `settings-changed` Socket.IO event
 - Admin can change any connected frontend's theme remotely
 - OBS overlays at `/overlay` receive theme updates live
 
-### OBS Overlay Colors
-- The `/overlay` route accepts URL params for custom colors: `?primary=#FF3B30&secondary=#8B0000&bg=transparent`
-- Overlay uses inline styles (no Mantine) for OBS compatibility
-- Transparent background by default for compositing
+### OBS Overlay
+- The `/overlay` route uses transparent background for compositing
+- Overlay uses inline styles for OBS browser source compatibility
+- Receives theme updates via Socket.IO in real-time
 
 ---
 
@@ -219,10 +149,9 @@ function applyTheme(themeName: string) {
 - **UI Components**: Minimum 3:1
 
 ### Browser Support
-- Modern CSS custom properties
-- Fallback colors for legacy browsers
-- Tested on Chrome, Firefox, Safari, Edge
+- Modern CSS custom properties (all evergreen browsers)
+- `color-mix()` for opacity variants (Chrome 111+, Firefox 113+, Safari 16.2+)
 
 ---
 
-**Last Updated:** February 1, 2026
+**Last Updated:** February 25, 2026

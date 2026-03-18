@@ -3,11 +3,35 @@ const http = require('http');
 const { Server } = require('socket.io');
 const tmi = require('tmi.js');
 const path = require('path');
+const fs = require('fs');
 const cors = require('cors');
 const fetch = require('node-fetch');
 const crypto = require('crypto');
+const multer = require('multer');
 require('dotenv').config();
 const db = require('../shared');
+
+// Asset storage directory
+const ASSETS_DIR = path.join(__dirname, '../data/assets');
+if (!fs.existsSync(ASSETS_DIR)) fs.mkdirSync(ASSETS_DIR, { recursive: true });
+
+const assetStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, ASSETS_DIR),
+  filename: (_req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const base = Date.now() + '-' + Math.round(Math.random() * 1e6);
+    cb(null, base + ext);
+  },
+});
+const upload = multer({
+  storage: assetStorage,
+  limits: { fileSize: 20 * 1024 * 1024 }, // 20 MB
+  fileFilter: (_req, file, cb) => {
+    const allowed = /\.(png|jpe?g|gif|webp|svg|bmp|avif)$/i;
+    if (allowed.test(file.originalname)) cb(null, true);
+    else cb(new Error('Only image files are allowed'));
+  },
+});
 
 function getSetting(key, defaultValue) {
   try { return db.settings.get(key, defaultValue); } catch { return defaultValue; }
@@ -979,6 +1003,61 @@ app.delete('/api/scenes/:id', (req, res) => {
     res.json({ success: true });
   } catch (err) {
     res.status(400).json({ error: err.message });
+  }
+});
+
+// ===========================================
+// ASSET STORAGE
+// ===========================================
+
+// Serve uploaded assets as static files — inline so browsers display, not download
+const ASSET_MIME_TYPES = {
+  '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
+  '.png': 'image/png',  '.gif': 'image/gif',
+  '.webp': 'image/webp', '.svg': 'image/svg+xml',
+  '.avif': 'image/avif', '.bmp': 'image/bmp',
+};
+app.use('/assets', express.static(ASSETS_DIR, {
+  setHeaders: (res, filePath) => {
+    const ext = path.extname(filePath).toLowerCase();
+    const mime = ASSET_MIME_TYPES[ext];
+    if (mime) res.setHeader('Content-Type', mime);
+    res.setHeader('Content-Disposition', 'inline');
+  },
+}));
+
+// List all assets
+app.get('/api/assets', (_req, res) => {
+  try {
+    const files = fs.readdirSync(ASSETS_DIR)
+      .filter(f => /\.(png|jpe?g|gif|webp|svg|bmp|avif)$/i.test(f))
+      .map(f => {
+        const stat = fs.statSync(path.join(ASSETS_DIR, f));
+        return { filename: f, url: `/assets/${f}`, size: stat.size, created: stat.birthtimeMs };
+      })
+      .sort((a, b) => b.created - a.created);
+    res.json(files);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Upload an asset
+app.post('/api/assets/upload', upload.single('file'), (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+  res.json({ url: `/assets/${req.file.filename}`, filename: req.file.filename, size: req.file.size });
+});
+
+// Delete an asset
+app.delete('/api/assets/:filename', (req, res) => {
+  const filename = path.basename(req.params.filename); // prevent path traversal
+  const filePath = path.join(ASSETS_DIR, filename);
+  if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'File not found' });
+  try {
+    fs.unlinkSync(filePath);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
