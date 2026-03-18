@@ -1,5 +1,7 @@
 # Vesper Astra — AI Stream Companion Engine
 
+> **Status: PARKED** — Stream manager core is priority. Voice/companion work paused. Future home: [jarvis_cnn](https://github.com/worxed/jarvis_cnn) project (Vesper relational AI research).
+
 An AI-powered stream companion that connects to the [Worxed Stream Manager](https://github.com/worxed/worxed-stream-manager) backend, processes stream events in real-time, and maintains a dynamic personality with voice synthesis.
 
 ## Architecture
@@ -15,7 +17,7 @@ An AI-powered stream companion that connects to the [Worxed Stream Manager](http
 │                                             │
 │  engine.py ──► events.py (mood + state)     │
 │           ──► personality.py (Ollama/Mistral)│
-│           ──► voice.py (Chatterbox-Turbo)   │
+│           ──► voice.py (Orpheus TTS)        │
 │                                             │
 │  GET /status  → current CompanionState      │
 │  GET /health  → connection + feature status │
@@ -30,35 +32,45 @@ Vesper is a **standalone Python process** that connects to the existing Worxed b
 - **Expression states** — 12 expressions (idle, happy, excited, snarky, thinking, surprised, sad, angry, sleepy, love, laughing, cat_face) driven by events
 - **Mood decay** — Without stream activity, energy and engagement gradually decrease
 - **Personality engine** — Ollama (Mistral) generates reactions and chat responses in-character with 5 personality presets and 6 relationship dynamics
-- **Voice synthesis** — Chatterbox-Turbo TTS with trained voice profile (GPU required, ROCm/CUDA)
-- **Trained voice profile** — Averaged speaker embedding from 836 clips (35.5 min audio) for consistent voice identity
+- **Voice synthesis** — Orpheus TTS (Llama-3B + SNAC 24kHz) with LoRA fine-tuning for custom voice blend
+- **Emotion tags** — `<happy>`, `<sad>`, `<excited>`, `<whisper>`, `<frustrated>`, `<angry>`, `<curious>`, `<surprise>`, and more
 - **Rate limiting** — Configurable cooldowns for reactions and chat responses
 - **Health API** — HTTP endpoints for monitoring companion state
+
+## TTS History
+
+| Model | Status | Notes |
+|-------|--------|-------|
+| CSM-1B (Sesame) | Abandoned | Severe hallucinations, garbled audio |
+| Chatterbox-Turbo (Resemble AI) | Abandoned | Too robotic/predictable, poor punctuation handling |
+| **Orpheus TTS** | **Current** | Llama-3B backbone + SNAC 24kHz codec, LoRA fine-tunable, emotion tags |
 
 ## Setup
 
 ```bash
 cd companion
 
-# WSL2 (recommended for AMD GPU / ROCm)
-python -m venv venv-wsl
-source venv-wsl/bin/activate.fish  # fish shell
-# or: source venv-wsl/bin/activate  # bash
+# Windows (native)
+python -m venv venv
+venv\Scripts\activate
 
 pip install -r requirements.txt
 ```
 
+### Prerequisites
+
+- **Python 3.12+**
+- **ffmpeg** — `winget install Gyan.FFmpeg` or `scoop install ffmpeg`
+- **deno** — `winget install DenoLand.Deno` or `scoop install deno` (needed by yt-dlp for YouTube)
+- **Ollama** — running locally with Mistral model pulled
+
 ### GPU Requirements (Voice)
 
-Voice synthesis requires a CUDA or ROCm GPU with ~3.2 GB VRAM.
+Voice synthesis requires a GPU with ~6.2 GB VRAM (Orpheus TTS).
 
-**ROCm (AMD 7900 XTX on WSL2):**
-- ROCm 6.4.2.1 with `--usecase=wsl --no-dkms`
-- PyTorch from `repo.radeon.com/rocm/manylinux/rocm-rel-6.4.2/`
-- Remove PyTorch's bundled `libhsa-runtime64.so`
-- Env: `LD_LIBRARY_PATH=/opt/rocm-6.4.2/lib:/opt/rocm/lib`, `HSA_ENABLE_SDMA=0`
-
-See `MEMORY.md` notes for the full ROCm setup.
+- **AMD (ROCm):** Native Windows ROCm or DirectML — needs configuration when companion work resumes
+- **NVIDIA (CUDA):** Standard PyTorch CUDA wheels
+- **CRITICAL:** Use `attn_implementation="sdpa"` (not `flash_attention_2`) on ROCm
 
 ## Configuration
 
@@ -98,7 +110,18 @@ python vesper_chat.py           # text + voice
 python vesper_chat.py --no-voice  # text only
 ```
 
-Talk directly to Vesper in your terminal. She uses the full personality engine and trained voice profile.
+Talk directly to Vesper in your terminal. She uses the full personality engine.
+
+### Orpheus TTS Testing
+
+```bash
+python test_orpheus.py                          # Base model, default voice (tara)
+python test_orpheus.py --model finetuned        # Fine-tuned model
+python test_orpheus.py --voice scarlett          # Specific voice
+python test_orpheus.py --emotion happy           # With emotion tag
+python test_orpheus.py --compare                 # A/B: base vs fine-tuned
+python test_orpheus.py --play                    # Auto-play output
+```
 
 ### Voice Lab UI
 
@@ -106,7 +129,7 @@ Talk directly to Vesper in your terminal. She uses the full personality engine a
 python test_voice_ui.py
 ```
 
-Tkinter GUI for testing voice generation with different reference clips, mood presets, and exaggeration levels.
+Tkinter GUI for testing voice generation with different reference clips and settings.
 
 ## Pipeline
 
@@ -122,79 +145,71 @@ PersonalityEngine (personality.py)
     → 5 presets × 6 relationship dynamics
     ↓
 VoiceEngine (voice.py)
-    → Chatterbox-Turbo TTS
-    → Trained speaker embedding (836 clips averaged)
-    → Mood → exaggeration mapping
+    → Orpheus TTS with emotion tags
+    → LoRA fine-tuned for custom voice blend
+    → Mood → emotion tag mapping
     ↓
 Audio Output
 ```
+
+## Voice Blend Target
+
+- **40% Sadie Sink** — warmth, groundedness, youthful sincerity
+- **35% Scarlett Johansson** — smoky low register, intimate/husky, effortless confidence
+- **25% Ana de Armas** — soft accent texture, gentle warmth, delicate precision
+
+### Training Data
+
+280 clips (142 scarlett + 42 ana + 96 sadie) processed via `process_interview.py`:
+
+```
+YouTube URL → yt-dlp → demucs vocal separation → silero-vad
+  → MFCC + KMeans speaker clustering → faster-whisper transcription
+```
+
+HuggingFace dataset at `voices/hf_dataset/` (252 train + 28 val, Arrow format).
+
+### Training
+
+LoRA fine-tuning on `canopylabs/orpheus-tts-0.1-pretrained`:
+- Rank 32, alpha 64, RS-LoRA
+- All attention + FFN projections + lm_head + embed_tokens
+- ~6 min on AMD 7900 XTX
 
 ## Directory Structure
 
 ```
 companion/
-├── engine.py               # Main engine — Socket.IO client + health API
-├── events.py               # Event processor + mood state machine
-├── personality.py          # Personality presets + LLM prompt builder
-├── voice.py                # VoiceEngine — Chatterbox-Turbo wrapper
-├── config.py               # All configuration + env vars
-├── models.py               # Data models (CompanionState, MoodState, etc.)
-├── mood_config.py          # Mood-to-voice parameter mappings
-├── vesper_chat.py          # Interactive terminal chat with voice
-├── build_voice_profile.py  # Build averaged speaker embedding from clips
-├── test_voice_ui.py        # Tkinter Voice Lab for testing generation
-├── test_voice.py           # Quick voice test script
-├── voice_collector.py      # YouTube/audio reference collector
-├── voice_engine.py         # Voice consistency engine
-├── voice_filter.py         # Audio filtering utilities
-├── voice_generator.py      # Batch voice generation
-├── voice_workshop.py       # Voice tuning workshop
+├── engine.py                  # Main engine — Socket.IO + health API
+├── events.py                  # Event processor + mood state machine
+├── personality.py             # Personality presets + LLM prompts
+├── voice.py                   # VoiceEngine (migrating to Orpheus)
+├── config.py                  # Configuration + env vars
+├── models.py                  # Data models
+├── mood_config.py             # Mood-to-voice mappings
+├── vesper_chat.py             # Interactive chat with voice
+├── test_orpheus.py            # Orpheus TTS inference + A/B comparison
+├── prepare_dataset.py         # SNAC-encode clips → HF dataset
+├── process_interview.py       # YouTube → training clips pipeline
+├── build_voice_profile.py     # Speaker embedding builder
+├── test_voice_ui.py           # Tkinter Voice Lab
+├── orpheus/                   # Cloned Orpheus TTS repo
+│   └── finetune/              # LoRA training scripts + checkpoints
 ├── voices/
-│   ├── training/           # Raw training clips by speaker
-│   │   ├── aubrey/         # 179 clips — Aubrey Plaza reference
-│   │   ├── sadie/          # 239 clips — Sadie Sink reference
-│   │   └── schnukums/      # 418 clips — combined persona
-│   ├── golden/             # Curated "this IS her" clips
-│   │   ├── warm/           # Warm/sincere golden clips + composite
-│   │   ├── snarky/         # Snarky/deadpan golden clips
-│   │   └── vesper_trained/ # Averaged speaker embedding (836 clips)
-│   ├── generated/          # All generated outputs by timestamp
-│   └── live/               # Live test outputs + A/B comparisons
-├── tests/
-│   └── test_events.py      # Event processor unit tests
-└── requirements.txt
+│   ├── training/              # Training clips by speaker
+│   │   ├── scarlett/          # 87 WAVs, 150 metadata entries
+│   │   ├── ana/               # 107 WAVs, 42 metadata entries
+│   │   └── sadie/             # 72 WAVs, 98 metadata entries
+│   ├── reference/
+│   │   └── sadie/             # 478 short clips (not in training yet)
+│   ├── old/                   # Legacy (aubrey, schnukums — no longer in blend)
+│   ├── hf_dataset/            # HuggingFace Arrow dataset (280 rows)
+│   ├── golden/                # Curated reference clips
+│   ├── generated/             # Generated outputs by timestamp
+│   └── live/                  # Live test outputs
+└── tests/
+    └── test_events.py         # Event processor unit tests
 ```
-
-## Voice System
-
-### Trained Voice Profile
-
-The voice profile is built by averaging speaker embeddings from all training clips:
-
-```bash
-python build_voice_profile.py
-```
-
-This extracts 256-dimensional embeddings from every clip using Chatterbox's voice encoder and averages them into a stable voice identity stored at `voices/golden/vesper_trained/speaker_embedding.npy`.
-
-**Current profile:** 836 clips, 35.5 minutes of audio, (1, 256) embedding.
-
-### Voice Blend Target
-
-70% Aubrey Plaza + 30% Sadie Sink — see `SCHNUKUMSVOICE.MD` for the full voice identity description.
-
-### Mood-to-Voice Mapping
-
-| Mood | Exaggeration | Character |
-|------|-------------|-----------|
-| neutral | 0.5 | Default relaxed delivery |
-| warm | 0.6 | Softer, genuine feeling |
-| amused | 0.65 | Light, playful |
-| snarky | 0.4 | Controlled deadpan |
-| excited | 0.8 | Higher energy, faster |
-| sad | 0.55 | Subdued, slower |
-| angry | 0.7 | Sharp, clipped |
-| flirty | 0.65 | Breathy, intimate |
 
 ## API Endpoints
 
@@ -247,13 +262,14 @@ python -m pytest tests/ -v
 
 **LLM:** Ollama + Mistral — working, generates in-character responses with personality presets.
 
-**TTS:** Chatterbox-Turbo (Resemble AI) — functional but under evaluation. Voice quality is too predictable/robotic for the intimate character we're building. Researching alternatives (Orpheus, Dia, Fish Speech, F5-TTS, CosyVoice 2, Kokoro).
+**TTS:** Orpheus TTS selected and tested. LoRA fine-tuning pipeline built. First training run had male voice contamination — dataset cleaned (280 clips), ready for retrain. Voice integration into engine pending.
 
-**Next:** Find a TTS model that sounds more natural and intimate — less "talking to an AI", more real conversational delivery with proper punctuation/pause handling.
+**Project:** PARKED — stream manager core development is priority. See `CLAUDE.md` for full technical details and next steps.
 
 ## Future
 
-- **Better TTS model** — Replace Chatterbox with something more natural and expressive
+- **Complete LoRA training** — Retrain on cleaned dataset, test all 3 voices
+- **Integrate into voice.py** — Replace Chatterbox with fine-tuned Orpheus
 - **OBS overlay integration** — Visual companion avatar driven by expression state
 - **Supervisor management** — Add as a managed process in the Worxed supervisor
 - **Custom triggers** — React to custom endpoint events from the Endpoint Builder

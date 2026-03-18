@@ -126,7 +126,7 @@ export interface CustomEvent {
 }
 
 // Scene / Overlay Editor Types
-export type ElementType = 'alert-box' | 'chat' | 'text' | 'image' | 'custom-event';
+export type ElementType = 'alert-box' | 'chat' | 'text' | 'image' | 'custom-event' | 'goal' | 'stat' | 'recent-events';
 
 export interface SceneElementStyle {
   backgroundColor?: string;
@@ -143,14 +143,34 @@ export interface SceneElementStyle {
 
 export interface AlertBoxConfig {
   alertTypes: AlertType[];
+  /** Total alert visible duration in ms (includes in + out animations) */
   duration: number;
-  animation: string;
+  /** Entry animation preset id */
+  animationIn: string;
+  /** Exit animation preset id */
+  animationOut: string;
+  /** Entry animation duration in ms */
+  animationInDuration: number;
+  /** Exit animation duration in ms */
+  animationOutDuration: number;
+  /** Custom keyframes for animationIn when id is 'custom' */
+  customKeyframesIn?: import('../animations').AnimationKeyframe[];
+  /** Custom keyframes for animationOut when id is 'custom' */
+  customKeyframesOut?: import('../animations').AnimationKeyframe[];
+  /** Secondary animation applied to inner text content (label + username) */
+  textAnimationIn: string;
+  /** Delay in ms before text animation starts (after container anim begins) */
+  textAnimationInDelay: number;
+  /** @deprecated use animationIn instead */
+  animation?: string;
 }
 
 export interface ChatConfig {
   maxMessages: number;
   showBadges: boolean;
   fadeAfter: number;
+  /** Animation for incoming messages: msgSlideIn | msgFadeIn | msgPopIn | none */
+  messageAnimation: string;
 }
 
 export interface DataBindingConfig {
@@ -180,8 +200,48 @@ export interface CustomEventConfig {
   eventName: string;
   template: string;
   duration: number;
-  animation: string;
+  animationIn: string;
+  animationOut: string;
+  animationInDuration: number;
+  animationOutDuration: number;
   maxQueueSize: number;
+  /** @deprecated use animationIn instead */
+  animation?: string;
+}
+
+// Goal widget
+export type GoalType = 'follower' | 'subscriber' | 'donation' | 'custom';
+
+export interface GoalConfig {
+  goalType: GoalType;
+  goal: number;
+  label: string;
+  showNumbers: boolean;
+  showPercentage: boolean;
+  barColor: string;
+  barStyle: 'linear' | 'radial';
+  /** Manual current value — only used when goalType === 'custom' */
+  currentOverride?: number;
+}
+
+// Stat widget
+export type StatType = 'viewers' | 'followers' | 'uptime' | 'session-follows' | 'session-subs' | 'session-donations';
+
+export interface StatConfig {
+  statType: StatType;
+  /** Empty string = auto-label from statType */
+  label: string;
+  prefix: string;
+  suffix: string;
+}
+
+// Recent Events widget
+export interface RecentEventsConfig {
+  eventTypes: ('follow' | 'subscribe' | 'donation' | 'raid')[];
+  maxCount: number;
+  showIcons: boolean;
+  /** Seconds before entries fade out. 0 = never */
+  fadeAfter: number;
 }
 
 export interface SceneElement {
@@ -197,7 +257,7 @@ export interface SceneElement {
   visible: boolean;
   locked: boolean;
   style: SceneElementStyle;
-  config: AlertBoxConfig | ChatConfig | TextConfig | ImageConfig | CustomEventConfig | Record<string, unknown>;
+  config: AlertBoxConfig | ChatConfig | TextConfig | ImageConfig | CustomEventConfig | GoalConfig | StatConfig | RecentEventsConfig | Record<string, unknown>;
 }
 
 export interface Scene {

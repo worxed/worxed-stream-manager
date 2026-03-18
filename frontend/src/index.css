@@ -1398,7 +1398,7 @@ body {
 .editor-panel {
   background: color-mix(in srgb, var(--card) 95%, transparent);
   backdrop-filter: blur(8px);
-  z-index: 10;
+  flex-shrink: 0;
 }
 
 .dark .editor-panel {

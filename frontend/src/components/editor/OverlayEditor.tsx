@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { WDropdown, WButton, WInput, WInputNumber } from '../w';
 import { Plus, Play, ExternalLink, Save, Undo2, Redo2 } from 'lucide-react';
-import { useEditorStore, useCurrentScene, useFirstSelectedElement } from '../../stores/editorStore';
+import { useEditorStore, useCurrentScene } from '../../stores/editorStore';
 import KonvaCanvas from './KonvaCanvas';
 import ElementToolbox from './ElementToolbox';
 import PropertiesPanel from './PropertiesPanel';
@@ -28,8 +28,6 @@ export default function OverlayEditor() {
   const newSceneName = useEditorStore(s => s.newSceneName);
   const pastLength = useEditorStore(s => s.past.length);
   const futureLength = useEditorStore(s => s.future.length);
-  const hasSelection = useEditorStore(s => s.selectedIds.size > 0);
-
   const loadScenes = useEditorStore(s => s.loadScenes);
   const switchScene = useEditorStore(s => s.switchScene);
   const createScene = useEditorStore(s => s.createScene);
@@ -43,7 +41,6 @@ export default function OverlayEditor() {
   const updateSceneResolution = useEditorStore(s => s.updateSceneResolution);
 
   const scene = useCurrentScene();
-  const selectedElement = useFirstSelectedElement();
 
   // --- Pop-out preview tracking ---
   const previewWindowRef = useRef<Window | null>(null);
@@ -65,9 +62,11 @@ export default function OverlayEditor() {
       return;
     }
     const url = scene?.id
-      ? `${window.location.origin}/overlay?scene=${scene.id}`
-      : `${window.location.origin}/overlay`;
-    previewWindowRef.current = window.open(url, '_blank', 'width=1920,height=1080');
+      ? `${window.location.origin}/overlay?scene=${scene.id}&preview=1`
+      : `${window.location.origin}/overlay?preview=1`;
+    const w = scene?.width ?? 1920;
+    const h = scene?.height ?? 1080;
+    previewWindowRef.current = window.open(url, '_blank', `width=${w},height=${h}`);
     setPreviewOpen(true);
   }, [scene?.id]);
 
@@ -242,21 +241,21 @@ export default function OverlayEditor() {
       {/* Editor Body */}
       {scene ? (
         <div className="flex flex-col flex-1 editor-body">
-          <div className="flex-1 overflow-hidden relative">
-            {/* Canvas takes full space */}
-            <KonvaCanvas canvasWidth={scene.width} canvasHeight={scene.height} />
-
-            {/* Floating left panel: Toolbox */}
-            <div className="absolute left-0 top-0 bottom-0 w-52 editor-panel editor-panel-left overflow-y-auto">
+          <div className="flex flex-1 overflow-hidden">
+            {/* Left panel: Toolbox */}
+            <div className="w-56 editor-panel editor-panel-left overflow-y-auto">
               <ElementToolbox />
             </div>
 
-            {/* Floating right panel: Properties */}
-            {hasSelection && selectedElement && (
-              <div className="absolute right-0 top-0 bottom-0 w-72 editor-panel editor-panel-right overflow-y-auto">
-                <PropertiesPanel />
-              </div>
-            )}
+            {/* Canvas takes remaining space */}
+            <div className="flex-1 overflow-hidden">
+              <KonvaCanvas canvasWidth={scene.width} canvasHeight={scene.height} />
+            </div>
+
+            {/* Right panel: Properties (always visible) */}
+            <div className="w-72 editor-panel editor-panel-right overflow-y-auto">
+              <PropertiesPanel />
+            </div>
           </div>
 
           {/* Bottom: Testing Panel */}

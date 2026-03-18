@@ -114,7 +114,14 @@
 - [x] Absorb repeated boilerplate: `!w-8 !h-4` (switches), `text-xs` (inputs), `gap-1.5` (buttons), card variants, badge presets
 - [x] Remove lara-dark-blue theme CSS — replaced with full component styles in index.css
 - [x] Complete PrimeReact styling: Button (variants, severities, sizes, animations), InputText, Dropdown (panel, items), InputSwitch, Slider, Tag, Toast, OverlayPanel, Tooltip, Skeleton
-- [ ] **FIX: Scene creation broken after theme removal** — konva/scenes not functioning, needs debug
+- [x] **FIX: Scene creation broken after theme removal** — fixed Feb 25
+
+### Customizer Full-Width Layout
+
+- [x] Customizer breaks out of content-container — full viewport width with `px-4` padding
+- [x] 3-column flex layout: fixed toolbox (w-56) | fluid canvas (flex-1) | fixed properties (w-72)
+- [x] Properties panel always visible — empty state with icon when no element selected
+- [x] CSS cleanup — `.editor-panel` from `z-index: 10` to `flex-shrink: 0`
 
 ### Accessibility
 
@@ -300,7 +307,7 @@
 - [ ] Port conflict when backend crashes (no detection/handling)
 - [ ] WebSocket disconnect doesn't always trigger reconnect
 - [ ] React strict mode console warnings
-- [ ] Scene creation broken after PrimeReact theme removal (Feb 24) — needs debug
+- [x] ~~Scene creation broken after PrimeReact theme removal (Feb 24) — fixed Feb 25~~
 
 ---
 
@@ -352,4 +359,4 @@
 - Medium - Quality of life improvements
 - Low - Nice to have features
 
-**Last Updated:** February 24, 2026
+**Last Updated:** February 25, 2026

@@ -183,6 +183,10 @@ worxed-stream-manager/
 │   │   │   ├── EventFeed.tsx          # Live custom endpoint event feed
 │   │   │   ├── Overlay.tsx            # OBS scene-based overlay renderer
 │   │   │   ├── ColorPicker.tsx        # Color picker component
+│   │   │   ├── w/                   # W-Component wrappers (PrimeReact)
+│   │   │   │   ├── index.ts         # Barrel export (15 components + cx)
+│   │   │   │   ├── utils.ts         # cx() className merger
+│   │   │   │   └── W*.tsx           # WButton, WInput, WDropdown, etc.
 │   │   │   ├── common/
 │   │   │   │   └── EmptyState.tsx     # Reusable empty state
 │   │   │   ├── editor/               # Figma-like scene editor
@@ -546,8 +550,8 @@ graph TB
 - **KonvaCanvas**: Stage/Layer/Transformer with zoom-to-fit, letterbox guides, resolution label
 - **KonvaElement**: Per-element rendering (alert-box, chat, text, image, custom-event)
 - **OverlayEditor**: Toolbar with scene CRUD, resolution presets, undo/redo, preview
-- **ElementToolbox**: Floating panel — add elements + layers with visibility/lock/reorder
-- **PropertiesPanel**: Floating panel — per-element properties (position, style, type-specific config)
+- **ElementToolbox**: Fixed left panel (w-56) — add elements + layers with visibility/lock/reorder
+- **PropertiesPanel**: Fixed right panel (w-72) — per-element properties (position, style, type-specific config), empty state when no selection
 - **TestingPanel**: Collapsible panel — fire test alerts, chat messages, custom events
 - **editorStore**: Zustand store with `subscribeWithSelector` — all state + auto-save + Socket.IO sync
 
@@ -836,4 +840,4 @@ The `companion/` directory contains **Vesper Astra**, an AI stream companion pro
 
 ---
 
-**Last Updated:** February 23, 2026
+**Last Updated:** February 25, 2026

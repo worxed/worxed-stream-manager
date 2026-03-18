@@ -211,12 +211,18 @@ function AppMain() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-auto py-8 relative z-1">
-        <div className="content-container">
-          <div key={activeView} className="animate-view-enter">
+      <main className="flex-1 overflow-auto relative z-1" style={{ paddingTop: activeView === 'customizer' ? '0.5rem' : '2rem', paddingBottom: activeView === 'customizer' ? '0.5rem' : '2rem' }}>
+        {activeView === 'customizer' ? (
+          <div key="customizer" className="animate-view-enter px-4 h-full">
             {renderView()}
           </div>
-        </div>
+        ) : (
+          <div className="content-container">
+            <div key={activeView} className="animate-view-enter">
+              {renderView()}
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );

@@ -17,9 +17,13 @@
   --accent, --accent-foreground
   --border, --input, --ring
   --destructive, --destructive-foreground
+  --success, --success-foreground
+  --warning, --warning-foreground
+  --info, --info-foreground
   --chart-1 through --chart-5
-  /* Glow effects */
-  --glow-primary, --glow-secondary
+  /* Ambient & glow */
+  --ambient-1, --ambient-2
+  --glow-primary
 }
 ```
 
@@ -34,7 +38,7 @@ Clean, neutral theme. Uses bare `:root` / `.dark` defaults — no `data-theme` a
 | Mode | Background | Foreground | Primary | Border |
 |------|-----------|------------|---------|--------|
 | Light | `#ffffff` | `#09090b` | `#18181b` | `#e4e4e7` |
-| Dark | `#09090b` | `#fafafa` | `#fafafa` | `#27272a` |
+| Dark | `#09090b` | `#fafafa` | `#fafafa` | `#2e2e33` |
 
 ### Theme 2: **Synthetica** (Cool Blue-Gray)
 
@@ -42,8 +46,8 @@ Monochromatic theme with subtle blue tint. OLED-friendly in dark mode.
 
 | Mode | Background | Foreground | Primary | Border |
 |------|-----------|------------|---------|--------|
-| Light | `#fafafa` | `#1d1d1f` | `#334680` | `#d1d1d6` |
-| Dark | `#09090b` | `#e8e8e8` | `#6889c8` | `#27272a` |
+| Light | `#f0f2f8` | `#1a1d2e` | `#334680` | `#c8cad8` |
+| Dark | `#0d1020` | `#d0d5e8` | `#6889c8` | `#2a3158` |
 
 ### Theme 3: **Magma** (Warm Amber/Fire)
 
@@ -51,8 +55,8 @@ High-energy theme with warm tones. Good for active streaming sessions.
 
 | Mode | Background | Foreground | Primary | Border |
 |------|-----------|------------|---------|--------|
-| Light | `#fffbeb` | `#1c1917` | `#b45309` | `#e4e4e7` |
-| Dark | `#0c0a09` | `#fafaf9` | `#f59e0b` | `#292524` |
+| Light | `#faf6f0` | `#2a1a0e` | `#b44d1e` | `#e0d0c0` |
+| Dark | `#1a1008` | `#e8ddd0` | `#e07830` | `#3e2e22` |
 
 ### Theme 4: **Arctic** (Icy Blue)
 
@@ -60,8 +64,8 @@ Cool, crisp theme. Pairs well with light mode for daytime use.
 
 | Mode | Background | Foreground | Primary | Border |
 |------|-----------|------------|---------|--------|
-| Light | `#f0f9ff` | `#0c4a6e` | `#0c4a6e` | `#e0f2fe` |
-| Dark | `#0c1222` | `#e0f2fe` | `#38bdf8` | `#1e3a5f` |
+| Light | `#f0f6fc` | `#0e2a4a` | `#1565c0` | `#c0d8f0` |
+| Dark | `#08111e` | `#cddaea` | `#42a5f5` | `#1e3350` |
 
 ---
 
@@ -150,4 +154,4 @@ Three layers of styling:
 
 ---
 
-**Last Updated:** February 23, 2026
+**Last Updated:** February 25, 2026

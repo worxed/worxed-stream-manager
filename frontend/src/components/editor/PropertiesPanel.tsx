@@ -1,22 +1,19 @@
-import { useRef } from 'react';
-import { Trash2 } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { Trash2, MousePointerClick, Upload, FolderOpen, X } from 'lucide-react';
 import { WInput, WInputNumber, WSwitch, WSlider, WDropdown, WTextarea, WButton } from '../w';
 import { ColorPicker } from '../ColorPicker';
-import { useEditorStore, useFirstSelectedElement } from '../../stores/editorStore';
-import type { SceneElement, AlertBoxConfig, ChatConfig, TextConfig, ImageConfig, CustomEventConfig, DataBindingConfig, AlertType } from '../../types';
+import { useEditorStore, useFirstSelectedElement, useCurrentScene } from '../../stores/editorStore';
+import { ENTER_OPTIONS, EXIT_OPTIONS, CHAT_ANIMATION_OPTIONS, TEXT_ANIMATION_OPTIONS, DEFAULT_EXIT_PAIR, getPreset } from '../../animations';
+import { uploadAsset, getAssets, deleteAsset } from '../../services/api';
+import AnimationTimeline from './AnimationTimeline';
+import type { SceneElement, AlertBoxConfig, ChatConfig, TextConfig, ImageConfig, CustomEventConfig, GoalConfig, GoalType, StatConfig, StatType, RecentEventsConfig, DataBindingConfig, AlertType } from '../../types';
+import type { AnimationKeyframe } from '../../animations';
 
 const ALERT_TYPE_OPTIONS: { value: AlertType; label: string }[] = [
   { value: 'follow', label: 'Follow' },
   { value: 'subscribe', label: 'Subscribe' },
   { value: 'donation', label: 'Donation' },
   { value: 'raid', label: 'Raid' },
-];
-
-const ANIMATION_OPTIONS = [
-  { value: 'fadeInUp', label: 'Fade In Up' },
-  { value: 'fadeIn', label: 'Fade In' },
-  { value: 'slideInLeft', label: 'Slide In Left' },
-  { value: 'scaleIn', label: 'Scale In' },
 ];
 
 const OBJECT_FIT_OPTIONS = [
@@ -44,11 +41,22 @@ export default function PropertiesPanel() {
   const updateElement = useEditorStore(s => s.updateElement);
   const deleteSelectedElements = useEditorStore(s => s.deleteSelectedElements);
   const pushHistory = useEditorStore(s => s.pushHistory);
+  const scene = useCurrentScene();
 
   // Track slider drag sessions to only push history once per drag
   const sliderDraggingRef = useRef(false);
 
-  if (!element) return null;
+  if (!element) return (
+    <div className="flex flex-col h-full">
+      <div className="p-3 border-b border-border">
+        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Properties</h3>
+      </div>
+      <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground p-4">
+        <MousePointerClick size={32} className="mb-3 opacity-40" />
+        <p className="text-xs text-center">Select an element to edit its properties</p>
+      </div>
+    </div>
+  );
 
   const onUpdate = (updates: Partial<SceneElement>) => {
     updateElement(element.id, updates);
@@ -85,6 +93,8 @@ export default function PropertiesPanel() {
     switch (element.type) {
       case 'alert-box': {
         const config = element.config as AlertBoxConfig;
+        const animInId  = config.animationIn  || config.animation || 'fadeInUp';
+        const animOutId = config.animationOut || DEFAULT_EXIT_PAIR[animInId] || 'fadeOutDown';
         return (
           <>
             <SectionHeader>Alert Settings</SectionHeader>
@@ -111,9 +121,10 @@ export default function PropertiesPanel() {
                   ))}
                 </div>
               </div>
+
               <div>
                 <div className="flex justify-between">
-                  <Label>Duration</Label>
+                  <Label>Total Duration</Label>
                   <span className="text-xs font-mono text-muted-foreground">{(config.duration || 5000) / 1000}s</span>
                 </div>
                 <WSlider
@@ -126,17 +137,121 @@ export default function PropertiesPanel() {
                   className="mt-1"
                 />
               </div>
+            </div>
+
+            <SectionHeader>Animation In</SectionHeader>
+            <div className="flex flex-col gap-3">
               <div>
-                <Label>Animation</Label>
+                <Label>Preset</Label>
                 <WDropdown
-                  value={config.animation || 'fadeInUp'}
-                  options={ANIMATION_OPTIONS}
-                  onChange={(e) => withHistory(() => updateConfig({ animation: e.value }))}
+                  value={animInId}
+                  options={ENTER_OPTIONS}
+                  onChange={(e) => withHistory(() => updateConfig({
+                    animationIn: e.value,
+                    animationInDuration: getPreset(e.value)?.defaultDuration ?? 450,
+                    animationOut: DEFAULT_EXIT_PAIR[e.value] || animOutId,
+                    animationOutDuration: getPreset(DEFAULT_EXIT_PAIR[e.value] || animOutId)?.defaultDuration ?? 400,
+                  }))}
                   optionLabel="label"
                   optionValue="value"
                   className="w-full mt-1"
                 />
               </div>
+              <div>
+                <div className="flex justify-between">
+                  <Label>Duration</Label>
+                  <span className="text-xs font-mono text-muted-foreground">{(config.animationInDuration ?? getPreset(animInId)?.defaultDuration ?? 450)}ms</span>
+                </div>
+                <WSlider
+                  value={config.animationInDuration ?? getPreset(animInId)?.defaultDuration ?? 450}
+                  min={100}
+                  max={2000}
+                  step={50}
+                  onChange={handleSliderChange((v) => updateConfig({ animationInDuration: v }))}
+                  onSlideEnd={handleSliderEnd}
+                  className="mt-1"
+                />
+              </div>
+              <AnimationTimeline
+                label="Custom Keyframes In"
+                trackId={`${element.id}_in`}
+                keyframes={(config.customKeyframesIn as AnimationKeyframe[]) || []}
+                duration={config.animationInDuration ?? 450}
+                onChange={(kfs) => withHistory(() => updateConfig({ customKeyframesIn: kfs }))}
+              />
+
+              {/* Secondary text animation */}
+              <div>
+                <Label>Text Animation</Label>
+                <p className="text-muted-foreground mb-1" style={{ fontSize: '10px' }}>
+                  Plays on inner text after container animates in
+                </p>
+                <WDropdown
+                  value={config.textAnimationIn || 'none'}
+                  options={TEXT_ANIMATION_OPTIONS}
+                  onChange={(e) => withHistory(() => updateConfig({ textAnimationIn: e.value }))}
+                  optionLabel="label"
+                  optionValue="value"
+                  className="w-full"
+                />
+              </div>
+              {config.textAnimationIn && config.textAnimationIn !== 'none' && (
+                <div>
+                  <div className="flex justify-between">
+                    <Label>Text Delay</Label>
+                    <span className="text-xs font-mono text-muted-foreground">{config.textAnimationInDelay ?? 150}ms</span>
+                  </div>
+                  <WSlider
+                    value={config.textAnimationInDelay ?? 150}
+                    min={0}
+                    max={1000}
+                    step={50}
+                    onChange={handleSliderChange((v) => updateConfig({ textAnimationInDelay: v }))}
+                    onSlideEnd={handleSliderEnd}
+                    className="mt-1"
+                  />
+                </div>
+              )}
+            </div>
+
+            <SectionHeader>Animation Out</SectionHeader>
+            <div className="flex flex-col gap-3">
+              <div>
+                <Label>Preset</Label>
+                <WDropdown
+                  value={animOutId}
+                  options={EXIT_OPTIONS}
+                  onChange={(e) => withHistory(() => updateConfig({
+                    animationOut: e.value,
+                    animationOutDuration: getPreset(e.value)?.defaultDuration ?? 400,
+                  }))}
+                  optionLabel="label"
+                  optionValue="value"
+                  className="w-full mt-1"
+                />
+              </div>
+              <div>
+                <div className="flex justify-between">
+                  <Label>Duration</Label>
+                  <span className="text-xs font-mono text-muted-foreground">{(config.animationOutDuration ?? getPreset(animOutId)?.defaultDuration ?? 400)}ms</span>
+                </div>
+                <WSlider
+                  value={config.animationOutDuration ?? getPreset(animOutId)?.defaultDuration ?? 400}
+                  min={100}
+                  max={2000}
+                  step={50}
+                  onChange={handleSliderChange((v) => updateConfig({ animationOutDuration: v }))}
+                  onSlideEnd={handleSliderEnd}
+                  className="mt-1"
+                />
+              </div>
+              <AnimationTimeline
+                label="Custom Keyframes Out"
+                trackId={`${element.id}_out`}
+                keyframes={(config.customKeyframesOut as AnimationKeyframe[]) || []}
+                duration={config.animationOutDuration ?? 400}
+                onChange={(kfs) => withHistory(() => updateConfig({ customKeyframesOut: kfs }))}
+              />
             </div>
           </>
         );
@@ -181,6 +296,17 @@ export default function PropertiesPanel() {
                   onChange={handleSliderChange((v) => updateConfig({ fadeAfter: v }))}
                   onSlideEnd={handleSliderEnd}
                   className="mt-1"
+                />
+              </div>
+              <div>
+                <Label>Message Animation</Label>
+                <WDropdown
+                  value={config.messageAnimation || 'msgSlideIn'}
+                  options={CHAT_ANIMATION_OPTIONS}
+                  onChange={(e) => withHistory(() => updateConfig({ messageAnimation: e.value }))}
+                  optionLabel="label"
+                  optionValue="value"
+                  className="w-full mt-1"
                 />
               </div>
             </div>
@@ -263,10 +389,27 @@ export default function PropertiesPanel() {
                   value={config.src || ''}
                   onFocus={pushHistory}
                   onChange={(e) => updateConfig({ src: e.target.value })}
-                  placeholder="https://..."
+                  placeholder="https://... or /assets/file.png"
                   className="w-full mt-1"
                 />
               </div>
+              <ImageUploader
+                currentSrc={config.src || ''}
+                onSelect={(url) => { pushHistory(); updateConfig({ src: url }); }}
+              />
+              <WButton
+                size="small"
+                text
+                onClick={() => withHistory(() => onUpdate({
+                  x: 0,
+                  y: 0,
+                  width: scene?.width ?? 1920,
+                  height: scene?.height ?? 1080,
+                }))}
+                className="w-full"
+              >
+                Fill Scene
+              </WButton>
               <div>
                 <Label>Object Fit</Label>
                 <WDropdown
@@ -337,11 +480,30 @@ export default function PropertiesPanel() {
                 />
               </div>
               <div>
-                <Label>Animation</Label>
+                <Label>Animation In</Label>
                 <WDropdown
-                  value={config.animation || 'fadeInUp'}
-                  options={ANIMATION_OPTIONS}
-                  onChange={(e) => withHistory(() => updateConfig({ animation: e.value }))}
+                  value={config.animationIn || config.animation || 'fadeInUp'}
+                  options={ENTER_OPTIONS}
+                  onChange={(e) => withHistory(() => updateConfig({
+                    animationIn: e.value,
+                    animationInDuration: getPreset(e.value)?.defaultDuration ?? 450,
+                    animationOut: DEFAULT_EXIT_PAIR[e.value] || 'fadeOutDown',
+                    animationOutDuration: getPreset(DEFAULT_EXIT_PAIR[e.value] || 'fadeOutDown')?.defaultDuration ?? 400,
+                  }))}
+                  optionLabel="label"
+                  optionValue="value"
+                  className="w-full mt-1"
+                />
+              </div>
+              <div>
+                <Label>Animation Out</Label>
+                <WDropdown
+                  value={config.animationOut || DEFAULT_EXIT_PAIR[config.animationIn || 'fadeInUp'] || 'fadeOutDown'}
+                  options={EXIT_OPTIONS}
+                  onChange={(e) => withHistory(() => updateConfig({
+                    animationOut: e.value,
+                    animationOutDuration: getPreset(e.value)?.defaultDuration ?? 400,
+                  }))}
                   optionLabel="label"
                   optionValue="value"
                   className="w-full mt-1"
@@ -357,6 +519,178 @@ export default function PropertiesPanel() {
                   onValueChange={(e) => updateConfig({ maxQueueSize: e.value })}
                   className="w-full mt-1"
                 />
+              </div>
+            </div>
+          </>
+        );
+      }
+
+      case 'goal': {
+        const config = element.config as GoalConfig;
+        const GOAL_TYPE_OPTIONS: { value: GoalType; label: string }[] = [
+          { value: 'follower',   label: 'Follower Goal' },
+          { value: 'subscriber', label: 'Subscriber Goal' },
+          { value: 'donation',   label: 'Donation Goal ($)' },
+          { value: 'custom',     label: 'Custom (manual)' },
+        ];
+        const BAR_STYLE_OPTIONS = [
+          { value: 'linear', label: 'Linear (bar)' },
+          { value: 'radial', label: 'Radial (circle)' },
+        ];
+        return (
+          <>
+            <SectionHeader>Goal Settings</SectionHeader>
+            <div className="flex flex-col gap-3">
+              <div>
+                <Label>Goal Type</Label>
+                <WDropdown value={config.goalType || 'follower'} options={GOAL_TYPE_OPTIONS}
+                  onChange={(e) => withHistory(() => updateConfig({ goalType: e.value }))}
+                  optionLabel="label" optionValue="value" className="w-full mt-1" />
+              </div>
+              <div>
+                <Label>Target{config.goalType === 'donation' ? ' ($)' : ''}</Label>
+                <WInputNumber value={config.goal || 500} min={1} onFocus={pushHistory}
+                  onValueChange={(e) => updateConfig({ goal: e.value ?? 500 })} className="w-full mt-1" />
+              </div>
+              <div>
+                <Label>Label (empty = auto)</Label>
+                <WInput value={config.label || ''} onFocus={pushHistory}
+                  onChange={(e) => updateConfig({ label: e.target.value })}
+                  placeholder="Follower Goal" className="w-full mt-1" />
+              </div>
+              <div>
+                <Label>Bar Style</Label>
+                <WDropdown value={config.barStyle || 'linear'} options={BAR_STYLE_OPTIONS}
+                  onChange={(e) => withHistory(() => updateConfig({ barStyle: e.value }))}
+                  optionLabel="label" optionValue="value" className="w-full mt-1" />
+              </div>
+              <ColorPicker label="Bar Color" value={config.barColor || '#3b82f6'}
+                onChange={(c) => { pushHistory(); updateConfig({ barColor: c }); }} />
+              <label className="flex items-center gap-2 text-xs cursor-pointer">
+                <WSwitch checked={config.showNumbers !== false}
+                  onChange={(e) => withHistory(() => updateConfig({ showNumbers: e.value }))} />
+                <span>Show Numbers</span>
+              </label>
+              <label className="flex items-center gap-2 text-xs cursor-pointer">
+                <WSwitch checked={config.showPercentage !== false}
+                  onChange={(e) => withHistory(() => updateConfig({ showPercentage: e.value }))} />
+                <span>Show Percentage</span>
+              </label>
+              {config.goalType === 'custom' && (
+                <div>
+                  <Label>Current Value (manual)</Label>
+                  <WInputNumber value={config.currentOverride ?? 0} min={0} onFocus={pushHistory}
+                    onValueChange={(e) => updateConfig({ currentOverride: e.value ?? 0 })} className="w-full mt-1" />
+                </div>
+              )}
+            </div>
+          </>
+        );
+      }
+
+      case 'stat': {
+        const config = element.config as StatConfig;
+        const STAT_TYPE_OPTIONS: { value: StatType; label: string }[] = [
+          { value: 'viewers',           label: 'Live Viewers' },
+          { value: 'followers',         label: 'Total Followers' },
+          { value: 'uptime',            label: 'Stream Uptime' },
+          { value: 'session-follows',   label: 'New Follows (session)' },
+          { value: 'session-subs',      label: 'New Subs (session)' },
+          { value: 'session-donations', label: 'Donations (session)' },
+        ];
+        return (
+          <>
+            <SectionHeader>Stat Settings</SectionHeader>
+            <div className="flex flex-col gap-3">
+              <div>
+                <Label>Stat Type</Label>
+                <WDropdown value={config.statType || 'viewers'} options={STAT_TYPE_OPTIONS}
+                  onChange={(e) => withHistory(() => updateConfig({ statType: e.value }))}
+                  optionLabel="label" optionValue="value" className="w-full mt-1" />
+              </div>
+              <div>
+                <Label>Label (empty = auto)</Label>
+                <WInput value={config.label || ''} onFocus={pushHistory}
+                  onChange={(e) => updateConfig({ label: e.target.value })}
+                  placeholder="VIEWERS" className="w-full mt-1" />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label>Prefix</Label>
+                  <WInput value={config.prefix || ''} onFocus={pushHistory}
+                    onChange={(e) => updateConfig({ prefix: e.target.value })}
+                    placeholder="$" className="w-full mt-1" />
+                </div>
+                <div>
+                  <Label>Suffix</Label>
+                  <WInput value={config.suffix || ''} onFocus={pushHistory}
+                    onChange={(e) => updateConfig({ suffix: e.target.value })}
+                    placeholder="pts" className="w-full mt-1" />
+                </div>
+              </div>
+            </div>
+          </>
+        );
+      }
+
+      case 'recent-events': {
+        const config = element.config as RecentEventsConfig;
+        const EVENT_TYPE_OPTIONS = [
+          { value: 'follow',    label: 'Follows' },
+          { value: 'subscribe', label: 'Subscribers' },
+          { value: 'donation',  label: 'Donations' },
+          { value: 'raid',      label: 'Raids' },
+        ];
+        return (
+          <>
+            <SectionHeader>Recent Events Settings</SectionHeader>
+            <div className="flex flex-col gap-3">
+              <div>
+                <Label>Event Types</Label>
+                <div className="flex flex-col gap-1.5 mt-1">
+                  {EVENT_TYPE_OPTIONS.map(opt => (
+                    <label key={opt.value} className="flex items-center gap-2 text-xs cursor-pointer">
+                      <WSwitch
+                        checked={(config.eventTypes || []).includes(opt.value as 'follow' | 'subscribe' | 'donation' | 'raid')}
+                        onChange={(e) => {
+                          withHistory(() => {
+                            const types = config.eventTypes || [];
+                            const newTypes = e.value
+                              ? [...types, opt.value as 'follow' | 'subscribe' | 'donation' | 'raid']
+                              : types.filter(t => t !== opt.value);
+                            updateConfig({ eventTypes: newTypes });
+                          });
+                        }}
+                      />
+                      <span>{opt.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <div className="flex justify-between">
+                  <Label>Max Events</Label>
+                  <span className="text-xs font-mono text-muted-foreground">{config.maxCount || 8}</span>
+                </div>
+                <WSlider value={config.maxCount || 8} min={1} max={20}
+                  onChange={handleSliderChange((v) => updateConfig({ maxCount: v }))}
+                  onSlideEnd={handleSliderEnd} className="mt-1" />
+              </div>
+              <label className="flex items-center gap-2 text-xs cursor-pointer">
+                <WSwitch checked={config.showIcons !== false}
+                  onChange={(e) => withHistory(() => updateConfig({ showIcons: e.value }))} />
+                <span>Show Icons</span>
+              </label>
+              <div>
+                <div className="flex justify-between">
+                  <Label>Fade After</Label>
+                  <span className="text-xs font-mono text-muted-foreground">
+                    {config.fadeAfter ? `${config.fadeAfter}s` : 'Never'}
+                  </span>
+                </div>
+                <WSlider value={config.fadeAfter || 0} min={0} max={300} step={5}
+                  onChange={handleSliderChange((v) => updateConfig({ fadeAfter: v }))}
+                  onSlideEnd={handleSliderEnd} className="mt-1" />
               </div>
             </div>
           </>
@@ -594,6 +928,152 @@ function SectionHeader({ children }: { children: React.ReactNode }) {
     <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider pt-2 border-t border-border">
       {children}
     </h4>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// ImageUploader — upload from disk or pick from stored assets
+// ---------------------------------------------------------------------------
+
+function ImageUploader({ currentSrc, onSelect }: { currentSrc: string; onSelect: (url: string) => void }) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [assets, setAssets] = useState<Array<{ filename: string; url: string }> | null>(null);
+  const [showBrowser, setShowBrowser] = useState(false);
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    setError(null);
+    const result = await uploadAsset(file);
+    setUploading(false);
+    if (result.data) {
+      onSelect(result.data.url);
+    } else {
+      setError(result.error);
+    }
+    // Reset input so the same file can be re-selected
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const openBrowser = async () => {
+    setShowBrowser(true);
+    const result = await getAssets();
+    setAssets(result.data || []);
+  };
+
+  const handleDelete = async (filename: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    await deleteAsset(filename);
+    setAssets(prev => prev ? prev.filter(a => a.filename !== filename) : prev);
+    if (currentSrc === `/assets/${filename}`) onSelect('');
+  };
+
+  return (
+    <div className="flex flex-col gap-2">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml,image/avif"
+        style={{ display: 'none' }}
+        onChange={handleUpload}
+      />
+
+      <div className="flex gap-1.5">
+        <WButton
+          size="small"
+          text
+          onClick={() => fileInputRef.current?.click()}
+          disabled={uploading}
+          className="flex items-center gap-1 flex-1"
+        >
+          <Upload size={11} />
+          <span>{uploading ? 'Uploading…' : 'Upload Image'}</span>
+        </WButton>
+        <WButton
+          size="small"
+          text
+          onClick={openBrowser}
+          className="flex items-center gap-1 flex-1"
+        >
+          <FolderOpen size={11} />
+          <span>Browse</span>
+        </WButton>
+      </div>
+
+      {error && (
+        <p style={{ fontSize: '10px', color: 'var(--destructive)' }}>{error}</p>
+      )}
+
+      {showBrowser && (
+        <div
+          style={{
+            background: 'rgba(0,0,0,0.4)',
+            border: '1px solid var(--border)',
+            borderRadius: 6,
+            padding: 8,
+            maxHeight: 220,
+            overflowY: 'auto',
+          }}
+        >
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-medium text-muted-foreground">Stored Assets</span>
+            <button
+              onClick={() => setShowBrowser(false)}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted-foreground)', padding: 0 }}
+            >
+              <X size={12} />
+            </button>
+          </div>
+
+          {assets === null ? (
+            <p className="text-xs text-muted-foreground">Loading…</p>
+          ) : assets.length === 0 ? (
+            <p className="text-xs text-muted-foreground">No assets uploaded yet.</p>
+          ) : (
+            <div className="flex flex-col gap-1">
+              {assets.map(asset => (
+                <div
+                  key={asset.filename}
+                  onClick={() => { onSelect(asset.url); setShowBrowser(false); }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    padding: '4px 6px',
+                    borderRadius: 4,
+                    cursor: 'pointer',
+                    background: currentSrc === asset.url ? 'rgba(59,130,246,0.2)' : 'transparent',
+                    border: currentSrc === asset.url ? '1px solid rgba(59,130,246,0.4)' : '1px solid transparent',
+                  }}
+                >
+                  <img
+                    src={asset.url}
+                    alt={asset.filename}
+                    style={{ width: 32, height: 32, objectFit: 'cover', borderRadius: 3, flexShrink: 0 }}
+                  />
+                  <span
+                    className="text-xs text-muted-foreground"
+                    style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                  >
+                    {asset.filename}
+                  </span>
+                  <button
+                    onClick={(e) => handleDelete(asset.filename, e)}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted-foreground)', padding: 2, flexShrink: 0 }}
+                    title="Delete"
+                  >
+                    <Trash2 size={11} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 

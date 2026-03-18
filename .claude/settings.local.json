@@ -5,7 +5,7 @@
       "Write",
       "Bash(*)",
       "WebSearch"
-
     ]
-  }
+  },
+  "prefersReducedMotion": false
 }

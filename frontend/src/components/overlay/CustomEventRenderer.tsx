@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { socketService } from '../../services/socket';
 import { resolveTemplate } from '../../utils/templateResolver';
+import { ANIMATION_KEYFRAMES_CSS, getPreset, DEFAULT_EXIT_PAIR } from '../../animations';
 import type { SceneElement, CustomEventConfig } from '../../types';
 
 interface QueueItem {
@@ -14,62 +15,52 @@ interface Props {
 
 let itemCounter = 0;
 
-export default function CustomEventRenderer({ element }: Props) {
-  const [queue, setQueue] = useState<QueueItem[]>([]);
-  const [current, setCurrent] = useState<QueueItem | null>(null);
+// Inject @keyframes into the document once
+let keyframesInjected = false;
+function ensureKeyframes() {
+  if (keyframesInjected) return;
+  keyframesInjected = true;
+  const style = document.createElement('style');
+  style.textContent = ANIMATION_KEYFRAMES_CSS;
+  document.head.appendChild(style);
+}
 
-  const config = element.config as CustomEventConfig;
-  const eventName = config.eventName || '';
-  const template = config.template || '{{message}}';
-  const duration = config.duration || 5000;
-  const animation = config.animation || 'fadeInUp';
-  const maxQueueSize = config.maxQueueSize || 10;
+// ---------------------------------------------------------------------------
+// EventContent — mounts once per item (key={item.id}), runs phase machine
+// ---------------------------------------------------------------------------
 
-  const processQueue = useCallback(() => {
-    setQueue(prev => {
-      if (prev.length === 0) return prev;
-      setCurrent(prev[0]);
-      return prev.slice(1);
-    });
-  }, []);
+interface ContentProps {
+  item: QueueItem;
+  element: SceneElement;
+  config: CustomEventConfig;
+  onDone: () => void;
+}
 
-  // Subscribe to the configured event
+function EventContent({ item, element, config, onDone }: ContentProps) {
+  const [phase, setPhase] = useState<'entering' | 'exiting'>('entering');
+
+  const animInId  = config.animationIn  || config.animation || 'fadeInUp';
+  const animOutId = config.animationOut || DEFAULT_EXIT_PAIR[animInId] || 'fadeOutDown';
+  const inDur     = config.animationInDuration  ?? getPreset(animInId)?.defaultDuration  ?? 450;
+  const outDur    = config.animationOutDuration ?? getPreset(animOutId)?.defaultDuration ?? 450;
+  const totalDur  = config.duration || 5000;
+  const holdEnd   = Math.max(totalDur - outDur, inDur + 100);
+
   useEffect(() => {
-    if (!eventName) return;
+    ensureKeyframes();
+    const t1 = setTimeout(() => setPhase('exiting'), holdEnd);
+    const t2 = setTimeout(() => onDone(), holdEnd + outDur);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, [holdEnd, outDur, onDone]);
 
-    const unsub = socketService.on(eventName, (raw) => {
-      const data = (raw != null && typeof raw === 'object') ? raw as Record<string, unknown> : {};
-      const text = resolveTemplate(template, data);
-      const item: QueueItem = { id: `ce-${++itemCounter}`, text };
-      setQueue(prev => {
-        const next = [...prev, item];
-        return next.length > maxQueueSize ? next.slice(-maxQueueSize) : next;
-      });
-    });
-
-    return () => unsub();
-  }, [eventName, template, maxQueueSize]);
-
-  // Process queue when current is null
-  useEffect(() => {
-    if (current) return;
-    processQueue();
-  }, [current, queue, processQueue]);
-
-  // Auto-dismiss
-  useEffect(() => {
-    if (!current) return;
-    const timer = setTimeout(() => setCurrent(null), duration);
-    return () => clearTimeout(timer);
-  }, [current, duration]);
-
-  if (!current) return null;
+  const animStyle: React.CSSProperties = phase === 'entering'
+    ? { animation: `${animInId} ${inDur}ms ${getPreset(animInId)?.easing ?? 'ease-out'} both` }
+    : { animation: `${animOutId} ${outDur}ms ${getPreset(animOutId)?.easing ?? 'ease-in'} both` };
 
   const style = element.style;
 
   return (
     <div
-      key={current.id}
       style={{
         width: '100%',
         height: '100%',
@@ -84,28 +75,72 @@ export default function CustomEventRenderer({ element }: Props) {
         whiteSpace: 'pre-wrap',
         wordBreak: 'break-word',
         overflow: 'hidden',
-        animation: `${animation} 0.5s ease-out`,
+        backgroundColor: style.backgroundColor,
+        borderRadius: style.borderRadius,
+        border: style.border,
+        boxShadow: style.boxShadow,
+        ...animStyle,
       }}
     >
-      {current.text}
-      <style>{`
-        @keyframes fadeInUp {
-          from { opacity: 0; transform: translateY(30px) scale(0.95); }
-          to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        @keyframes slideInLeft {
-          from { opacity: 0; transform: translateX(-30px); }
-          to { opacity: 1; transform: translateX(0); }
-        }
-        @keyframes scaleIn {
-          from { opacity: 0; transform: scale(0.8); }
-          to { opacity: 1; transform: scale(1); }
-        }
-      `}</style>
+      {item.text}
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// CustomEventRenderer — queue manager
+// ---------------------------------------------------------------------------
+
+export default function CustomEventRenderer({ element }: Props) {
+  const [queue, setQueue] = useState<QueueItem[]>([]);
+  const [current, setCurrent] = useState<QueueItem | null>(null);
+
+  const config = element.config as CustomEventConfig;
+  const eventName    = config.eventName || '';
+  const template     = config.template || '{{message}}';
+  const maxQueueSize = config.maxQueueSize || 10;
+
+  // Subscribe to the configured event
+  useEffect(() => {
+    if (!eventName) return;
+    const unsub = socketService.on(eventName, (raw) => {
+      const data = (raw != null && typeof raw === 'object') ? raw as Record<string, unknown> : {};
+      const text = resolveTemplate(template, data);
+      const item: QueueItem = { id: `ce-${++itemCounter}`, text };
+      setQueue(prev => {
+        const next = [...prev, item];
+        return next.length > maxQueueSize ? next.slice(-maxQueueSize) : next;
+      });
+    });
+    return () => unsub();
+  }, [eventName, template, maxQueueSize]);
+
+  // Advance queue when slot is free
+  const advance = useCallback(() => {
+    setCurrent(null);
+    setQueue(prev => {
+      if (prev.length === 0) return prev;
+      setTimeout(() => setCurrent(prev[0]), 50);
+      return prev.slice(1);
+    });
+  }, []);
+
+  // Pick next item when queue grows and slot is free
+  useEffect(() => {
+    if (current || queue.length === 0) return;
+    setCurrent(queue[0]);
+    setQueue(prev => prev.slice(1));
+  }, [current, queue]);
+
+  if (!current) return null;
+
+  return (
+    <EventContent
+      key={current.id}
+      item={current}
+      element={element}
+      config={config}
+      onDone={advance}
+    />
   );
 }

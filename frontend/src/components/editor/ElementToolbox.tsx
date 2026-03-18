@@ -1,21 +1,27 @@
-import { Bell, MessageSquare, Type, ImageIcon, Zap, Eye, EyeOff, Lock, Unlock, GripVertical } from 'lucide-react';
+import { Bell, MessageSquare, Type, ImageIcon, Zap, Target, BarChart2, List, Eye, EyeOff, Lock, Unlock, GripVertical } from 'lucide-react';
 import { useEditorStore, useCurrentScene } from '../../stores/editorStore';
 import type { ElementType } from '../../types';
 
 const ELEMENT_ICONS: Record<ElementType, React.ReactNode> = {
-  'alert-box': <Bell size={14} />,
-  'chat': <MessageSquare size={14} />,
-  'text': <Type size={14} />,
-  'image': <ImageIcon size={14} />,
-  'custom-event': <Zap size={14} />,
+  'alert-box':     <Bell size={14} />,
+  'chat':          <MessageSquare size={14} />,
+  'text':          <Type size={14} />,
+  'image':         <ImageIcon size={14} />,
+  'custom-event':  <Zap size={14} />,
+  'goal':          <Target size={14} />,
+  'stat':          <BarChart2 size={14} />,
+  'recent-events': <List size={14} />,
 };
 
 const ADD_ITEMS: { type: ElementType; label: string; icon: React.ReactNode }[] = [
-  { type: 'alert-box', label: 'Alert Box', icon: <Bell size={16} /> },
-  { type: 'chat', label: 'Chat', icon: <MessageSquare size={16} /> },
-  { type: 'text', label: 'Text', icon: <Type size={16} /> },
-  { type: 'image', label: 'Image', icon: <ImageIcon size={16} /> },
-  { type: 'custom-event', label: 'Custom Event', icon: <Zap size={16} /> },
+  { type: 'alert-box',     label: 'Alert Box',      icon: <Bell size={16} /> },
+  { type: 'chat',          label: 'Chat',            icon: <MessageSquare size={16} /> },
+  { type: 'text',          label: 'Text',            icon: <Type size={16} /> },
+  { type: 'image',         label: 'Image',           icon: <ImageIcon size={16} /> },
+  { type: 'custom-event',  label: 'Custom Event',    icon: <Zap size={16} /> },
+  { type: 'goal',          label: 'Goal',            icon: <Target size={16} /> },
+  { type: 'stat',          label: 'Stat',            icon: <BarChart2 size={16} /> },
+  { type: 'recent-events', label: 'Recent Events',   icon: <List size={16} /> },
 ];
 
 export default function ElementToolbox() {
